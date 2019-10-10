@@ -9,4 +9,5 @@ setup(name='batsim-py',
               'sortedcontainers',
               'zmq',
               'procset',
+              'evalys==4.0.4'
       ])
