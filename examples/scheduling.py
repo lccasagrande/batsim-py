@@ -1,20 +1,17 @@
 import argparse
 
-from batsim_py.utils.schedulers import FirstComeFirstServed
+from batsim_py.utils.schedulers import EASYBackfilling
 from batsim_py.rjms import RJMSHandler
 
 
 def run(args):
     rjms = RJMSHandler(args.use_batsim)
-    scheduler = FirstComeFirstServed()
+    scheduler = EASYBackfilling(rjms)
 
     rjms.start(args.platform, args.workload, args.output_fn)
     rjms.proceed_time()
     while rjms.is_running:
-        reserved_time = rjms.get_reserved_time()
-        jobs = scheduler.schedule(rjms.jobs_queue, reserved_time)
-        for job_id in jobs:
-            rjms.allocate(job_id)
+        scheduler.schedule()
         rjms.start_ready_jobs()
         rjms.proceed_time()
 
