@@ -2,69 +2,74 @@ import math
 from copy import copy
 from abc import ABC, abstractmethod
 
+
+from batsim_py.network import SimulatorEventHandler
+from batsim_py.rjms import Agenda
 import numpy as np
 
 
-class Scheduler(ABC):
+class Scheduler(SimulatorEventHandler):
+    def __init__(self, rjms):
+        self._rjms = rjms
+
     @abstractmethod
-    def schedule(self, queue, reserved_time):
+    def schedule(self):
         raise NotImplementedError()
 
 
 class FirstComeFirstServed(Scheduler):
-    def schedule(self, queue, reserved_time):
-        jobs = []
-        if len(queue) > 0:
-            available = [i for i, a in enumerate(reserved_time) if a == 0]
-            for job in queue:
-                if job.res <= len(available):
-                    reservation = available[:job.res]
-                    reserved_time[reservation] = job.walltime
-                    job.expected_time_to_start = 0
-                    jobs.append(job.id)
-                    del available[:job.res]
-                else:
-                    break
-        return jobs
+    def schedule(self):
+        if self._rjms.queue_lenght == 0:
+            return
 
-
-class EASYBackfilling(Scheduler):
-    def __init__(self):
-        super().__init__()
-        self.fcfs = FirstComeFirstServed()
-        self._priority_job = None
-
-    def _backfill(self, queue, nb_available_resources):
-        assert self._priority_job
-        jobs = []
-        for job in queue:
-            if nb_available_resources == 0:
+        available = self._rjms.get_available_resources()
+        available = sorted(available, key=lambda r: r.state.value)
+        for job in self._rjms.jobs_queue:
+            if job.res <= len(available):
+                alloc = [r.id for r in available[:job.res]]
+                self._rjms.allocate(job.id, alloc)
+                del available[:job.res]
+            else:
                 break
-            elif job.res <= nb_available_resources and job.walltime <= self._priority_job.expected_time_to_start:
-                jobs.append(job.id)
-                job.expected_time_to_start = 0
-                nb_available_resources -= job.res
-        return jobs
 
-    def schedule(self, queue, reserved_time):
+
+class EASYBackfilling(FirstComeFirstServed):
+    def __init__(self, rjms):
         self._priority_job = None
-        jobs = self.fcfs.schedule(queue, reserved_time)
-        if len(jobs) < len(queue):  # There is some jobs that could not be scheduled
+        super().__init__(rjms)
+
+    def _backfill(self, backfill_queue):
+        assert self._priority_job is not None
+        if len(backfill_queue) == 0 or self._priority_job.expected_time_to_start == 0:
+            return
+
+        available = self._rjms.get_available_resources()
+        available = sorted(available, key=lambda r: r.state.value)
+        for job in backfill_queue:
+            if job.res <= len(available) and job.walltime <= self._priority_job.expected_time_to_start:
+                alloc = [r.id for r in available[:job.res]]
+                self._rjms.allocate(job.id, alloc)
+                del available[:job.res]
+
+    def schedule(self):
+        def estimate_start_time(job):
+            earliest_time = sorted(self._rjms.get_reserved_time())[:job.res]
+            return math.ceil(earliest_time[-1]) if earliest_time else 0
+
+        super().schedule()
+        self._priority_job = None
+        if self._rjms.queue_lenght > 0:  # There is some jobs that could not be scheduled
             # Let's give an upper bound start time for the first job in the queue
-            self._priority_job = queue[len(jobs)]
-            earliest_time = sorted(reserved_time)[:self._priority_job.res]
-            earliest_time = math.ceil(
-                earliest_time[-1]) if earliest_time else 0
-            self._priority_job.expected_time_to_start = earliest_time
-            queue = queue[len(jobs) + 1:]
-            if len(queue) > 0 and self._priority_job.expected_time_to_start > 0:
-                nb_available = np.count_nonzero(reserved_time == 0)
-                backfill_jobs = self._backfill(queue, nb_available)
-                jobs.extend(backfill_jobs)
-        return jobs
+            queue = self._rjms.jobs_queue
+            self._priority_job = queue[0]
+            self._priority_job.expected_time_to_start = estimate_start_time(
+                self._priority_job)
+
+            # Let's backfill some jobs
+            self._backfill(queue[1:])
 
 
 class SAFBackfilling(EASYBackfilling):
-    def _backfill(self, queue, nb_available_resources):
-        saf_queue = sorted(queue, key=lambda j: j.walltime * j.res)
-        return super()._backfill(saf_queue, nb_available_resources)
+    def _backfill(self, backfill_queue):
+        saf_queue = sorted(backfill_queue, key=lambda j: j.walltime * j.res)
+        super()._backfill(saf_queue)
