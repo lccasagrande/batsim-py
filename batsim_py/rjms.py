@@ -30,7 +30,7 @@ class RJMSHandler(SimulatorEventHandler):
             EventType.JOB_KILLED, self.start_ready_jobs)
 
         self._job_submitter = JobSubmitter(self.simulator)
-        self._jobs = {"queue": [], "running": {}, "ready": []}
+        self._jobs = {"queue": [], "running": {}, "ready": [], "completed": []}
         self._agenda = None
         self.platform, self.simulation_time, self.submitter_ended = None, None, False
 
@@ -49,6 +49,10 @@ class RJMSHandler(SimulatorEventHandler):
     @property
     def jobs_running(self):
         return np.asarray(list(self._jobs["running"].values()))
+
+    @property
+    def jobs_finished(self):
+        return np.asarray(self._jobs['completed'])
 
     @property
     def queue_lenght(self):
@@ -70,12 +74,12 @@ class RJMSHandler(SimulatorEventHandler):
         assert self._agenda
         return self._agenda.get_available_nodes()
 
-    def start(self, platform_fn, workload_fn=None, output_fn=None, simulation_time=None):
+    def start(self, platform_fn, workload_fn=None, output_fn=None, simulation_time=None, qos_stretch=None):
         assert not self.is_running, "A simulation is already running."
         assert not simulation_time or simulation_time > 0
         self.simulation_time = simulation_time
-        self.simulator.start(platform_fn, output_fn=output_fn)
-        self._jobs = {"queue": [], "running": {}, "ready": []}
+        self.simulator.start(platform_fn, output_fn=output_fn, qos_stretch=qos_stretch)
+        self._jobs = {"queue": [], "running": {}, "ready": [], "completed": []}
         self.submitter_ended = False
         if workload_fn:
             self._job_submitter.start(workload_fn)
@@ -83,7 +87,6 @@ class RJMSHandler(SimulatorEventHandler):
     def close(self):
         if self.simulator.is_running:
             self.simulator.finish()
-        self._jobs = {"queue": [], "running": {}, "ready": []}
         self._job_submitter.close()
 
     def proceed_time(self, until=0):
@@ -111,7 +114,6 @@ class RJMSHandler(SimulatorEventHandler):
             self.simulator.call_me_later(self.simulation_time)
 
     def on_simulation_ends(self, timestamp, data):
-        self._jobs = {"queue": [], "running": {}, "ready": []}
         self._job_submitter.close()
 
     def on_job_submitted(self, timestamp, data):
@@ -127,6 +129,7 @@ class RJMSHandler(SimulatorEventHandler):
         for r in resources:
             r.release()
             self._agenda.release(r.id)
+        self._jobs['completed'].append(job)
 
     def on_job_killed(self, timestamp, data):
         for id in data.job_ids:
@@ -227,14 +230,14 @@ class RJMSHandler(SimulatorEventHandler):
 class Agenda():
     def __init__(self, platform):
         self.platform = platform
-        self.reservations = SortedDict(lambda k: int(
-            k.id), {r: None for r in platform.resources})
+        self.nodes = {n.id: n for n in platform.nodes}
+        self.reservations = SortedDict(lambda k: int(k.id), {r: None for r in platform.resources})
 
     def get_available_nodes(self):
         nodes = []
         for node_id, reservations in groupby(self.reservations.items(), key=lambda it: it[0].parent_id):
             if all(j is None for (r, j) in reservations):
-                nodes.append(self.platform.get_node(node_id))
+                nodes.append(self.nodes[node_id])
         return np.asarray(nodes)
 
     def get_available_resources(self):
