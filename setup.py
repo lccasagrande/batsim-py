@@ -1,6 +1,6 @@
 from setuptools import setup
 
-setup(name='batsim-py',
+setup(name='batsim_py',
       author='lccasagrande',
       version='0.1',
       python_requires='>=3.6',
