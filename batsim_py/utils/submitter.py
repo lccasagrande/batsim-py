@@ -24,7 +24,7 @@ class Workload():
         self.path = fn
         with open(self.path, 'r') as f:
             data = json.load(f)
-            self.simulation_time = data['simulation_time']
+            self.simulation_time = data.get('simulation_time', None)
             self.profiles = {name: get_profile(
                 profile) for name, profile in data['profiles'].items()}
             self.jobs = [Job(
@@ -42,7 +42,7 @@ class JobSubmitter(SimulatorEventHandler):
         super().__init__(simulator)
         self.current_workload = None
         self.workloads = []
-        self._workload_finish_time = -1
+        self.current_time = 0
         self.finished = True
 
     def _load_workload(self):
@@ -58,13 +58,12 @@ class JobSubmitter(SimulatorEventHandler):
                 profile_name=profile_name,
                 profile=profile
             )
-        if self._workload_finish_time == -1:
-            self._workload_finish_time = workload.simulation_time
-        else:
-            start_time = self._workload_finish_time
+        # Append workload to current simulation
+        if self.current_time > 0:
+            if workload.simulation_time is not None:
+                workload.simulation_time += self.current_time
             for j in workload.jobs:
-                j.subtime += start_time
-            self._workload_finish_time += workload.simulation_time
+                j.subtime += self.current_time
         return workload
 
     def start(self, workloads):
@@ -78,13 +77,18 @@ class JobSubmitter(SimulatorEventHandler):
     def close(self):
         self.finished = True
         self.current_workload = None
+        self.current_time = 0
         self.workloads = []
 
     def on_requested_call(self, timestamp, data):
+        self.current_time = timestamp
+
         if self.finished:
             return
 
-        if timestamp < self._workload_finish_time and (len(self.current_workload.jobs) == 0 or timestamp < self.current_workload.jobs[0].subtime):
+        if len(self.current_workload.jobs) == 0 and self.current_workload.simulation_time and self.current_time < self.current_workload.simulation_time:
+            return
+        elif len(self.current_workload.jobs) > 0 and self.current_time < self.current_workload.jobs[0].subtime:
             return
 
         while self.current_workload.jobs and timestamp >= self.current_workload.jobs[0].subtime:
@@ -97,15 +101,13 @@ class JobSubmitter(SimulatorEventHandler):
                 job.user
             )
 
+        # Check if there is job to be submitted
         if len(self.current_workload.jobs) == 0:
-            if len(self.workloads) == 0 and timestamp >= self._workload_finish_time:
+            if self.current_workload.simulation_time and self.current_time < self.current_workload.simulation_time:
+                self.simulator.call_me_later(
+                    self.current_workload.simulation_time)
+            else:
                 self.close()
                 self.simulator.notify(NotifyType.registration_finished)
-            elif timestamp < self._workload_finish_time:
-                self.simulator.call_me_later(self._workload_finish_time)
-            else:
-                self.current_workload = self._load_workload()
-                self.simulator.call_me_later(
-                    self.current_workload.jobs[0].subtime)
         else:
             self.simulator.call_me_later(self.current_workload.jobs[0].subtime)
