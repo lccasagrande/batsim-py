@@ -69,8 +69,12 @@ class Job():
         return -1 if self.stop_time == -1 else self.waiting_time + self.runtime
 
     @property
+    def per_processor_slowdown(self):
+        return -1 if self.stop_time == -1 else max(1, self.turnaround_time / (self.res * self.runtime))
+
+    @property
     def slowdown(self):
-        return -1 if self.stop_time == -1 else self.turnaround_time / self.runtime
+        return -1 if self.stop_time == -1 else max(1, self.turnaround_time / self.runtime)
 
     def set_allocation(self, allocation):
         assert isinstance(allocation, list)

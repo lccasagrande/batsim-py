@@ -104,6 +104,7 @@ class JobsStatsMonitor(SimulatorMonitor):
             'max_waiting_time': 0,
             'max_turnaround_time': 0,
             'mean_slowdown': 0,
+            'mean_pp_slowdown': 0,
             'mean_stretch': 0,
             'mean_waiting_time': 0,
             'mean_turnaround_time': 0,
@@ -132,6 +133,7 @@ class JobsStatsMonitor(SimulatorMonitor):
         nb_finished = max(1, self.info['nb_jobs_finished'])
         self.info['mean_waiting_time'] /= nb_finished
         self.info['mean_slowdown'] /= nb_finished
+        self.info['mean_pp_slowdown'] /= nb_finished
         self.info['mean_stretch'] /= nb_finished
         self.info['mean_turnaround_time'] /= nb_finished
         self.info['mean_qos_delay'] /= max(1, self.info['qos_violations'])
@@ -159,6 +161,7 @@ class JobsStatsMonitor(SimulatorMonitor):
 
         self.info['mean_waiting_time'] += job.waiting_time
         self.info['mean_slowdown'] += job.slowdown
+        self.info['mean_pp_slowdown'] += job.per_processor_slowdown
         self.info['mean_turnaround_time'] += job.turnaround_time
         self.info['mean_stretch'] += job.stretch
 
