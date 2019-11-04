@@ -26,6 +26,7 @@ class FirstComeFirstServed(Scheduler):
         available = sorted(available, key=lambda r: r.state.value)
         for job in self._rjms.jobs_queue:
             if job.res <= len(available):
+                job.expected_time_to_start = 0
                 alloc = [r.id for r in available[:job.res]]
                 self._rjms.allocate(job.id, alloc)
                 del available[:job.res]
@@ -47,6 +48,7 @@ class EASYBackfilling(FirstComeFirstServed):
         available = sorted(available, key=lambda r: r.state.value)
         for job in backfill_queue:
             if job.res <= len(available) and job.walltime <= self._priority_job.expected_time_to_start:
+                job.expected_time_to_start = 0
                 alloc = [r.id for r in available[:job.res]]
                 self._rjms.allocate(job.id, alloc)
                 del available[:job.res]
