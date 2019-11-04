@@ -57,7 +57,7 @@ class GridSimulatorHandler(SimulatorProtocol):
         else:
             raise RuntimeError
 
-    def start(self, platform_fn, workload_fn=None, output_fn=None):
+    def start(self, platform_fn, workload_fn=None, output_fn=None, qos_stretch=None):
         assert not self.is_running
         assert platform_fn
 
@@ -80,7 +80,7 @@ class GridSimulatorHandler(SimulatorProtocol):
         if self.output_fn is not None and not self.monitors:
             os.makedirs(Path(self.output_fn).parent, exist_ok=True)
             self.monitors = {
-                "schedule": SchedulerStatsMonitor(self),
+                "schedule": SchedulerStatsMonitor(self, qos_stretch),
                 "machine_states": ResourceStatesEventMonitor(self),
                 "pstate_changes": ResourcePowerStatesEventMonitor(self),
                 "consumed_energy": PowerEventMonitor(self),
@@ -116,8 +116,6 @@ class GridSimulatorHandler(SimulatorProtocol):
 
         job = self.__jobs.pop(job_id)
         min_speed = min(r.speed for r in self.__platform.get_resources(alloc))
-        if job.profile not in self.__profiles:
-            print(self.__profiles)
         job_profile = self.__profiles[job.profile]
         if job_profile.type == WorkloadProfileType.parallel_homogeneous:
             runtime = int(job_profile.cpu / min_speed)
@@ -262,7 +260,7 @@ class BatsimSimulatorHandler(SimulatorProtocol):
         assert self.is_running
         self._dispatch_events(self._send_and_recv())
 
-    def start(self, platform_fn, workload_fn=None, output_fn=None):
+    def start(self, platform_fn, workload_fn=None, output_fn=None, qos_stretch=None):
         assert not self.is_running
         assert platform_fn
         cmd = "batsim -s {} -p {} -E".format(self.address, platform_fn)
