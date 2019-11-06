@@ -20,6 +20,7 @@ class FirstComeFirstServed(Scheduler):
         for job in queue:
             if job.res <= len(resources):
                 jobs.append(job)
+                job.expected_time_to_start = 0
             else:
                 break
         return jobs
@@ -38,6 +39,7 @@ class EASYBackfilling(Scheduler):
             if job.res <= len(resources):
                 alloc = [resources.pop(0).id for r in resources[:job.res]]
                 agenda[alloc] = job.walltime
+                job.expected_time_to_start = 0
                 jobs.append(job)
                 queue.remove(job)
             else:
@@ -61,6 +63,7 @@ class EASYBackfilling(Scheduler):
         if self._priority_job.expected_time_to_start != 0:
             for job in backfill_queue:
                 if job.res <= len(resources) and job.walltime <= self._priority_job.expected_time_to_start:
+                    job.expected_time_to_start = 0
                     del resources[:job.res]
                     jobs.append(job)
         return jobs
