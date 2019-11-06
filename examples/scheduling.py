@@ -6,12 +6,14 @@ from batsim_py.rjms import RJMSHandler
 
 def run(args):
     rjms = RJMSHandler(args.use_batsim)
-    scheduler = EASYBackfilling(rjms)
+    scheduler = EASYBackfilling()
 
     rjms.start(args.platform, args.workload, args.output_fn)
     rjms.proceed_time()
     while rjms.is_running:
-        scheduler.schedule()
+        jobs = scheduler.schedule(rjms.jobs_queue, rjms.get_available_resources(), rjms.get_reserved_time())
+        for j in jobs:
+            rjms.allocate(j.id)
         rjms.start_ready_jobs()
         rjms.proceed_time()
 
