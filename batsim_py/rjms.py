@@ -219,13 +219,16 @@ class RJMSHandler(SimulatorEventHandler):
             resource_ids = [r.id for r in resources[:job.res]]
 
         if len(resource_ids) != job.res:
-            raise Exception("Insufficient resources for job {}".format(job.id))
+            raise InsufficientResources("Insufficient resources for job {}".format(job.id))
 
         job.set_allocation(resource_ids)
         self._agenda.reserve(job)
         self._jobs['queue'].remove(job)
         self._jobs['ready'].append(job)
 
+
+class InsufficientResources(Exception):
+    pass
 
 class Agenda():
     def __init__(self, platform):
