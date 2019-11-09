@@ -234,6 +234,18 @@ class Node(Id):
     def is_switching_on(self):
         return self.state.type == PowerStateType.switching_on
 
+    def estimate_energy_to_wakeup(self):
+        ps = next(ps for ps in self.power_states if ps.type == PowerStateType.switching_on)
+        switch_t = 1 / ps.speed
+        switch_e = switch_t * ps.power_max
+        return switch_e
+
+    def estimate_energy_to_shutdown(self):
+        ps = next(ps for ps in self.power_states if ps.type == PowerStateType.switching_off)
+        switch_t = 1 / ps.speed
+        switch_e = switch_t * ps.power_max
+        return switch_e
+
     def get_power_state(self, pstate_id):
         return self.resources[0].get_power_state(pstate_id)
 
