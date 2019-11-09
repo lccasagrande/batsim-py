@@ -15,8 +15,8 @@ class Timeout(SimulatorEventHandler):
     def __init__(self, idling_time, rjms):
         assert idling_time > 0
         self.idling_time = idling_time
-        self.next_call = None
         self.rjms = rjms
+        self.next_call = None
         self._idle_nodes = {}
         super().__init__(rjms.simulator)
 
@@ -48,6 +48,7 @@ class Timeout(SimulatorEventHandler):
         self.set_callback()
 
     def on_simulation_begins(self, timestamp, data):
+        self.next_call = None
         self._idle_nodes = {
             n.id: timestamp for n in self.rjms.platform.nodes if n.is_idle
         }
