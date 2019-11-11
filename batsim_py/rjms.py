@@ -39,8 +39,20 @@ class RJMSHandler(SimulatorEventHandler):
         return self.simulator.current_time
 
     @property
+    def nb_running_jobs(self):
+        return len(self._jobs['running'])
+
+    @property
+    def nb_allocated_jobs(self):
+        return len(self._jobs['ready'])
+
+    @property
+    def nb_completed_jobs(self):
+        return len(self._jobs['completed'])
+
+    @property
     def is_running(self):
-        return self.simulator.is_running and (not self.submitter_ended or any(len(v) > 0 for k, v in self._jobs.items()))
+        return self.simulator.is_running and (not self.submitter_ended or self.nb_running_jobs > 0 or self.nb_allocated_jobs > 0 or self.queue_lenght > 0)
 
     @property
     def jobs_queue(self):
@@ -78,7 +90,8 @@ class RJMSHandler(SimulatorEventHandler):
         assert not self.is_running, "A simulation is already running."
         assert not simulation_time or simulation_time > 0
         self.simulation_time = simulation_time
-        self.simulator.start(platform_fn, output_fn=output_fn, qos_stretch=qos_stretch)
+        self.simulator.start(
+            platform_fn, output_fn=output_fn, qos_stretch=qos_stretch)
         self._jobs = {"queue": [], "running": {}, "ready": [], "completed": []}
         self.submitter_ended = False
         if workload_fn:
@@ -103,7 +116,7 @@ class RJMSHandler(SimulatorEventHandler):
         self.check_end_of_simulation()
 
     def check_end_of_simulation(self):
-        if self.submitter_ended and all(len(v) == 0 for k, v in self._jobs.items()) and self.simulator.is_running:
+        if self.submitter_ended and self.simulator.is_running and self.nb_allocated_jobs == 0 and self.nb_running_jobs == 0 and self.queue_lenght == 0:
             while self.simulator.is_running:
                 self.simulator.proceed_simulation()
 
@@ -219,7 +232,8 @@ class RJMSHandler(SimulatorEventHandler):
             resource_ids = [r.id for r in resources[:job.res]]
 
         if len(resource_ids) != job.res:
-            raise InsufficientResources("Insufficient resources for job {}".format(job.id))
+            raise InsufficientResources(
+                "Insufficient resources for job {}".format(job.id))
 
         job.set_allocation(resource_ids)
         self._agenda.reserve(job)
@@ -230,11 +244,13 @@ class RJMSHandler(SimulatorEventHandler):
 class InsufficientResources(Exception):
     pass
 
+
 class Agenda():
     def __init__(self, platform):
         self.platform = platform
         self.nodes = {n.id: n for n in platform.nodes}
-        self.reservations = SortedDict(lambda k: int(k.id), {r: None for r in platform.resources})
+        self.reservations = SortedDict(lambda k: int(
+            k.id), {r: None for r in platform.resources})
 
     def get_available_nodes(self):
         nodes = []
