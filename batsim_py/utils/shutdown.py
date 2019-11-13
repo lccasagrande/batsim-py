@@ -38,13 +38,17 @@ class Timeout(SimulatorEventHandler):
             self.next_call = None
 
         for node_id in list(self._idle_nodes.keys()):
-            time_idle = timestamp - self._idle_nodes[node_id]
-            if time_idle == self.idling_time:
-                self.rjms.turn_off(node_id)
+            if self.rjms.platform.get_node(node_id).is_idle:
+                time_idle = timestamp - self._idle_nodes[node_id]
+                if time_idle == self.idling_time:
+                    self.rjms.turn_off(node_id)
+                    del self._idle_nodes[node_id]
+                elif time_idle > self.idling_time:
+                    raise RuntimeError(
+                        "Resource is idle for more time than allowed (idling time)")
+            else:
                 del self._idle_nodes[node_id]
-            elif time_idle > self.idling_time:
-                raise RuntimeError(
-                    "Resource is idle for more time than allowed (idling time)")
+
         self.set_callback()
 
     def on_simulation_begins(self, timestamp, data):
