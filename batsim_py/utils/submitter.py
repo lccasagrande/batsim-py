@@ -24,7 +24,7 @@ class Workload():
         self.path = fn
         with open(self.path, 'r') as f:
             data = json.load(f)
-            self.simulation_time = data.get('simulation_time', None)
+            self.simulation_time = None#data.get('simulation_time', None)
             self.profiles = {name: get_profile(
                 profile) for name, profile in data['profiles'].items()}
             self.jobs = [Job(
@@ -72,12 +72,12 @@ class JobSubmitter(SimulatorEventHandler):
         self.workloads = workloads.copy() if isinstance(
             workloads, list) else [workloads]
         self.current_workload = self._load_workload()
+        self.current_time = 0
         self.simulator.call_me_later(self.current_workload.jobs[0].subtime)
 
     def close(self):
         self.finished = True
         self.current_workload = None
-        self.current_time = 0
         self.workloads = []
 
     def on_requested_call(self, timestamp, data):
