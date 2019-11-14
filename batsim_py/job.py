@@ -44,6 +44,7 @@ class Job():
         self.stop_time = -1.  # will be set on terminate
         self.allocation = None  # will be set on scheduling
         self.expected_time_to_start = -1.  # will be set on scheduling
+        self.metadata = {}
 
     def __repr__(self):
         return "Job_%s" % self.id
