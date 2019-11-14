@@ -24,7 +24,7 @@ class Workload():
         self.path = fn
         with open(self.path, 'r') as f:
             data = json.load(f)
-            self.simulation_time = None#data.get('simulation_time', None)
+            self.simulation_time = data.get('simulation_time', None)
             self.profiles = {name: get_profile(
                 profile) for name, profile in data['profiles'].items()}
             self.jobs = [Job(
@@ -60,19 +60,16 @@ class JobSubmitter(SimulatorEventHandler):
             )
         # Append workload to current simulation
         if self.current_time > 0:
-            if workload.simulation_time is not None:
-                workload.simulation_time += self.current_time
             for j in workload.jobs:
                 j.subtime += self.current_time
         return workload
 
     def start(self, workloads):
         self.finished = False
-        self._workload_finish_time = -1
+        self.current_time = 0
         self.workloads = workloads.copy() if isinstance(
             workloads, list) else [workloads]
         self.current_workload = self._load_workload()
-        self.current_time = 0
         self.simulator.call_me_later(self.current_workload.jobs[0].subtime)
 
     def close(self):
@@ -81,13 +78,15 @@ class JobSubmitter(SimulatorEventHandler):
         self.workloads = []
 
     def on_requested_call(self, timestamp, data):
-        self.current_time = timestamp
-
         if self.finished:
             return
 
+        self.current_time = timestamp
+
+        # Check if we need to just wait until simulation time.
         if len(self.current_workload.jobs) == 0 and self.current_workload.simulation_time and self.current_time < self.current_workload.simulation_time:
             return
+        # Check if there is a job to be submitted
         elif len(self.current_workload.jobs) > 0 and self.current_time < self.current_workload.jobs[0].subtime:
             return
 
@@ -101,8 +100,9 @@ class JobSubmitter(SimulatorEventHandler):
                 job.user
             )
 
-        # Check if there is job to be submitted
+        # Check if there is job to be submitted or not
         if len(self.current_workload.jobs) == 0:
+            # Check if we need to wait for the simulation time.
             if self.current_workload.simulation_time and self.current_time < self.current_workload.simulation_time:
                 self.simulator.call_me_later(
                     self.current_workload.simulation_time)
