@@ -212,7 +212,7 @@ class Node(Id):
     @property
     def load(self):
         l = len([r for r in self.resources if r.is_computing])
-        return l / self.nb_resources
+        return (l / self.nb_resources) * 100
 
     @property
     def is_idle(self):
