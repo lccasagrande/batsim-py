@@ -6,6 +6,7 @@ from itertools import groupby
 import numpy as np
 from procset import ProcSet
 
+from batsim_py.rjms import RJMSEventType
 from batsim_py.job import Job, JobState
 from batsim_py.resource import ResourceState, PowerStateType
 from batsim_py.network import SimulatorEventHandler
@@ -19,6 +20,8 @@ class Timeout(SimulatorEventHandler):
         self.next_call = None
         self._idle_nodes = {}
         super().__init__(rjms.simulator)
+        self.rjms.set_callback(
+            RJMSEventType.JOB_ALLOCATED, self.on_job_allocated)
 
     def get_next_call(self):
         if len(self._idle_nodes) == 0:
@@ -32,6 +35,10 @@ class Timeout(SimulatorEventHandler):
         if next_call and (not self.next_call or next_call < self.next_call):
             self.next_call = next_call
             self.simulator.call_me_later(self.next_call)
+
+    def on_job_allocated(self, timestamp, data):
+        for r in self.rjms.platform.get_resources(data.allocation):
+            self._idle_nodes.pop(r.parent_id, None)
 
     def on_requested_call(self, timestamp, data):
         if self.next_call and timestamp == self.next_call:

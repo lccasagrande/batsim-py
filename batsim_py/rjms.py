@@ -3,6 +3,7 @@ import time as tm
 from itertools import groupby
 from copy import copy
 from collections import defaultdict
+from enum import Enum
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -13,6 +14,10 @@ from batsim_py.job import Job, JobState
 from batsim_py.network import EventType, NotifyType, SimulatorEventHandler
 from batsim_py.utils.submitter import JobSubmitter
 from batsim_py.simulator import GridSimulatorHandler, BatsimSimulatorHandler
+
+
+class RJMSEventType(str, Enum):
+    JOB_ALLOCATED: str = "JOB_ALLOCATED"
 
 
 class RJMSHandler(SimulatorEventHandler):
@@ -33,6 +38,7 @@ class RJMSHandler(SimulatorEventHandler):
         self._jobs = {"queue": [], "running": {}, "ready": [], "completed": []}
         self._agenda = None
         self.platform, self.simulation_time, self.submitter_ended = None, None, False
+        self._callbacks = defaultdict(list)
 
     @property
     def current_time(self):
@@ -69,6 +75,11 @@ class RJMSHandler(SimulatorEventHandler):
     @property
     def queue_lenght(self):
         return len(self._jobs['queue'])
+
+    def set_callback(self, event_type, call):
+        assert callable(call)
+        assert isinstance(event_type, RJMSEventType)
+        self._callbacks[event_type].append(call)
 
     def get_reserved_time(self):
         assert self._agenda
@@ -224,6 +235,10 @@ class RJMSHandler(SimulatorEventHandler):
                 self._jobs['ready'].remove(job)
                 self._jobs['running'][job.id] = job
 
+    def _dispatch(self, event_type, data):
+        for call in self._callbacks[event_type]:
+            call(self.current_time, data)
+
     def allocate(self, job_id, resource_ids=None):
         job = next(j for j in self._jobs['queue'] if j.id == job_id)
         if resource_ids is None:
@@ -237,6 +252,7 @@ class RJMSHandler(SimulatorEventHandler):
 
         job.set_allocation(resource_ids)
         self._agenda.reserve(job)
+        self._dispatch(RJMSEventType.JOB_ALLOCATED, job)
         self._jobs['queue'].remove(job)
         self._jobs['ready'].append(job)
 

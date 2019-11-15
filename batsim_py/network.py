@@ -128,10 +128,10 @@ class EventType(str, Enum):
     SIMULATION_ENDS: str = "SIMULATION_ENDS"
     JOB_SUBMITTED: str = "JOB_SUBMITTED"
     JOB_COMPLETED: str = "JOB_COMPLETED"
+    JOB_STARTED: str = "JOB_STARTED"
     JOB_KILLED: str = "JOB_KILLED"
     REQUESTED_CALL: str = "REQUESTED_CALL"
     NOTIFY: str = "NOTIFY"
-    JOB_STARTED: str = "JOB_STARTED"
     RESOURCE_STATE_CHANGED: str = "RESOURCE_STATE_CHANGED"
     RESOURCE_POWER_STATE_CHANGED: str = "RESOURCE_POWER_STATE_CHANGED"
 
@@ -380,7 +380,8 @@ class RegisterJobRequest(Request):
 
         def __init__(self, id, profile, res, walltime, user, timestamp):
             self.job_id = id
-            self.job = self.__job__(id, profile, res, walltime, user, timestamp)
+            self.job = self.__job__(
+                id, profile, res, walltime, user, timestamp)
 
     def __init__(self, timestamp, id, profile, res, walltime, user):
         data = self.__data__(id, profile, res, walltime, user, timestamp)
