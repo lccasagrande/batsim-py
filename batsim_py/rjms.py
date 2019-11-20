@@ -22,6 +22,8 @@ class RJMSEventType(str, Enum):
 
 class RJMSHandler(SimulatorEventHandler):
     def __init__(self, use_batsim=False):
+        self.use_batsim = use_batsim
+
         if use_batsim:
             super().__init__(BatsimSimulatorHandler())
         else:
@@ -58,7 +60,7 @@ class RJMSHandler(SimulatorEventHandler):
 
     @property
     def is_running(self):
-        return self.simulator.is_running and (not self.submitter_ended or self.nb_running_jobs > 0 or self.nb_allocated_jobs > 0 or self.queue_lenght > 0)
+        return self.simulator.is_running
 
     @property
     def jobs_queue(self):
@@ -109,12 +111,12 @@ class RJMSHandler(SimulatorEventHandler):
             self._job_submitter.start(workload_fn)
 
     def close(self):
-        if self.simulator.is_running:
+        if self.is_running:
             self.simulator.finish()
         self._job_submitter.close()
 
     def proceed_time(self, until=0):
-        assert self.simulator.is_running, "Cannot proceed if there is no simulator running."
+        assert self.is_running, "Cannot proceed if there is no simulator running."
         self.start_ready_jobs()
         if until > 0:
             assert until > self.current_time
@@ -124,7 +126,8 @@ class RJMSHandler(SimulatorEventHandler):
         else:
             self.simulator.proceed_simulation()
 
-        self.check_end_of_simulation()
+        if self.use_batsim:
+            self.check_end_of_simulation()
 
     def check_end_of_simulation(self):
         if self.submitter_ended and self.simulator.is_running and self.nb_allocated_jobs == 0 and self.nb_running_jobs == 0 and self.queue_lenght == 0:
@@ -174,6 +177,8 @@ class RJMSHandler(SimulatorEventHandler):
     def on_notify(self, timestamp, data):
         if data.type == NotifyType.no_more_static_job_to_submit or data.type == NotifyType.registration_finished:
             self.submitter_ended = True
+        elif data.type == NotifyType.no_more_external_event_to_occur:
+            self.close()
 
     def on_resource_power_state_changed(self, timestamp, data):
         resources = self.platform.get_resources(data.resources)

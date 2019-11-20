@@ -41,6 +41,10 @@ class GridSimulatorHandler(SimulatorProtocol):
     def current_time(self):
         return math.floor(self.__current_time)
 
+    @property
+    def no_more_event_to_occur(self):
+        return len(self.__events) == 0 and self.__submitter_ended and len(self.__jobs) == 0
+
     def ack(self):
         pass
 
@@ -49,13 +53,16 @@ class GridSimulatorHandler(SimulatorProtocol):
 
     def proceed_simulation(self):
         assert self.is_running
-        if len(self.__events) == 0 and self.__submitter_ended and len(self.__jobs) == 0:
-            self.finish()
-        elif len(self.__events) > 0:
+        if len(self.__events) > 0:
             self.__current_time = self.__events[0].timestamp
             self._dispatch_events()
         else:
-            raise RuntimeError
+            raise RuntimeError("Deadlock")
+
+        if self.no_more_event_to_occur:
+            self.__events.add(Notify(self.current_time, NotifyType.no_more_external_event_to_occur))
+            self._dispatch_events()
+
 
     def start(self, platform_fn, workload_fn=None, output_fn=None, qos_stretch=None):
         assert not self.is_running
