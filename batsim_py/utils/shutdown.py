@@ -41,27 +41,28 @@ class Timeout(SimulatorEventHandler):
             self._idle_nodes.pop(r.parent_id, None)
 
     def on_requested_call(self, timestamp, data):
-        if self.next_call and timestamp == self.next_call:
+        if self.next_call and int(timestamp) == self.next_call:
             self.next_call = None
 
         for node_id in list(self._idle_nodes.keys()):
             if self.rjms.platform.get_node(node_id).is_idle:
-                time_idle = timestamp - self._idle_nodes[node_id]
+                time_idle = int(timestamp) - self._idle_nodes[node_id]
                 if time_idle == self.idling_time:
                     self.rjms.turn_off(node_id)
-                    del self._idle_nodes[node_id]
-                elif time_idle > self.idling_time:
+                    assert node_id not in self._idle_nodes, "The node must be removed from idle ones"
+                elif int(time_idle) > self.idling_time:
                     raise RuntimeError(
                         "Resource is idle for more time than allowed (idling time)")
             else:
-                del self._idle_nodes[node_id]
+                if node_id in self._idle_nodes:
+                    del self._idle_nodes[node_id]
 
         self.set_callback()
 
     def on_simulation_begins(self, timestamp, data):
         self.next_call = None
         self._idle_nodes = {
-            n.id: timestamp for n in self.rjms.platform.nodes if n.is_idle
+            n.id: int(timestamp) for n in self.rjms.platform.nodes if n.is_idle
         }
         self.set_callback()
 
@@ -73,20 +74,20 @@ class Timeout(SimulatorEventHandler):
     def on_job_completed(self, timestamp, data):
         # Resources are released
         for r in self.rjms.platform.get_resources(data.alloc):
-            self._idle_nodes[r.parent_id] = timestamp
+            self._idle_nodes[r.parent_id] = int(timestamp)
         self.set_callback()
 
     def on_job_killed(self, timestamp, data):
         # Resources are released
         for node in self.rjms.platform.nodes:
             if node.is_idle:
-                self._idle_nodes.setdefault(node.id, timestamp)
+                self._idle_nodes.setdefault(node.id, int(timestamp))
         self.set_callback()
 
     def on_resource_power_state_changed(self, timestamp, data):
         for node in self.rjms.platform.nodes:
             if node.is_idle:
-                self._idle_nodes.setdefault(node.id, timestamp)
+                self._idle_nodes.setdefault(node.id, int(timestamp))
             else:
                 self._idle_nodes.pop(node.id, None)
         self.set_callback()
