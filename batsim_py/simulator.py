@@ -204,6 +204,8 @@ class GridSimulatorHandler(SimulatorProtocol):
             e = ResourcePowerStateChangedEvent(
                 self.current_time + time_to_switch, str(ProcSet(*ids)), pstate)
             self.__events.add(e)
+        
+        self._dispatch_events()
 
     def change_job_state(self, job_id, job_state, kill_reason):
         raise NotImplementedError
@@ -322,7 +324,9 @@ class BatsimSimulatorHandler(SimulatorProtocol):
         self._append_request(request)
 
     def call_me_later(self, at):
-        request = CallMeLaterRequest(self.current_time, math.floor(at) + 0.0009)
+        if at == self.current_time:
+            return
+        request = CallMeLaterRequest(self.current_time, math.floor(at) + 0.009)
         if not any(r.type == request.type and r.timestamp == request.timestamp for r in self.__requests):
             self._append_request(request)
 
