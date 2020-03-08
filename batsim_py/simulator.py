@@ -323,7 +323,8 @@ class BatsimSimulatorHandler(SimulatorProtocol):
 
     def call_me_later(self, at):
         request = CallMeLaterRequest(self.current_time, math.floor(at) + 0.0009)
-        self._append_request(request)
+        if not any(r.type == request.type and r.timestamp == request.timestamp for r in self.__requests):
+            self._append_request(request)
 
     def kill_job(self, job_ids):
         request = KillJobRequest(self.current_time, job_ids)
