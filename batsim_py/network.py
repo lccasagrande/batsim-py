@@ -454,7 +454,7 @@ class NetworkHandler:
     def flush(self, blocking=False):
         assert self.socket, "Connection not open"
         try:
-            self.socket.recv(flags=zmq.NOBLOCK)
+            self.socket.recv()
         except zmq.Again as e:
             pass
 
