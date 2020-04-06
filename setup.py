@@ -3,11 +3,10 @@ from setuptools import setup
 setup(name='batsim_py',
       author='lccasagrande',
       version='0.1',
-      python_requires='>=3.6',
+      python_requires='>=3.7',
       install_requires=[
-              'numpy',
-              'sortedcontainers',
               'zmq',
               'procset',
-              'evalys==4.0.4'
+              'pydispatcher',
+              'evalys'
       ])

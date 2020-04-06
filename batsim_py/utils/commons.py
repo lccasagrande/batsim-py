@@ -2,42 +2,29 @@ import os
 import shutil
 import sys
 import socket
-from xml.dom import minidom
 
 
-def get_free_tcp_address():
-    tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    tcp.bind(("", 0))
-    host, port = tcp.getsockname()
-    tcp.close()
-    return "tcp://127.0.0.1:{}".format(port)
+class Identifier:
+    def __init__(self, id):
+        assert isinstance(id, int) or isinstance(id, str)
+        self.__id = id
 
+    @property
+    def id(self):
+        return self.__id
 
-def get_resources_from_platform(fn):
-    platform = minidom.parse(fn)
-    prop = platform.getElementsByTagName("prop")[0]
-    assert prop.getAttribute("id") == 'cores_per_node'
-    cores_per_node = int(prop.getAttribute("value"))
-    hosts = platform.getElementsByTagName('host')
-    hosts.sort(key=lambda x: x.attributes['id'].value)
-    resources, id = [], 0
-    for r in hosts:
-        if r.getAttribute('id') != 'master_host':
-            properties = {
-                p.getAttribute('id'): p.getAttribute('value') for p in r.getElementsByTagName('prop')
-            }
-            properties['role'] = properties.get('role', '')
-            resource = {
-                'id': id,
-                'name': r.getAttribute('id'),
-                'pstate': r.getAttribute('pstate'),
-                'speed': r.getAttribute('speed'),
-                'properties': properties,
-                'zone_properties': {'cores_per_node': cores_per_node}
-            }
-            resources.append(resource)
-            id += 1
-    return resources
+    def __hash__(self):
+        return hash(self.id)
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.id == other.id
+        elif isinstance(other, int) or isinstance(other, str):
+            return self.id == other
+        return False
 
 
 def overwrite_dir(path):
@@ -52,3 +39,11 @@ def signal_wrapper(call):
         sys.exit(signum)
     assert callable(call)
     return cleanup
+
+
+def get_free_tcp_address():
+    tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp.bind(("", 0))
+    host, port = tcp.getsockname()
+    tcp.close()
+    return "tcp://127.0.0.1:{}".format(port)

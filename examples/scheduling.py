@@ -1,32 +1,33 @@
 import argparse
-
-from batsim_py.utils.schedulers import EASYBackfilling
-from batsim_py.rjms import RJMSHandler
+import batsim_py
 
 
 def run(args):
-    rjms = RJMSHandler(args.use_batsim)
-    scheduler = EASYBackfilling()
+    simulator = batsim_py.SimulatorHandler()
 
-    rjms.start(args.platform, args.workload, args.output_fn)
-    rjms.proceed_time()
-    while rjms.is_running:
-        jobs = scheduler.schedule(rjms.jobs_queue, rjms.get_available_resources(), rjms.get_reserved_time())
-        for j in jobs:
-            rjms.allocate(j.id)
-        rjms.start_ready_jobs()
-        rjms.proceed_time()
+    simulator.start(args.platform, args.workload, args.output_fn)
+    while simulator.is_running:
+        avail_hosts = [h.id for h, _ in simulator.agenda if not h.is_allocated]
+        for job in simulator.queue:
+            if job.res <= len(avail_hosts):
+                simulator.allocate(job.id, avail_hosts[:job.res])
+                del avail_hosts[:job.res]
 
-    rjms.close()
+        simulator.proceed_time()
+
+    simulator.close()
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--use_batsim", action="store_true")
-    parser.add_argument("-w", "--workload", type=str, default='examples/files/workloads/1.json')
-    parser.add_argument("-p", "--platform", type=str, default='examples/files/platform.xml')
-    parser.add_argument("-o", "--output_fn", type=str, default='/tmp/batsim_py/scheduling')
+    parser.add_argument("-w", "--workload", type=str,
+                        default='examples/files/workloads/1.json')
+    parser.add_argument("-p", "--platform", type=str,
+                        default='examples/files/platform.xml')
+    parser.add_argument("-o", "--output_fn", type=str,
+                        default='/tmp/scheduling')
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     run(parse_args())
