@@ -180,7 +180,7 @@ class Job(Identifier):
 
     @property
     def is_finished(self):
-        return (self.start_time and not self.stop_time) or self.__state == JobState.REJECTED
+        return self.stop_time != None
 
     @property
     def start_time(self):
@@ -196,7 +196,10 @@ class Job(Identifier):
 
     @property
     def stretch(self):
-        return self.waiting_time / self.walltime if self.start_time and self.walltime else None
+        if self.walltime:
+            return self.waiting_time / self.walltime if self.waiting_time else None
+        else:
+            return self.waiting_time / self.runtime if self.runtime else None
 
     @property
     def waiting_time(self):
@@ -229,8 +232,10 @@ class Job(Identifier):
         self.__state == JobState.REJECTED
         self.__dispatch(JobEvent.REJECTED)
 
-    def _submit(self):
+    def _submit(self, subtime):
+        assert subtime >= 0
         self.__state = JobState.SUBMITTED
+        self.__subtime = subtime
         self.__dispatch(JobEvent.SUBMITTED)
 
     def _kill(self, current_time):
