@@ -48,11 +48,19 @@ class PowerProfile:
         Raises:
             AssertionError: In case of invalid arguments.
         """
-        self.idle = float(idle)
-        self.full_load = float(full_load)
+        self.__idle = float(idle)
+        self.__full_load = float(full_load)
 
     def __str__(self):
         return "Idle is %i Watts and AllCores is %i Watts" % (self.idle, self.full_load)
+
+    @property
+    def idle(self):
+        return self.__idle
+
+    @property
+    def full_load(self):
+        return self.__full_load
 
 
 class PowerState(Identifier):
@@ -63,16 +71,29 @@ class PowerState(Identifier):
         assert isinstance(power_profile, PowerProfile)
         if pstate_type != PowerStateType.COMPUTATION:
             assert power_profile.idle == power_profile.full_load, "Only computation power states can have different wattages."
+
         super().__init__(int(pstate_id))
-        self.type = pstate_type
-        self.power_profile = power_profile
-        self.speed = float(pstate_speed)
+        self.__type = pstate_type
+        self.__power_profile = power_profile
+        self.__speed = float(pstate_speed)
 
     def __str__(self):
         return "{}.{} ({})".format(self.type.__class__.__name__, str(self.type), self.id)
 
     def __repr__(self):
         return str(self)
+
+    @property
+    def speed(self):
+        return self.__speed
+
+    @property
+    def power_profile(self):
+        return self.__power_profile
+
+    @property
+    def type(self):
+        return self.__type
 
 
 class Host(Identifier):
@@ -242,11 +263,9 @@ class Host(Identifier):
 
     def __set_state(self, new_state):
         assert isinstance(new_state, HostState)
-
         if self.__state != new_state:
+            self.__state = new_state
             self.__dispatch(HostEvent.STATE_CHANGED)
-
-        self.__state = new_state
 
     def __dispatch(self, event_type):
         dispatcher.send(signal=event_type, sender=self)
@@ -283,5 +302,6 @@ class Platform:
     def get_available(self):
         return self.get_all(lambda h: not h.is_allocated)
 
-    def get(self, *host_ids):
+    def get(self, host_ids):
+        host_ids = host_ids if isinstance(host_ids, list) else [host_ids]
         return [self.__hosts[h_id] for h_id in host_ids]
