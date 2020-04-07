@@ -160,7 +160,7 @@ class SimulatorHandler:
 
     def allocate(self, job_id, hosts_id):
         job = next(j for j in self.__jobs if j.id == job_id)
-        hosts = self.__platform.get(*hosts_id)
+        hosts = self.__platform.get(hosts_id)
 
         # Allocate
         for host in hosts:
@@ -186,16 +186,16 @@ class SimulatorHandler:
         request = RejectJobBatsimRequest(self.current_time, job.id)
         self.__batsim_requests.append(request)
 
-    def switch_on(self, *hosts_id):
-        for host in self.__platform.get(*hosts_id):
+    def switch_on(self, hosts_id):
+        for host in self.__platform.get(hosts_id):
             host._switch_on()
             ending_pstate = host.get_default_pstate()
 
             # Sync Batsim
             self.__set_batsim_host_pstate(host.id, ending_pstate.id)
 
-    def switch_off(self, *hosts_id):
-        for host in self.__platform.get(*hosts_id):
+    def switch_off(self, hosts_id):
+        for host in self.__platform.get(hosts_id):
             host._switch_off()
             ending_pstate = host.get_sleep_pstate()
 
@@ -214,7 +214,7 @@ class SimulatorHandler:
             is_ready = True
 
             # Check if all hosts are active and switch on sleeping hosts
-            for host in self.__platform.get(*job.allocation):
+            for host in self.__platform.get(job.allocation):
                 if host.is_sleeping:
                     self.switch_on(host.id)
                     is_ready = False
@@ -282,7 +282,7 @@ class SimulatorHandler:
         self.close()
 
     def __on_batsim_host_state_changed(self, event):
-        for host in self.__platform.get(*event.resources):
+        for host in self.__platform.get(event.resources):
             if host.is_switching_off:
                 host._set_off()
             elif host.is_switching_on:
@@ -301,7 +301,7 @@ class SimulatorHandler:
 
     def __on_batsim_job_submitted(self, event):
         self.__jobs.append(event.job)
-        event.job._submit()
+        event.job._submit(self.current_time)
 
     def __on_batsim_job_completed(self, event):
         i = next(i for i, j in enumerate(self.__jobs) if j.id == event.job_id)
