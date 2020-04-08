@@ -91,7 +91,7 @@ class SimulatorHandler:
     def is_submitter_finished(self):
         return self.__no_more_jobs_to_submit
 
-    def start(self, platform, workload, simulation_time=None):
+    def start(self, platform, workload, verbosity="quiet", simulation_time=None):
         assert not self.is_running, "Simulation is already running"
         self.__platform = get_platform_from_xml(platform)
         self.__jobs = []
@@ -102,8 +102,8 @@ class SimulatorHandler:
         cmd = "batsim -E --forward-profiles-on-submission \
                 --disable-schedule-tracing \
                 --disable-machine-state-tracing"
-        cmd += " -s {} -p {} -w {}".format(
-            self.__network.address, platform, workload)
+        cmd += " -s {} -p {} -w {} -v {}".format(
+            self.__network.address, platform, workload, verbosity)
 
         # There isn't an option to avoid exporting batsim results
         cmd += " -e {}".format(tempfile.gettempdir() + "/batsim")
