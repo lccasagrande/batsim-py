@@ -100,7 +100,7 @@ class Host(Identifier):
     """ A host is the computing resource on which a job can run"""
 
     def __init__(self, id, name, pstates):
-        super().__init__(id)
+        super().__init__(int(id))
         self.__name = str(name)
         self.__pstates = sorted(pstates, key=lambda p: int(p.id))
         self.__state = HostState.IDLE
@@ -225,10 +225,6 @@ class Host(Identifier):
                            signal=JobEvent.STARTED,
                            sender=job)
 
-        dispatcher.connect(self.__release,
-                           signal=JobEvent.COMPLETED,
-                           sender=job)
-
         self.__dispatch(HostEvent.ALLOCATED)
 
     def __start_computing(self, sender):
@@ -236,11 +232,11 @@ class Host(Identifier):
         assert any(
             j.id == sender.id for j in self.__jobs), "A host was not allocated for this job."
 
-        self.__set_state(HostState.COMPUTING)
+        dispatcher.connect(self.__release,
+                           signal=JobEvent.COMPLETED,
+                           sender=sender)
 
-        dispatcher.disconnect(self.__start_computing,
-                              signal=JobEvent.STARTED,
-                              sender=sender)
+        self.__set_state(HostState.COMPUTING)
 
     def __release(self, sender):
         index = next(i for i, j in enumerate(self.__jobs) if j.id == sender.id)
@@ -249,17 +245,14 @@ class Host(Identifier):
         if not self.__jobs:
             self.__set_state(HostState.IDLE)
 
-        dispatcher.disconnect(self.__release,
-                              signal=JobEvent.COMPLETED,
-                              sender=sender)
-
     def __set_pstate(self, new_pstate):
         assert isinstance(new_pstate, PowerState)
 
         if self.__pstate.type == PowerStateType.COMPUTATION and new_pstate.type == PowerStateType.COMPUTATION:
+            self.__pstate = new_pstate
             self.__dispatch(HostEvent.COMPUTATION_POWER_STATE_CHANGED)
-
-        self.__pstate = new_pstate
+        else:
+            self.__pstate = new_pstate
 
     def __set_state(self, new_state):
         assert isinstance(new_state, HostState)
