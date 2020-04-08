@@ -197,29 +197,29 @@ class Job(Identifier):
     @property
     def stretch(self):
         if self.walltime:
-            return self.waiting_time / self.walltime if self.waiting_time else None
+            return self.waiting_time / self.walltime if self.start_time != None else None
         else:
             return self.waiting_time / self.runtime if self.runtime else None
 
     @property
     def waiting_time(self):
-        return self.start_time - self.subtime if self.start_time else None
+        return self.start_time - self.subtime if self.start_time != None else None
 
     @property
     def runtime(self):
-        return self.stop_time - self.start_time if self.stop_time else None
+        return self.stop_time - self.start_time if self.is_finished else None
 
     @property
     def turnaround_time(self):
-        return self.waiting_time + self.runtime if self.stop_time else None
+        return self.waiting_time + self.runtime if self.is_finished else None
 
     @property
     def per_processor_slowdown(self):
-        return max(1, self.turnaround_time / (self.res * self.runtime)) if self.stop_time else None
+        return max(1, self.turnaround_time / (self.res * self.runtime)) if self.is_finished else None
 
     @property
     def slowdown(self):
-        return max(1, self.turnaround_time / self.runtime) if self.stop_time else None
+        return max(1, self.turnaround_time / self.runtime) if self.is_finished else None
 
     def _allocate(self, hosts):
         assert not self.__allocation, "Cannot change job allocation."
@@ -233,29 +233,31 @@ class Job(Identifier):
         self.__dispatch(JobEvent.REJECTED)
 
     def _submit(self, subtime):
+        assert self.state == JobState.UNKNOWN
         assert subtime >= 0
         self.__state = JobState.SUBMITTED
         self.__subtime = subtime
         self.__dispatch(JobEvent.SUBMITTED)
 
     def _kill(self, current_time):
-        assert current_time >= self.start_time
         assert self.is_running, "A job must be running to be able to kill it."
+        assert current_time >= self.start_time
         self.__stop_time = current_time
         self.__state = JobState.COMPLETED_KILLED
         self.__dispatch(JobEvent.KILLED)
 
     def _start(self, current_time):
-        assert self.__state == JobState.ALLOCATED, "A job cannot start without an allocation."
+        assert self.start_time is None, "Job already started."
+        assert self.state == JobState.ALLOCATED, "A job cannot start without an allocation."
         assert current_time >= self.__subtime
         self.__start_time = current_time
         self.__state = JobState.RUNNING
         self.__dispatch(JobEvent.STARTED)
 
     def _terminate(self, current_time, state):
+        assert self.is_running, "A job must be running to be able to terminate."
         assert state == JobState.COMPLETED_SUCCESSFULLY or state == JobState.COMPLETED_FAILED or state == JobState.COMPLETED_WALLTIME_REACHED
         assert current_time >= self.start_time
-        assert self.is_running, "A job must be running to be able to terminate."
         self.__stop_time = current_time
         self.__state = state
         self.__dispatch(JobEvent.COMPLETED)
@@ -263,3 +265,7 @@ class Job(Identifier):
     def __dispatch(self, event_type):
         assert isinstance(event_type, JobEvent)
         dispatcher.send(signal=event_type, sender=self)
+        listeners = list(dispatcher.liveReceivers(
+            dispatcher.getReceivers(self, event_type)))
+        for r in list(listeners):
+            dispatcher.disconnect(r, signal=event_type, sender=self)
