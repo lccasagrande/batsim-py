@@ -3,6 +3,7 @@ import atexit
 import subprocess
 import os
 import math
+import tempfile
 from shutil import which
 from collections import defaultdict
 
@@ -13,7 +14,6 @@ from .events import JobEvent
 from .events import HostEvent
 from .events import SimulatorEvent
 from .utils.commons import get_free_tcp_address
-from .utils.commons import signal_wrapper
 from .protocol import get_platform_from_xml
 from .protocol import NetworkHandler
 from .protocol import BatsimMessage
@@ -61,7 +61,7 @@ class SimulatorHandler:
         }
 
         atexit.register(self.__close_simulator)
-        signal.signal(signal.SIGTERM, signal_wrapper(self.__close_simulator))
+        signal.signal(signal.SIGTERM, self.__on_sigterm)
 
     @property
     def jobs(self):
@@ -91,7 +91,7 @@ class SimulatorHandler:
     def is_submitter_finished(self):
         return self.__no_more_jobs_to_submit
 
-    def start(self, platform, workload, output_fn=None, simulation_time=None):
+    def start(self, platform, workload, simulation_time=None):
         assert not self.is_running, "Simulation is already running"
         self.__platform = get_platform_from_xml(platform)
         self.__jobs = []
@@ -99,10 +99,14 @@ class SimulatorHandler:
         self.__simulation_time = simulation_time
         self.__no_more_jobs_to_submit = False
 
-        cmd = "batsim -E --forward-profiles-on-submission"
+        cmd = "batsim -E --forward-profiles-on-submission \
+                --disable-schedule-tracing \
+                --disable-machine-state-tracing"
         cmd += " -s {} -p {} -w {}".format(
             self.__network.address, platform, workload)
-        cmd += " -e {}".format(output_fn) if output_fn else ""
+
+        # There isn't an option to avoid exporting batsim results
+        cmd += " -e {}".format(tempfile.gettempdir() + "/batsim")
 
         self.__simulator = subprocess.Popen(
             cmd.split(), stdout=subprocess.PIPE, shell=False)
@@ -121,10 +125,11 @@ class SimulatorHandler:
         dispatcher.send(signal=SimulatorEvent.SIMULATION_BEGINS, sender=self)
 
     def close(self):
+        if not self.is_running:
+            return
         self.__close_simulator()
         self.__network.close()
         self.__simulation_time = None
-        self.__platform = None
         self.__batsim_requests.clear()
         self.__job_profiles.clear()
         self.__callbacks.clear()
@@ -152,13 +157,15 @@ class SimulatorHandler:
             self.__start_runnable_jobs()
 
     def set_callback(self, at, call):
-        assert self.is_running, "The simulation must be running to setup a callback"
+        assert self.is_running, "Simulation is not running."
         assert at > self.current_time
         assert callable(call), "The call argument must be callable."
         self.__callbacks[at].append(call)
         self.__set_batsim_call_me_later(at)
 
     def allocate(self, job_id, hosts_id):
+        assert self.is_running, "Simulation is not running."
+
         job = next(j for j in self.__jobs if j.id == job_id)
         hosts = self.__platform.get(hosts_id)
 
@@ -171,6 +178,8 @@ class SimulatorHandler:
         self.__start_runnable_jobs()
 
     def kill_job(self, job_id):
+        assert self.is_running, "Simulation is not running."
+
         index = next(i for i, j in enumerate(self.__jobs) if j.id == job_id)
         del self.__jobs[index]
 
@@ -179,6 +188,8 @@ class SimulatorHandler:
         self.__batsim_requests.append(request)
 
     def reject_job(self, job_id):
+        assert self.is_running, "Simulation is not running."
+
         index = next(i for i, j in enumerate(self.__jobs) if j.id == job_id)
         del self.__jobs[index]
 
@@ -187,6 +198,8 @@ class SimulatorHandler:
         self.__batsim_requests.append(request)
 
     def switch_on(self, hosts_id):
+        assert self.is_running, "Simulation is not running."
+
         for host in self.__platform.get(hosts_id):
             host._switch_on()
             ending_pstate = host.get_default_pstate()
@@ -195,6 +208,8 @@ class SimulatorHandler:
             self.__set_batsim_host_pstate(host.id, ending_pstate.id)
 
     def switch_off(self, hosts_id):
+        assert self.is_running, "Simulation is not running."
+
         for host in self.__platform.get(hosts_id):
             host._switch_off()
             ending_pstate = host.get_sleep_pstate()
@@ -203,6 +218,8 @@ class SimulatorHandler:
             self.__set_batsim_host_pstate(host.id, ending_pstate.id)
 
     def switch_power_state(self, host_id, pstate_id):
+        assert self.is_running, "Simulation is not running."
+
         host = self.__platform.get(host_id)
         host._set_computation_pstate(pstate_id)
 
@@ -311,3 +328,7 @@ class SimulatorHandler:
 
     def __on_batsim_no_more_jobs_to_submit(self, event):
         self.__no_more_jobs_to_submit = True
+
+    def __on_sigterm(self, signum, frame):
+        self.__close_simulator()
+        sys.exit(signum)
