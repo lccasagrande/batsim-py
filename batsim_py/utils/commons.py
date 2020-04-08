@@ -1,6 +1,3 @@
-import os
-import shutil
-import sys
 import socket
 
 
@@ -25,21 +22,6 @@ class Identifier:
         elif isinstance(other, int) or isinstance(other, str):
             return self.id == other
         return False
-
-
-def overwrite_dir(path):
-    if os.path.exists(path):
-        shutil.rmtree(path)
-    os.makedirs(path)
-
-
-def signal_wrapper(call):
-    def cleanup(signum, frame):
-        call()
-        sys.exit(signum)
-    assert callable(call)
-    return cleanup
-
 
 def get_free_tcp_address():
     tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
