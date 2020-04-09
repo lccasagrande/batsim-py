@@ -147,9 +147,6 @@ class SimulatorHandler:
             next_time = int(time) + self.current_time
             self.set_callback(next_time, unflag)
 
-        if self.is_submitter_finished and not self.__batsim_requests:
-            raise RuntimeError("Deadlock: There is nothing to execute.")
-
         self.__goto_next_batsim_event()
         self.__start_runnable_jobs()
         while self.is_running and self.__wait_callback:
