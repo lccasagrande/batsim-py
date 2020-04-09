@@ -36,8 +36,6 @@ if which('batsim') is None:
 
 
 class SimulatorHandler:
-    OFFSET = 0.99
-
     def __init__(self, tcp_address=None):
         self.__network = NetworkHandler(tcp_address or get_free_tcp_address())
         self.__current_time = 0.
@@ -112,15 +110,10 @@ class SimulatorHandler:
             cmd.split(), stdout=subprocess.PIPE, shell=False)
 
         self.__network.bind()
-        self.__read_batsim_events()
+        self.__handle_batsim_events()
 
         if self.__simulation_time:
             self.__set_batsim_call_me_later(self.__simulation_time)
-
-        # We use the offset value to get all events from time 0 to OFFSET.
-        self.__set_batsim_call_me_later(self.OFFSET)
-        while self.is_running and self.__current_time < self.OFFSET:
-            self.__goto_next_batsim_event()
 
         dispatcher.send(signal=SimulatorEvent.SIMULATION_BEGINS, sender=self)
 
@@ -135,24 +128,28 @@ class SimulatorHandler:
         self.__callbacks.clear()
         dispatcher.send(signal=SimulatorEvent.SIMULATION_ENDS, sender=self)
 
-    def proceed_time(self, time=0):
-        assert time >= 0
+    def proceed_time(self, time=None):
+        def unflag(_):
+            self.__wait_callback = False
+
+        assert not time or time > 0
         assert self.is_running, "Simulation is not running."
 
-        if time == 0:
+        if not time:
             # Go to the next event.
-            next_decision_time = self.current_time
+            self.__wait_callback = False
         elif not self.__simulation_time and self.is_submitter_finished and not self.__jobs:
             # There are no more actions to do. Go to the next event.
-            next_decision_time = self.current_time
+            self.__wait_callback = False
         else:
             # Setup a call me later request and force it to be the last event
-            next_decision_time = int(time) + self.current_time + self.OFFSET
-            self.__set_batsim_call_me_later(next_decision_time)
+            self.__wait_callback = True
+            next_time = int(time) + self.current_time
+            self.set_callback(next_time, unflag)
 
         self.__goto_next_batsim_event()
         self.__start_runnable_jobs()
-        while self.is_running and self.__current_time < next_decision_time:
+        while self.is_running and self.__wait_callback:
             self.__goto_next_batsim_event()
             self.__start_runnable_jobs()
 
@@ -247,7 +244,8 @@ class SimulatorHandler:
                 self.__batsim_requests.append(request)
 
     def __goto_next_batsim_event(self):
-        self.__send_and_read_batsim_events()
+        self.__send_requests()
+        self.__handle_batsim_events()
         if self.__simulation_time and self.current_time >= self.__simulation_time:
             self.close()
 
@@ -273,7 +271,7 @@ class SimulatorHandler:
             self.__batsim_requests.append(SetResourceStateBatsimRequest(
                 self.current_time, [host_id], pstate_id))
 
-    def __read_batsim_events(self):
+    def __handle_batsim_events(self):
         msg = self.__network.recv()
         for event in msg.events:
             self.__current_time = event.timestamp
@@ -283,18 +281,14 @@ class SimulatorHandler:
         self.__current_time = msg.now
 
     def __send_requests(self):
-        msg = BatsimMessage(self.__current_time,
-                            sorted(self.__batsim_requests, key=lambda r: r.timestamp))
+        msg = BatsimMessage(self.current_time, self.__batsim_requests)
         self.__batsim_requests.clear()
         self.__network.send(msg)
 
-    def __send_and_read_batsim_events(self):
-        self.__send_requests()
-        return self.__read_batsim_events()
-
     def __on_batsim_simulation_ends(self, event):
         if self.__simulator:
-            self.__network.send(BatsimMessage(self.current_time, []))  # ack
+            ack = BatsimMessage(self.current_time, [])
+            self.__network.send(ack)
             self.__simulator.wait(5)
         self.close()
 

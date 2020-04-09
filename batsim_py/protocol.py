@@ -178,9 +178,10 @@ class BatsimNotifyType(Enum):
 
 
 class BatsimMessage():
-    def __init__(self, now, events):
-        self.now = now
-        self.events = events
+    def __init__(self, now, batsim_events):
+        self.now = float(now)
+        # Events timestamps must be in (non-strictly) ascending order.
+        self.events = sorted(batsim_events, key=lambda e: e.timestamp)
 
     def to_json(self):
         jsn = {
