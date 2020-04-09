@@ -83,7 +83,7 @@ class SimulatorHandler:
 
     @property
     def current_time(self):
-        return math.floor(self.__current_time)
+        return float(f"{self.__current_time:.1f}")
 
     @property
     def is_submitter_finished(self):
