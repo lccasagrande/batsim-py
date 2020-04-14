@@ -10,7 +10,6 @@ from procset import ProcSet
 from .jobs import Job
 from .jobs import JobState
 from .jobs import JobProfile
-from .jobs import JobProfileType
 from .jobs import DelayJobProfile
 from .jobs import ParallelJobProfile
 from .jobs import ParallelHomogeneousJobProfile
@@ -283,14 +282,13 @@ class JobSubmittedBatsimEvent(BatsimEvent):
 
     @staticmethod
     def get_profile(name, data):
-        profile_type = JobProfileType[data['type'].upper()]
-        if profile_type == JobProfileType.DELAY:
+        if data['type'] == "delay":
             return DelayJobProfile(name, data['delay'])
-        elif profile_type == JobProfileType.PARALLEL:
+        elif data['type'] == "parallel":
             return ParallelJobProfile(name, data['cpu'], data['com'])
-        elif profile_type == JobProfileType.PARALLEL_HOMOGENEOUS:
+        elif data['type'] == "parallel_homogeneous":
             return ParallelHomogeneousJobProfile(name, data['cpu'], data['com'])
-        elif profile_type == JobProfileType.PARALLEL_HOMOGENEOUS_TOTAL:
+        elif data['type'] == "parallel_homogeneous_total":
             return ParallelHomogeneousTotalJobProfile(name, data['cpu'], data['com'])
         else:
             raise NotImplementedError
