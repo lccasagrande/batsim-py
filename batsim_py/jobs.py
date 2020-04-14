@@ -407,7 +407,7 @@ class Job(Identifier):
         self.__start_time: Optional[float] = None  # will be set on start
         self.__stop_time: Optional[float] = None  # will be set on terminate
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Job_%s" % self.id
 
     @property
@@ -541,7 +541,7 @@ class Job(Identifier):
         else:
             return max(1., self.turnaround_time / self.runtime)
 
-    def _allocate(self, hosts: Sequence[Union[int, str]]):
+    def _allocate(self, hosts: Sequence[Union[int, str]]) -> None:
         """ Allocate hosts for the job. 
 
         This is an internal method to be used by the simulator only.
@@ -567,7 +567,7 @@ class Job(Identifier):
         self.__state = JobState.ALLOCATED
         self.__dispatch(JobEvent.ALLOCATED)
 
-    def _reject(self):
+    def _reject(self) -> None:
         """ Reject the job. 
 
         This is an internal method to be used by the simulator only.
@@ -578,7 +578,7 @@ class Job(Identifier):
         self.__state == JobState.REJECTED
         self.__dispatch(JobEvent.REJECTED)
 
-    def _submit(self, subtime: Union[int, float]):
+    def _submit(self, subtime: Union[int, float]) -> None:
         """ Submit the job. 
 
         This is an internal method to be used by the simulator only.
@@ -604,7 +604,7 @@ class Job(Identifier):
         self.__subtime = float(subtime)
         self.__dispatch(JobEvent.SUBMITTED)
 
-    def _kill(self, current_time: Union[int, float]):
+    def _kill(self, current_time: Union[int, float]) -> None:
         """ Kill the job. 
 
         This is an internal method to be used by the simulator only.
@@ -631,7 +631,7 @@ class Job(Identifier):
         self.__state = JobState.COMPLETED_KILLED
         self.__dispatch(JobEvent.KILLED)
 
-    def _start(self, current_time: Union[int, float]):
+    def _start(self, current_time: Union[int, float]) -> None:
         """ Start the job. 
 
         This is an internal method to be used by the simulator only.
@@ -663,7 +663,7 @@ class Job(Identifier):
         self.__state = JobState.RUNNING
         self.__dispatch(JobEvent.STARTED)
 
-    def _terminate(self, current_time: Union[int, float], state: JobState):
+    def _terminate(self, current_time: Union[int, float], state: JobState) -> None:
         """ Terminate the job. 
 
         This is an internal method to be used by the simulator only.
@@ -698,7 +698,7 @@ class Job(Identifier):
         self.__state = state
         self.__dispatch(JobEvent.COMPLETED)
 
-    def __dispatch(self, event_type: JobEvent):
+    def __dispatch(self, event_type: JobEvent) -> None:
         """ Dispatch job events and cleanup unnecessary connections. 
 
 
