@@ -10,23 +10,6 @@ from .events import JobEvent
 from .utils.commons import Identifier
 
 
-class JobProfileType(Enum):
-    """ Batsim Job Profile Type
-
-        This class enumerates the distinct profiles a job can simulate.
-    """
-    DELAY = 0
-    PARALLEL = 1
-    PARALLEL_HOMOGENEOUS = 2
-    PARALLEL_HOMOGENEOUS_TOTAL = 3
-    COMPOSED = 4
-    PARALLEL_HOMOGENEOUS_PFS = 5
-    DATA_STAGING = 6
-
-    def __str__(self) -> str:
-        return self.name
-
-
 class JobState(Enum):
     """ Batsim Job State
 
@@ -54,28 +37,15 @@ class JobProfile(ABC):
 
     Args:
         name: The profile name. Must be unique within a workload.
-        profile_type: The job profile type.
-    Raises:
-        TypeError: In case of invalid arguments.
     """
 
-    def __init__(self, name: str, profile_type: JobProfileType) -> None:
-        if not isinstance(profile_type, JobProfileType):
-            raise TypeError('Expected `profile_type` argument to be an instance'
-                            'of `JobProfileType`, got {}'.format(profile_type))
-
+    def __init__(self, name: str) -> None:
         self.__name = str(name)
-        self.__type = profile_type
 
     @property
     def name(self) -> str:
         """The profile's name. """
         return self.__name
-
-    @property
-    def type(self) -> JobProfileType:
-        """The profile's type. """
-        return self.__type
 
 
 class DelayJobProfile(JobProfile):
@@ -86,8 +56,6 @@ class DelayJobProfile(JobProfile):
     Args:
         name: The profile name. Must be unique within a workload.
         delay: The seconds to sleep.
-    Raises:
-        TypeError: In case of invalid arguments.
 
     Examples:
         A job that will sleep for 100 seconds.
@@ -96,7 +64,7 @@ class DelayJobProfile(JobProfile):
     """
 
     def __init__(self, name: str, delay: Union[int, float]) -> None:
-        super().__init__(name, JobProfileType.DELAY)
+        super().__init__(name)
         self.__delay = float(delay)
 
     @property
@@ -118,7 +86,6 @@ class ParallelJobProfile(JobProfile):
         com: A list [host x host] that defines the amount of bytes 
             to be transferred between allocated hosts.
     Raises:
-        TypeError: In case of invalid arguments.
         ValueError: In case of `com` argument invalid size.
 
     Examples:
@@ -135,12 +102,15 @@ class ParallelJobProfile(JobProfile):
         >>> profile = ParallelJobProfile(name="parallel", cpu=[2e6, 0], com=[0, 5e6, 10e6, 0])
     """
 
-    def __init__(self, name: str, cpu: Sequence[Union[int, float]], com: Sequence[Union[int, float]]) -> None:
+    def __init__(self,
+                 name: str,
+                 cpu: Sequence[Union[int, float]],
+                 com: Sequence[Union[int, float]]) -> None:
         if len(com) != len(cpu) * len(cpu):
             raise ValueError('Expected `com` argument to be a '
                              'list of size [host x host], got {}'.format(com))
 
-        super().__init__(name, JobProfileType.PARALLEL)
+        super().__init__(name)
         self.__cpu = list(cpu)
         self.__com = list(com)
 
@@ -165,15 +135,16 @@ class ParallelHomogeneousJobProfile(JobProfile):
         name: The profile name. Must be unique within a workload.
         cpu: The amount of flop/s to be computed on each allocated host.
         com: The amount of bytes to send and receive between each pair of hosts.
-    Raises:
-        TypeError: In case of invalid arguments.
 
     Examples:
         >>> profile = ParallelHomogeneousJobProfile("name", cpu=10e6, com=5e6)
     """
 
-    def __init__(self, name: str, cpu: Union[int, float], com: Union[int, float]) -> None:
-        super().__init__(name, JobProfileType.PARALLEL_HOMOGENEOUS)
+    def __init__(self,
+                 name: str,
+                 cpu: Union[int, float],
+                 com: Union[int, float]) -> None:
+        super().__init__(name)
         self.__cpu = float(cpu)
         self.__com = float(com)
 
@@ -200,15 +171,15 @@ class ParallelHomogeneousTotalJobProfile(JobProfile):
         com: The total amount of bytes to be sent and received on each
             pair of hosts.
 
-    Raises:
-        TypeError: In case of invalid arguments.
-
     Examples:
         >>> profile = ParallelHomogeneousTotalJobProfile("name", cpu=10e6, com=5e6)
     """
 
-    def __init__(self, name: str, cpu:  Union[int, float], com:  Union[int, float]) -> None:
-        super().__init__(name, JobProfileType.PARALLEL_HOMOGENEOUS_TOTAL)
+    def __init__(self,
+                 name: str,
+                 cpu:  Union[int, float],
+                 com:  Union[int, float]) -> None:
+        super().__init__(name)
         self.__cpu = float(cpu)
         self.__com = float(com)
 
@@ -243,8 +214,10 @@ class ComposedJobProfile(JobProfile):
         >>> composed = ComposedJobProfile("composed", profiles=[profile_1, profile_2], repeat=2)
     """
 
-    def __init__(self, name: str, profiles: Sequence[JobProfile], repeat: int = 1) -> None:
-        super().__init__(name, JobProfileType.COMPOSED)
+    def __init__(self,
+                 name: str,
+                 profiles: Sequence[JobProfile],
+                 repeat: int = 1) -> None:
         if repeat <= 0:
             raise ValueError('Expected `repeat` argument to be greater'
                              'than 0, got {}'.format(repeat))
@@ -252,6 +225,7 @@ class ComposedJobProfile(JobProfile):
             raise TypeError('Expected `profiles` argument to be a '
                             'sequence of `JobProfile`, got {}'.format(profiles))
 
+        super().__init__(name)
         self.__repeat = int(repeat)
         self.__profiles = list(profiles)
 
@@ -279,7 +253,6 @@ class ParallelHomogeneousPFSJobProfile(JobProfile):
         storage: The storage resource label.
 
     Raises:
-        TypeError: In case of invalid arguments.
         ValueError: In case of `bytes_to_read` and `bytes_to_write` arguments
             are not greater than or equal to zero and `storage` argument is 
             not a valid string.
@@ -293,8 +266,6 @@ class ParallelHomogeneousPFSJobProfile(JobProfile):
                  bytes_to_read: Union[int, float],
                  bytes_to_write: Union[int, float],
                  storage: str = 'pfs') -> None:
-        super().__init__(name, JobProfileType.PARALLEL_HOMOGENEOUS_PFS)
-
         if bytes_to_read < 0:
             raise ValueError('Expected `bytes_to_read` argument to be '
                              'a positive number, got {}'.format(bytes_to_read))
@@ -305,6 +276,7 @@ class ParallelHomogeneousPFSJobProfile(JobProfile):
             raise ValueError('Expected `storage` argument to be a '
                              'valid string, got {}'.format(storage))
 
+        super().__init__(name)
         self.__bytes_to_read = float(bytes_to_read)
         self.__bytes_to_write = float(bytes_to_write)
         self.__storage = str(storage)
@@ -338,7 +310,6 @@ class DataStagingJobProfile(JobProfile):
         dest: The receiving storage label (destination).
 
     Raises:
-        TypeError: In case of invalid arguments.
         ValueError: In case of `nb_bytes` argument is not greater than or equal 
             to zero and `src` and `dest` arguments are not valid strings.
 
@@ -346,8 +317,11 @@ class DataStagingJobProfile(JobProfile):
         >>> data = DataStagingJobProfile("data", nb_bytes=10e6, src="pfs", dest="nfs")
     """
 
-    def __init__(self, name: str, nb_bytes: Union[int, float], src: str, dest: str) -> None:
-        super().__init__(name, JobProfileType.DATA_STAGING)
+    def __init__(self,
+                 name: str,
+                 nb_bytes: Union[int, float],
+                 src: str,
+                 dest: str) -> None:
 
         if nb_bytes < 0:
             raise ValueError('Expected `nb_bytes` argument to be a '
@@ -360,6 +334,7 @@ class DataStagingJobProfile(JobProfile):
             raise ValueError('Expected `dest` argument to be a '
                              'valid string, got {}'.format(dest))
 
+        super().__init__(name)
         self.__nb_bytes = float(nb_bytes)
         self.__src = str(src)
         self.__dest = str(dest)
