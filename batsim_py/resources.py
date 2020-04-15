@@ -629,15 +629,21 @@ class Platform:
         """
         return self.get_all(lambda h: not h.is_allocated)
 
-    def get(self, host_ids: List[int]) -> Sequence[Host]:
-        """ Get hosts by id. 
+    def get(self, host_id: int) -> Host:
+        """ Get host by id. 
 
         Args:
-            host_ids: A sequence of host ids.
+            host_id: The host id.
 
         Returns:
-            The hosts with the corresponding ids.
+            The host with the corresponding id.
+
+        Raises:
+            LookupError: In case of host could not be found.
         """
-        ids = [host_ids] if not isinstance(host_ids, list) else host_ids
-        hosts = [self.__hosts[h_id] for h_id in ids]
-        return hosts
+        host = self.__hosts.get(host_id, None)
+        if not host:
+            raise LookupError('Host with id {} was not found in '
+                              'the platform.'.format(host_id))
+
+        return host

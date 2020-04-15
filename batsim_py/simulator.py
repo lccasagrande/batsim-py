@@ -162,12 +162,11 @@ class SimulatorHandler:
 
     def allocate(self, job_id, hosts_id):
         assert self.is_running, "Simulation is not running."
-
         job = next(j for j in self.__jobs if j.id == job_id)
-        hosts = self.__platform.get(hosts_id)
 
         # Allocate
-        for host in hosts:
+        for h_id in hosts_id:
+            host = self.__platform.get(h_id)
             host._allocate(job)
         job._allocate(hosts_id)
 
@@ -197,7 +196,8 @@ class SimulatorHandler:
     def switch_on(self, hosts_id):
         assert self.is_running, "Simulation is not running."
 
-        for host in self.__platform.get(hosts_id):
+        for h_id in hosts_id:
+            host = self.__platform.get(h_id)
             host._switch_on()
             ending_pstate = host.get_default_pstate()
 
@@ -207,7 +207,8 @@ class SimulatorHandler:
     def switch_off(self, hosts_id):
         assert self.is_running, "Simulation is not running."
 
-        for host in self.__platform.get(hosts_id):
+        for h_id in hosts_id:
+            host = self.__platform.get(h_id)
             host._switch_off()
             ending_pstate = host.get_sleep_pstate()
 
@@ -228,9 +229,10 @@ class SimulatorHandler:
             is_ready = True
 
             # Check if all hosts are active and switch on sleeping hosts
-            for host in self.__platform.get(job.allocation):
+            for h_id in job.allocation:
+                host = self.__platform.get(h_id)
                 if host.is_sleeping:
-                    self.switch_on(host.id)
+                    self.switch_on([host.id])
                     is_ready = False
                 elif host.is_switching_on or host.is_switching_off:
                     is_ready = False
@@ -293,7 +295,8 @@ class SimulatorHandler:
         self.close()
 
     def __on_batsim_host_state_changed(self, event):
-        for host in self.__platform.get(event.resources):
+        for h_id in event.resources:
+            host = self.__platform.get(h_id)
             if host.is_switching_off:
                 host._set_off()
             elif host.is_switching_on:
