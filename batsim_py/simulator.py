@@ -301,10 +301,10 @@ class SimulatorHandler:
                 host._set_off()
             elif host.is_switching_on:
                 host._set_on()
-            elif (host.is_idle or host.is_computing) and host.pstate.type != event.state.type:
+            elif (host.is_idle or host.is_computing) and host.pstate.id != event.state:
                 host._set_computation_pstate(int(event.state))
 
-            assert host.pstate.type == event.state
+            assert host.pstate.id == event.state
         self.__start_runnable_jobs()
 
     def __on_batsim_requested_call(self, event):
