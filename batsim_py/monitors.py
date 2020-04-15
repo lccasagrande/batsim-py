@@ -1,44 +1,72 @@
 
-import time as tm
-from abc import abstractmethod, ABC
-from copy import copy
-from collections import defaultdict
+from abc import ABC, abstractmethod
 from itertools import groupby
+import time as tm
 
 import pandas as pd
 from procset import ProcSet
 from pydispatch import dispatcher
 
-from .jobs import JobState
-from .resources import HostState
-from .resources import PowerStateType
 from .events import SimulatorEvent
 from .events import HostEvent
 from .events import JobEvent
+from .jobs import JobState
+from .jobs import Job
+from .resources import HostState
+from .resources import Host
+from .resources import PowerStateType
+from .simulator import SimulatorHandler
 
 
 class Monitor(ABC):
-    def __init__(self, simulator):
-        self.__simulator = simulator
+    """ Simulation Monitor base class.
 
-    @property
-    def simulator(self):
-        return self.__simulator
+    Args:
+        simulator: the simulator handler.
+
+    Raises:
+        TypeError: In case of invalid arguments.
+    """
+
+    def __init__(self, simulator: SimulatorHandler) -> None:
+        if not isinstance(simulator, SimulatorHandler):
+            raise TypeError('Expected `simulator` argument to be an '
+                            'instance of `SimulatorHandler`, '
+                            'got {}.'.format(simulator))
+
+        self._simulator = simulator
 
     @property
     @abstractmethod
-    def info(self):
+    def info(self) -> dict:
+        """ Get monitor info about the simulation. 
+
+        Returns:
+            A dict with all the information collected.
+        """
         raise NotImplementedError
 
     @abstractmethod
-    def to_csv(self, fn):
+    def to_csv(self, fn: str) -> None:
+        """ Dump info to a csv file. """
         raise NotImplementedError
 
 
 class JobMonitor(Monitor):
-    def __init__(self, simulator):
+    """ Simulation Job Monitor class.
+
+    This monitor collects statistics from each job submitted to the system.
+
+    Args:
+        simulator: the simulator handler.
+
+    Raises:
+        TypeError: In case of invalid arguments.
+    """
+
+    def __init__(self, simulator: SimulatorHandler) -> None:
         super().__init__(simulator)
-        self.__info = {
+        self.__info: dict = {
             'job_id': [],
             'workload_name': [],
             'profile': [],
@@ -60,7 +88,7 @@ class JobMonitor(Monitor):
         dispatcher.connect(
             self.__on_simulation_begins,
             signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self.simulator
+            sender=self._simulator
         )
 
         dispatcher.connect(
@@ -82,16 +110,23 @@ class JobMonitor(Monitor):
         )
 
     @property
-    def info(self):
+    def info(self) -> dict:
+        """ Get monitor info about the simulation. 
+
+        Returns:
+            A dict with all the information collected.
+        """
         return self.__info
 
-    def to_csv(self, fn):
+    def to_csv(self, fn: str) -> None:
+        """ Dump info to a csv file. """
         pd.DataFrame.from_dict(self.__info).to_csv(fn, index=False)
 
-    def __on_simulation_begins(self, sender):
+    def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         self.__info = {k: [] for k in self.__info.keys()}
 
-    def __update_info(self, sender):
+    def __update_info(self, sender: Job) -> None:
+        """ Record job statistics. """
         self.__info['job_id'].append(sender.id)
         self.__info['workload_name'].append(sender.workload)
         self.__info['profile'].append(sender.profile.name)
@@ -113,9 +148,20 @@ class JobMonitor(Monitor):
 
 
 class SchedulerMonitor(Monitor):
-    def __init__(self, simulator):
+    """ Simulation Scheduler Monitor class.
+
+    This monitor collects statistics about the scheduler performance.
+
+    Args:
+        simulator: the simulator handler.
+
+    Raises:
+        TypeError: In case of invalid arguments.
+    """
+
+    def __init__(self, simulator: SimulatorHandler) -> None:
         super().__init__(simulator)
-        self.__info = {
+        self.__info: dict = {
             'makespan': 0,
             'max_slowdown': 0,
             'max_stretch': 0,
@@ -136,13 +182,13 @@ class SchedulerMonitor(Monitor):
         dispatcher.connect(
             self.__on_simulation_begins,
             signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self.simulator
+            sender=self._simulator
         )
 
         dispatcher.connect(
             self.__on_simulation_ends,
             signal=SimulatorEvent.SIMULATION_ENDS,
-            sender=self.simulator
+            sender=self._simulator
         )
 
         dispatcher.connect(
@@ -170,17 +216,25 @@ class SchedulerMonitor(Monitor):
         )
 
     @property
-    def info(self):
+    def info(self) -> dict:
+        """ Get monitor info about the simulation. 
+
+        Returns:
+            A dict with all the information collected.
+        """
         return self.__info
 
-    def to_csv(self, fn):
+    def to_csv(self, fn: str) -> None:
+        """ Dump info to a csv file. """
         pd.DataFrame.from_dict(
-            self.__info, orient='index').T.to_csv(fn, index=False)
+            self.__info,
+            orient='index').T.to_csv(fn, index=False)
 
-    def __on_simulation_begins(self, sender):
+    def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         self.__info = {k: 0 for k in self.__info.keys()}
 
-    def __on_simulation_ends(self, sender):
+    def __on_simulation_ends(self, sender: SimulatorHandler) -> None:
+        """ Compute the average. """
         self.__info['makespan'] = sender.current_time
         nb_finished = max(1, self.__info['nb_jobs_finished'])
         self.__info['mean_waiting_time'] /= nb_finished
@@ -189,17 +243,18 @@ class SchedulerMonitor(Monitor):
         self.__info['mean_stretch'] /= nb_finished
         self.__info['mean_turnaround_time'] /= nb_finished
 
-    def __on_job_submitted(self, sender):
+    def __on_job_submitted(self, sender: Job) -> None:
         self.__info['nb_jobs'] += 1
 
-    def __on_job_rejected(self, sender):
+    def __on_job_rejected(self, sender: Job) -> None:
         self.__info['nb_jobs_rejected'] += 1
 
-    def __on_job_completed(self, sender):
+    def __on_job_completed(self, sender: Job) -> None:
+        """ Get job statistics. """
         if not sender.is_finished:
             return
 
-        self.__info['makespan'] = self.simulator.current_time
+        self.__info['makespan'] = self._simulator.current_time
         self.__info['mean_slowdown'] += sender.slowdown
         self.__info['mean_pp_slowdown'] += sender.per_processor_slowdown
         self.__info['mean_stretch'] += sender.stretch
@@ -223,10 +278,23 @@ class SchedulerMonitor(Monitor):
 
 
 class HostMonitor(Monitor):
-    def __init__(self, simulator):
+    """ Simulation Host Monitor class.
+
+    This monitor collects statistics about the time each host spent on each 
+    of its possible states. Moreover, it computes the total energy consumed
+    and the total number of state switches.
+
+    Args:
+        simulator: the simulator handler.
+
+    Raises:
+        TypeError: In case of invalid arguments.
+    """
+
+    def __init__(self, simulator: SimulatorHandler) -> None:
         super().__init__(simulator)
-        self.__last_host_state = None
-        self.__info = {
+        self.__last_host_state: dict = {}
+        self.__info: dict = {
             'time_idle':  0,
             'time_computing':  0,
             'time_switching_off':  0,
@@ -241,12 +309,12 @@ class HostMonitor(Monitor):
         dispatcher.connect(
             self.__on_simulation_begins,
             signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self.simulator
+            sender=self._simulator
         )
         dispatcher.connect(
             self.__on_simulation_ends,
             signal=SimulatorEvent.SIMULATION_ENDS,
-            sender=self.simulator
+            sender=self._simulator
         )
 
         dispatcher.connect(
@@ -260,35 +328,41 @@ class HostMonitor(Monitor):
             sender=dispatcher.Any
         )
 
-    def to_csv(self, fn):
+    @property
+    def info(self) -> dict:
+        """ Get monitor info about the simulation. 
+
+        Returns:
+            A dict with all the information collected.
+        """
+        return self.__info
+
+    def to_csv(self, fn: str) -> None:
+        """ Dump info to a csv file. """
         pd.DataFrame.from_dict(
             self.__info, orient='index').T.to_csv(fn, index=False)
 
-    @property
-    def info(self):
-        return self.__info
-
-    def __on_simulation_begins(self, sender):
-        self.__last_host_state = {
-            h.id: (h.pstate, h.state, self.simulator.current_time) for h in self.simulator.platform.hosts
-        }
+    def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
+        t_now = self._simulator.current_time
+        self.__last_host_state = {}
+        for h in self._simulator.platform.hosts:
+            self.__last_host_state[h.id] = (h.pstate, h.state, t_now)
 
         self.__info = {k: 0 for k in self.__info.keys()}
-        self.__info['nb_computing_machines'] = self.simulator.platform.size
+        self.__info['nb_computing_machines'] = self._simulator.platform.size
 
-    def __on_simulation_ends(self, sender):
-        for h in self.simulator.platform.hosts:
+    def __on_simulation_ends(self, sender: SimulatorHandler) -> None:
+        for h in self._simulator.platform.hosts:
             self.__update_info(h)
 
-
-    def __on_host_state_changed(self, sender):
+    def __on_host_state_changed(self, sender: Host) -> None:
         self.__update_info(sender)
 
-    def __update_info(self, host):
-        pstate, state, tstart = self.__last_host_state[host.id]
+    def __update_info(self, host: Host) -> None:
+        pstate, state, t_start = self.__last_host_state[host.id]
 
         # Update Info
-        time_spent = self.simulator.current_time - tstart
+        time_spent = self._simulator.current_time - t_start
         if state == HostState.IDLE:
             self.__info['time_idle'] += time_spent
             consumption = waste = pstate.power_profile.idle * time_spent
@@ -314,51 +388,81 @@ class HostMonitor(Monitor):
             self.__info['nb_switches'] += 1
 
         # Update Last State
-        self.__last_host_state[host.id] = (
-            host.pstate, host.state, self.simulator.current_time)
+        t_now = self._simulator.current_time
+        self.__last_host_state[host.id] = (host.pstate, host.state, t_now)
 
 
 class SimulationMonitor(Monitor):
-    def __init__(self, simulator):
+    """ Simulation Monitor class.
+
+    This monitor collects statistics about the simulation. It merges the 
+    statistics from the Scheduler Monitor with the Host Monitor.
+
+    Args:
+        simulator: the simulator handler.
+
+    Raises:
+        TypeError: In case of invalid arguments.
+    """
+
+    def __init__(self, simulator: SimulatorHandler) -> None:
         super().__init__(simulator)
         self.__sched_monitor = SchedulerMonitor(simulator)
         self.__hosts_monitor = HostMonitor(simulator)
-        self.__sim_start_time = self.__simulation_time = -1
+        self.__sim_start_time = self.__simulation_time = -1.
 
         dispatcher.connect(
             self.__on_simulation_begins,
             signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self.simulator
+            sender=self._simulator
         )
 
         dispatcher.connect(
             self.__on_simulation_ends,
             signal=SimulatorEvent.SIMULATION_ENDS,
-            sender=self.simulator
+            sender=self._simulator
         )
 
     @property
-    def info(self):
+    def info(self) -> dict:
+        """ Get monitor info about the simulation. 
+
+        Returns:
+            A dict with all the information collected.
+        """
         info = dict(self.__sched_monitor.info, **self.__hosts_monitor.info)
         info['simulation_time'] = self.__simulation_time
         return info
 
-    def __on_simulation_begins(self, sender):
-        self.__sim_start_time = tm.time()
-
-    def __on_simulation_ends(self, sender):
-        self.__simulation_time = tm.time() - self.__sim_start_time
-
-    def to_csv(self, fn):
+    def to_csv(self, fn: str) -> None:
+        """ Dump info to a csv file. """
         pd.DataFrame.from_dict(
             self.info, orient='index').T.to_csv(fn, index=False)
 
+    def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
+        self.__sim_start_time = tm.time()
+
+    def __on_simulation_ends(self, sender: SimulatorHandler) -> None:
+        self.__simulation_time = tm.time() - self.__sim_start_time
+
 
 class HostStateSwitchMonitor(Monitor):
-    def __init__(self, simulator):
+    """ Simulation Host State Monitor class.
+
+    This monitor collects statistics about the host state switches. It'll
+    record the number of hosts on each state when any host switches its state.
+
+    Args:
+        simulator: the simulator handler.
+
+    Raises:
+        TypeError: In case of invalid arguments.
+    """
+
+    def __init__(self, simulator: SimulatorHandler) -> None:
         super().__init__(simulator)
-        self.__last_host_state = None
-        self.__info = {
+        self.__last_host_state: dict = {}
+        self.__info: dict = {
             'time': [],
             'nb_sleeping': [],
             'nb_switching_on': [],
@@ -369,7 +473,7 @@ class HostStateSwitchMonitor(Monitor):
         dispatcher.connect(
             self.__on_simulation_begins,
             signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self.simulator
+            sender=self._simulator
         )
 
         dispatcher.connect(
@@ -379,30 +483,36 @@ class HostStateSwitchMonitor(Monitor):
         )
 
     @property
-    def info(self):
+    def info(self) -> dict:
+        """ Get monitor info about the simulation. 
+
+        Returns:
+            A dict with all the information collected.
+        """
         return self.__info
 
-    def to_csv(self, fn):
+    def to_csv(self, fn: str) -> None:
+        """ Dump info to a csv file. """
         pd.DataFrame.from_dict(self.__info).to_csv(fn, index=False)
 
-    def __on_simulation_begins(self, sender):
+    def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         self.__last_host_state = {}
         self.__info = {k: [0] for k in self.__info.keys()}
 
         # Update initial state
-        self.__info['time'][-1] = self.simulator.current_time
-        for h in self.simulator.platform.hosts:
+        self.__info['time'][-1] = self._simulator.current_time
+        for h in self._simulator.platform.hosts:
             key = self.__get_key_from_state(h.state)
             self.__last_host_state[h.id] = key
             self.__info[key][-1] += 1
 
-    def __on_host_state_changed(self, sender):
-        if self.__info['time'][-1] != self.simulator.current_time:
+    def __on_host_state_changed(self, sender: Host) -> None:
+        if self.__info['time'][-1] != self._simulator.current_time:
             # Update new info from last one
             for k in self.__info.keys():
                 self.__info[k].append(self.__info[k][-1])
 
-            self.__info['time'][-1] = self.simulator.current_time
+            self.__info['time'][-1] = self._simulator.current_time
 
         # Update info
         old_key = self.__last_host_state[sender.id]
@@ -411,7 +521,8 @@ class HostStateSwitchMonitor(Monitor):
         self.__info[new_key][-1] += 1
         self.__last_host_state[sender.id] = new_key
 
-    def __get_key_from_state(self, state):
+    def __get_key_from_state(self, state: HostState) -> str:
+        """ Convert a host state to a dict key. """
         if state == HostState.IDLE:
             return "nb_idle"
         elif state == HostState.COMPUTING:
@@ -427,16 +538,28 @@ class HostStateSwitchMonitor(Monitor):
 
 
 class HostPowerStateSwitchMonitor(Monitor):
-    def __init__(self, simulator):
+    """ Simulation Host Power State Monitor class.
+
+    This monitor collects statistics about the host power state switches. It'll
+    record an entry when a host switches its power state.
+
+    Args:
+        simulator: the simulator handler.
+
+    Raises:
+        TypeError: In case of invalid arguments.
+    """
+
+    def __init__(self, simulator: SimulatorHandler) -> None:
         super().__init__(simulator)
 
-        self.__last_host_pstate_id = None
-        self.__info = {'time': [], 'machine_id': [], 'new_pstate': []}
+        self.__last_host_pstate_id: dict = {}
+        self.__info: dict = {'time': [], 'machine_id': [], 'new_pstate': []}
 
         dispatcher.connect(
             self.__on_simulation_begins,
             signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self.simulator
+            sender=self._simulator
         )
 
         dispatcher.connect(
@@ -451,26 +574,32 @@ class HostPowerStateSwitchMonitor(Monitor):
         )
 
     @property
-    def info(self):
+    def info(self) -> dict:
+        """ Get monitor info about the simulation. 
+
+        Returns:
+            A dict with all the information collected.
+        """
         return self.__info
 
-    def to_csv(self, fn):
+    def to_csv(self, fn: str) -> None:
+        """ Dump info to a csv file. """
         pd.DataFrame.from_dict(self.__info).to_csv(fn, index=False)
 
-    def __on_simulation_begins(self, sender):
+    def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         self.__last_host_pstate_id = {
-            h.id: h.pstate.id for h in self.simulator.platform.hosts
+            h.id: h.pstate.id for h in self._simulator.platform.hosts
         }
         self.__info = {k: [] for k in self.__info.keys()}
 
         # Record initial state
-        for pstate_id, hosts in groupby(self.simulator.platform.hosts, key=lambda h: h.pstate.id):
-            self.__info['time'].append(self.simulator.current_time)
+        for pstate_id, hosts in groupby(self._simulator.platform.hosts, key=lambda h: h.pstate.id):
+            self.__info['time'].append(self._simulator.current_time)
             procset = ProcSet(*[h.id for h in hosts])
             self.__info['machine_id'].append(str(procset))
             self.__info['new_pstate'].append(pstate_id)
 
-    def __on_host_power_state_changed(self, sender):
+    def __on_host_power_state_changed(self, sender: Host) -> None:
         if self.__last_host_pstate_id[sender.id] == sender.pstate.id:
             return
 
@@ -482,34 +611,51 @@ class HostPowerStateSwitchMonitor(Monitor):
         else:
             new_pstate_id = sender.pstate.id
 
-        if self.__info['time'][-1] == self.simulator.current_time and self.__info['new_pstate'][-1] == new_pstate_id:
-            # Update last recorda
+        if self.__info['time'][-1] == self._simulator.current_time and self.__info['new_pstate'][-1] == new_pstate_id:
+            # Update last record
             procset = ProcSet.from_str(self.__info['machine_id'][-1])
             procset.update(ProcSet(sender.id))
             self.__info['machine_id'][-1] = str(procset)
         else:
             # Record new state
-            self.__info['time'].append(self.simulator.current_time)
+            self.__info['time'].append(self._simulator.current_time)
             self.__info['machine_id'].append(str(sender.id))
             self.__info['new_pstate'].append(new_pstate_id)
 
 
 class ConsumedEnergyMonitor(Monitor):
+    """ Simulation Energy Monitor class.
+
+    This monitor collects energy statistics. It'll record the platform consumed 
+    energy when a job starts/finish or a host changes its state/power state.
+
+    Args:
+        simulator: the simulator handler.
+
+    Raises:
+        TypeError: In case of invalid arguments.
+
+    Attributes:
+        POWER_STATE_TYPE: A signal that a power state switch ocurred.
+        JOB_STARTED_TYPE: A signal that a job started.
+        JOB_COMPLETED_TYPE: A signal that a job finished.
+    """
+
     POWER_STATE_TYPE = "p"
     JOB_STARTED_TYPE = "s"
     JOB_COMPLETED_TYPE = "e"
 
-    def __init__(self, simulator):
+    def __init__(self, simulator: SimulatorHandler) -> None:
         super().__init__(simulator)
-        self.__info = {
+        self.__last_host_state: dict = {}
+        self.__info: dict = {
             'time': [], 'energy': [], 'event_type': [], 'wattmin': [], 'epower': []
         }
-        self.__last_host_state = None
 
         dispatcher.connect(
             self.__on_simulation_begins,
             signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self.simulator
+            sender=self._simulator
         )
 
         dispatcher.connect(
@@ -541,33 +687,39 @@ class ConsumedEnergyMonitor(Monitor):
         )
 
     @property
-    def info(self):
+    def info(self) -> dict:
+        """ Get monitor info about the simulation. 
+
+        Returns:
+            A dict with all the information collected.
+        """
         return self.__info
 
-    def to_csv(self, fn):
+    def to_csv(self, fn: str) -> None:
+        """ Dump info to a csv file. """
         pd.DataFrame.from_dict(self.__info).to_csv(fn, index=False)
 
-    def __on_simulation_begins(self, sender):
+    def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         self.__info = {k: [] for k in self.__info.keys()}
         self.__last_host_state = {
-            h.id: (h.pstate, h.state, self.simulator.current_time) for h in self.simulator.platform.hosts
+            h.id: (h.pstate, h.state, self._simulator.current_time) for h in self._simulator.platform.hosts
         }
 
-    def __handle_job_started_event(self, sender):
+    def __handle_job_started_event(self, sender: Host) -> None:
         self.__update_info(event_type=self.JOB_STARTED_TYPE)
 
-    def __handle_job_completed_event(self, sender):
+    def __handle_job_completed_event(self, sender: Host) -> None:
         self.__update_info(event_type=self.JOB_COMPLETED_TYPE)
 
-    def __handle_host_event(self, sender):
+    def __handle_host_event(self, sender: Host) -> None:
         self.__update_info(event_type=self.POWER_STATE_TYPE)
 
-    def __update_info(self, event_type):
+    def __update_info(self, event_type: str) -> None:
         consumed_energy = wattmin = epower = 0
-        for host in self.simulator.platform.hosts:
-            pstate, state, tstart = self.__last_host_state[host.id]
+        for host in self._simulator.platform.hosts:
+            pstate, state, t_start = self.__last_host_state[host.id]
 
-            time = self.simulator.current_time - tstart
+            time = self._simulator.current_time - t_start
             wattage = pstate.power_profile.full_load if state == HostState.COMPUTING else pstate.power_profile.idle
 
             epower += wattage
@@ -576,15 +728,10 @@ class ConsumedEnergyMonitor(Monitor):
 
             # Update Last State
             self.__last_host_state[host.id] = (
-                host.pstate, host.state, self.simulator.current_time)
+                host.pstate, host.state, self._simulator.current_time)
 
-        # if self.__info['time'] and self.__info['time'][-1] == self.simulator.current_time and self.__info['event_type'][-1] == event_type:
-        #    self.__info['energy'][-1] = consumed_energy
-        #    self.__info['wattmin'][-1] = wattmin
-        #    self.__info['epower'][-1] = epower
-        # else:
         consumed_energy += self.__info['energy'][-1] if self.__info['energy'] else 0
-        self.__info["time"].append(self.simulator.current_time)
+        self.__info["time"].append(self._simulator.current_time)
         self.__info["energy"].append(consumed_energy)
         self.__info["event_type"].append(event_type)
         self.__info["wattmin"].append(wattmin)
