@@ -102,7 +102,7 @@ class PowerState(Identifier):
                  pstate_id: int,
                  pstate_type: PowerStateType,
                  power_profile: PowerProfile,
-                 pstate_speed: int) -> None:
+                 pstate_speed: float) -> None:
 
         if not isinstance(pstate_type, PowerStateType):
             raise TypeError('Expected `pstate_type` argument to be a '
@@ -120,7 +120,7 @@ class PowerState(Identifier):
         super().__init__(int(pstate_id))
         self.__type = pstate_type
         self.__power_profile = power_profile
-        self.__speed = int(pstate_speed)
+        self.__speed = float(pstate_speed)
 
     def __str__(self) -> str:
         return "{}.{} ({})".format(self.type.__class__.__name__, str(self.type), self.id)
@@ -129,7 +129,7 @@ class PowerState(Identifier):
         return str(self)
 
     @property
-    def speed(self) -> int:
+    def speed(self) -> float:
         """ The power state speed (flop/s). """
         return self.__speed
 
