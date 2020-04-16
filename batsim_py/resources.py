@@ -292,7 +292,10 @@ class Host(Identifier):
         return list(self.__jobs)
 
     def get_pstate_by_id(self, pstate_id: int) -> PowerState:
-        """ Get a power state by id. 
+        """ Get a power state by id.
+
+        Args:
+            pstate_id: The power state id. 
 
         Raises:
             LookupError: In case of power state could not be found.
@@ -395,6 +398,9 @@ class Host(Identifier):
         This is useful when DVFS is desired. It's an internal method to be 
         used by the simulator only. 
 
+        Args:
+            pstate_id: The power state id.
+
         Raises:
             RuntimeError: In case of the power state could not be found or 
                 it is not a computation one or the current host state is not 
@@ -437,7 +443,7 @@ class Host(Identifier):
         self.__set_state(HostState.SLEEPING)
 
     def _set_on(self) -> None:
-        """ Finish the switching on routine and wakeup.
+        """ Finish the switching on routine and wake up.
 
         This is an internal method to be used by the simulator only. 
 
@@ -447,7 +453,7 @@ class Host(Identifier):
         """
 
         if not self.is_switching_on:
-            SystemError('A host must be switching on to wakeup, '
+            SystemError('A host must be switching on to wake up, '
                         'got {}'.format(self.state))
 
         ps = self.get_default_pstate()
@@ -458,6 +464,9 @@ class Host(Identifier):
         """ Allocate the host for a job.
 
         This is an internal method to be used by the simulator only. 
+
+        Args:
+            job: The job that will use this host.
         """
         if any(j.id == job.id for j in self.__jobs):
             return
@@ -496,7 +505,7 @@ class Host(Identifier):
         self.__set_state(HostState.COMPUTING)
 
     def __release(self, sender: Job) -> None:
-        """ Relase the resource.
+        """ Release the resource.
 
         This is an internal method to be used by the job instance only.
         When a job finish it'll dispatch an event, we catch this event to

@@ -155,7 +155,7 @@ class ParallelHomogeneousJobProfile(JobProfile):
 
     @property
     def com(self) -> float:
-        """The amount of bytes to be transfered between hosts."""
+        """The amount of bytes to be transferred between hosts."""
         return self.__com
 
 
@@ -561,7 +561,7 @@ class Job(Identifier):
                                'got, {}'.format(self.state))
         if len(hosts) != self.res:
             raise RuntimeError('Expected `hosts` argument to be a list of hosts '
-                               'of lenght {}, got {}'.format(self.res, hosts))
+                               'of length {}, got {}'.format(self.res, hosts))
 
         self.__allocation = list(hosts)
         self.__state = JobState.ALLOCATED
