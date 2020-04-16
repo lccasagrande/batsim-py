@@ -403,7 +403,7 @@ class Job(Identifier):
         self.__user = user
 
         self.__state: JobState = JobState.UNKNOWN
-        self.__allocation: Optional[Sequence[Union[int, str]]] = None
+        self.__allocation: Optional[Sequence[int]] = None
         self.__start_time: Optional[float] = None  # will be set on start
         self.__stop_time: Optional[float] = None  # will be set on terminate
 
@@ -451,7 +451,7 @@ class Job(Identifier):
         return self.__state
 
     @property
-    def allocation(self) -> Optional[Sequence[Union[str, int]]]:
+    def allocation(self) -> Optional[Sequence[int]]:
         """ The allocated resources id. """
         return self.__allocation
 
