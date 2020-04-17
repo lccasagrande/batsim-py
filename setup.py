@@ -8,10 +8,13 @@ def read_requirements_file(filename):
         return [line.strip() for line in f]
 
 
+with open("batsim_py/__version__.py") as version_file:
+    exec(version_file.read())
+    
 setup(
     name='batsim_py',
     author='lccasagrande',
-    version='0.1',
+    version=__version__,
     python_requires='>=3.7',
     install_requires=read_requirements_file('requirements.txt'),
 )
