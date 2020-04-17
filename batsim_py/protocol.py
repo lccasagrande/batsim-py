@@ -4,9 +4,9 @@ from typing import Dict
 from typing import Sequence
 from typing import Union
 from typing import Any
+from xml.dom import minidom
 
 from procset import ProcSet
-from xml.dom import minidom
 import zmq
 
 from .jobs import Job
