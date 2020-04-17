@@ -14,9 +14,8 @@ after_success:
 
 deploy:
   provider: pages
-  skip-cleanup: true
-  github-token: $GITHUB_TOKEN
-  local-dir: docs/build/html
-  committer-from-gh: true
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN
+  local_dir: docs/build/html
   on:
     branch: master
