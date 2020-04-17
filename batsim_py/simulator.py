@@ -37,11 +37,6 @@ from .resources import Platform
 from .utils.commons import get_free_tcp_address
 
 
-if which('batsim') is None:
-    raise ImportError(
-        "(HINT: you need to install Batsim. Check the setup instructions here: https://batsim.readthedocs.io/en/latest/.)")
-
-
 class SimulatorHandler:
     """ Simulator handler class.
 
@@ -52,11 +47,20 @@ class SimulatorHandler:
         tcp_address: An address string consisting of three parts  as follows: 
             protocol://interface:port.
 
+    Raises:
+        ImportError: In case of Batsim is not installed or cannot be found.
+
     Examples:
         >>> handler = SimulatorHandler("tcp://localhost:28000")
     """
 
     def __init__(self, tcp_address: Optional[str] = None) -> None:
+        if which('batsim') is None:
+            raise ImportError('(HINT: you need to install Batsim. '
+                              'Check the setup instructions here: '
+                              'https://batsim.readthedocs.io/en/latest/.). '
+                              'Run "batsim --version" to make sure it is working.')
+
         self.__network = NetworkHandler(tcp_address or get_free_tcp_address())
         self.__current_time: float = 0.
         self.__simulator: Optional[subprocess.Popen] = None
