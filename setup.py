@@ -14,11 +14,12 @@ with open("batsim_py/__version__.py") as version_file:
 
 
 setup(
-    name='batsim_py',
+    name='batsim-py',
     author='lccasagrande',
     version=__version__,
     license="MIT",
     python_requires='>=3.7',
-    packages=find_packages(),
     install_requires=read_requirements_file('requirements.txt'),
+    packages=find_packages(),
+    package_dir={'batsim_py': 'batsim_py'},
 )
