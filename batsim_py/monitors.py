@@ -5,8 +5,8 @@ import time as tm
 
 import pandas as pd
 from procset import ProcSet
-from pydispatch import dispatcher
 
+from .dispatcher import subscribe
 from .events import SimulatorEvent
 from .events import HostEvent
 from .events import JobEvent
@@ -85,29 +85,17 @@ class JobMonitor(Monitor):
             'consumed_energy': [],
         }
 
-        dispatcher.connect(
+        subscribe(
             self.__on_simulation_begins,
-            signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self._simulator
+            SimulatorEvent.SIMULATION_BEGINS,
+            self._simulator,
         )
 
-        dispatcher.connect(
-            self.__update_info,
-            signal=JobEvent.COMPLETED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__update_info, JobEvent.COMPLETED)
 
-        dispatcher.connect(
-            self.__update_info,
-            signal=JobEvent.KILLED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__update_info, JobEvent.KILLED)
 
-        dispatcher.connect(
-            self.__update_info,
-            signal=JobEvent.REJECTED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__update_info, JobEvent.REJECTED)
 
     @property
     def info(self) -> dict:
@@ -179,41 +167,25 @@ class SchedulerMonitor(Monitor):
             'nb_jobs_success': 0,
         }
 
-        dispatcher.connect(
+        subscribe(
             self.__on_simulation_begins,
-            signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self._simulator
+            SimulatorEvent.SIMULATION_BEGINS,
+            self._simulator,
         )
 
-        dispatcher.connect(
+        subscribe(
             self.__on_simulation_ends,
-            signal=SimulatorEvent.SIMULATION_ENDS,
-            sender=self._simulator
+            SimulatorEvent.SIMULATION_ENDS,
+            self._simulator,
         )
 
-        dispatcher.connect(
-            self.__on_job_completed,
-            signal=JobEvent.COMPLETED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__on_job_completed, JobEvent.COMPLETED)
 
-        dispatcher.connect(
-            self.__on_job_completed,
-            signal=JobEvent.KILLED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__on_job_completed, JobEvent.KILLED)
 
-        dispatcher.connect(
-            self.__on_job_submitted,
-            signal=JobEvent.SUBMITTED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__on_job_submitted, JobEvent.SUBMITTED)
 
-        dispatcher.connect(
-            self.__on_job_rejected,
-            signal=JobEvent.REJECTED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__on_job_rejected, JobEvent.REJECTED)
 
     @property
     def info(self) -> dict:
@@ -306,27 +278,20 @@ class HostMonitor(Monitor):
             'nb_computing_machines': 0,
         }
 
-        dispatcher.connect(
+        subscribe(
             self.__on_simulation_begins,
-            signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self._simulator
+            SimulatorEvent.SIMULATION_BEGINS,
+            self._simulator,
         )
-        dispatcher.connect(
+        subscribe(
             self.__on_simulation_ends,
-            signal=SimulatorEvent.SIMULATION_ENDS,
-            sender=self._simulator
+            SimulatorEvent.SIMULATION_ENDS,
+            self._simulator,
         )
 
-        dispatcher.connect(
-            self.__on_host_state_changed,
-            signal=HostEvent.STATE_CHANGED,
-            sender=dispatcher.Any
-        )
-        dispatcher.connect(
-            self.__on_host_state_changed,
-            signal=HostEvent.COMPUTATION_POWER_STATE_CHANGED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__on_host_state_changed, HostEvent.STATE_CHANGED)
+        subscribe(self.__on_host_state_changed,
+                  HostEvent.COMPUTATION_POWER_STATE_CHANGED)
 
     @property
     def info(self) -> dict:
@@ -343,6 +308,7 @@ class HostMonitor(Monitor):
             self.__info, orient='index').T.to_csv(fn, index=False)
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
+        assert self._simulator.platform
         t_now = self._simulator.current_time
         self.__last_host_state = {}
         for h in self._simulator.platform.hosts:
@@ -352,6 +318,7 @@ class HostMonitor(Monitor):
         self.__info['nb_computing_machines'] = self._simulator.platform.size
 
     def __on_simulation_ends(self, sender: SimulatorHandler) -> None:
+        assert self._simulator.platform
         for h in self._simulator.platform.hosts:
             self.__update_info(h)
 
@@ -411,16 +378,16 @@ class SimulationMonitor(Monitor):
         self.__hosts_monitor = HostMonitor(simulator)
         self.__sim_start_time = self.__simulation_time = -1.
 
-        dispatcher.connect(
+        subscribe(
             self.__on_simulation_begins,
-            signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self._simulator
+            SimulatorEvent.SIMULATION_BEGINS,
+            self._simulator,
         )
 
-        dispatcher.connect(
+        subscribe(
             self.__on_simulation_ends,
-            signal=SimulatorEvent.SIMULATION_ENDS,
-            sender=self._simulator
+            SimulatorEvent.SIMULATION_ENDS,
+            self._simulator,
         )
 
     @property
@@ -470,17 +437,13 @@ class HostStateSwitchMonitor(Monitor):
             'nb_idle': [],
             'nb_computing': []
         }
-        dispatcher.connect(
+        subscribe(
             self.__on_simulation_begins,
-            signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self._simulator
+            SimulatorEvent.SIMULATION_BEGINS,
+            self._simulator,
         )
 
-        dispatcher.connect(
-            self.__on_host_state_changed,
-            signal=HostEvent.STATE_CHANGED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__on_host_state_changed, HostEvent.STATE_CHANGED)
 
     @property
     def info(self) -> dict:
@@ -496,6 +459,7 @@ class HostStateSwitchMonitor(Monitor):
         pd.DataFrame.from_dict(self.__info).to_csv(fn, index=False)
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
+        assert self._simulator.platform
         self.__last_host_state = {}
         self.__info = {k: [0] for k in self.__info.keys()}
 
@@ -556,22 +520,15 @@ class HostPowerStateSwitchMonitor(Monitor):
         self.__last_host_pstate_id: dict = {}
         self.__info: dict = {'time': [], 'machine_id': [], 'new_pstate': []}
 
-        dispatcher.connect(
+        subscribe(
             self.__on_simulation_begins,
-            signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self._simulator
+            SimulatorEvent.SIMULATION_BEGINS,
+            self._simulator,
         )
 
-        dispatcher.connect(
-            self.__on_host_power_state_changed,
-            signal=HostEvent.COMPUTATION_POWER_STATE_CHANGED,
-            sender=dispatcher.Any
-        )
-        dispatcher.connect(
-            self.__on_host_power_state_changed,
-            signal=HostEvent.STATE_CHANGED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__on_host_power_state_changed,
+                  HostEvent.COMPUTATION_POWER_STATE_CHANGED)
+        subscribe(self.__on_host_power_state_changed, HostEvent.STATE_CHANGED)
 
     @property
     def info(self) -> dict:
@@ -587,6 +544,7 @@ class HostPowerStateSwitchMonitor(Monitor):
         pd.DataFrame.from_dict(self.__info).to_csv(fn, index=False)
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
+        assert self._simulator.platform
         self.__last_host_pstate_id = {
             h.id: h.pstate.id for h in self._simulator.platform.hosts
         }
@@ -652,38 +610,23 @@ class ConsumedEnergyMonitor(Monitor):
             'time': [], 'energy': [], 'event_type': [], 'wattmin': [], 'epower': []
         }
 
-        dispatcher.connect(
+        subscribe(
             self.__on_simulation_begins,
-            signal=SimulatorEvent.SIMULATION_BEGINS,
-            sender=self._simulator
+            SimulatorEvent.SIMULATION_BEGINS,
+            self._simulator,
         )
 
-        dispatcher.connect(
-            self.__handle_job_started_event,
-            signal=JobEvent.STARTED,
-            sender=dispatcher.Any)
+        subscribe(self.__handle_job_started_event, JobEvent.STARTED)
 
-        dispatcher.connect(
-            self.__handle_job_completed_event,
-            signal=JobEvent.COMPLETED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__handle_job_completed_event, JobEvent.COMPLETED)
 
-        dispatcher.connect(
-            self.__handle_job_completed_event,
-            signal=JobEvent.KILLED,
-            sender=dispatcher.Any
-        )
+        subscribe(self.__handle_job_completed_event, JobEvent.KILLED)
 
-        dispatcher.connect(
+        subscribe(self.__handle_host_event, HostEvent.STATE_CHANGED)
+
+        subscribe(
             self.__handle_host_event,
-            signal=HostEvent.STATE_CHANGED,
-            sender=dispatcher.Any
-        )
-        dispatcher.connect(
-            self.__handle_host_event,
-            signal=HostEvent.COMPUTATION_POWER_STATE_CHANGED,
-            sender=dispatcher.Any
+            HostEvent.COMPUTATION_POWER_STATE_CHANGED,
         )
 
     @property
@@ -700,6 +643,7 @@ class ConsumedEnergyMonitor(Monitor):
         pd.DataFrame.from_dict(self.__info).to_csv(fn, index=False)
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
+        assert self._simulator.platform
         self.__info = {k: [] for k in self.__info.keys()}
         self.__last_host_state = {
             h.id: (h.pstate, h.state, self._simulator.current_time) for h in self._simulator.platform.hosts
@@ -715,7 +659,8 @@ class ConsumedEnergyMonitor(Monitor):
         self.__update_info(event_type=self.POWER_STATE_TYPE)
 
     def __update_info(self, event_type: str) -> None:
-        consumed_energy = wattmin = epower = 0
+        assert self._simulator.platform
+        consumed_energy = wattmin = epower = 0.
         for host in self._simulator.platform.hosts:
             pstate, state, t_start = self.__last_host_state[host.id]
 

@@ -14,8 +14,7 @@ from typing import Any
 from typing import DefaultDict
 from typing import Optional
 
-from pydispatch import dispatcher
-
+from .dispatcher import dispatch
 from .events import SimulatorEvent
 from .jobs import Job
 from .protocol import get_platform_from_xml
@@ -199,7 +198,7 @@ class SimulatorHandler:
         if self.__simulation_time:
             self.__set_batsim_call_me_later(self.__simulation_time)
 
-        dispatcher.send(signal=SimulatorEvent.SIMULATION_BEGINS, sender=self)
+        dispatch(SimulatorEvent.SIMULATION_BEGINS, self)
 
     def close(self) -> None:
         """ Close the simulation process.
@@ -214,7 +213,7 @@ class SimulatorHandler:
         self.__simulation_time = None
         self.__batsim_requests.clear()
         self.__callbacks.clear()
-        dispatcher.send(signal=SimulatorEvent.SIMULATION_ENDS, sender=self)
+        dispatch(SimulatorEvent.SIMULATION_ENDS, self)
 
     def proceed_time(self, time: Optional[float] = None) -> None:
         """ Proceed the simulation process to the next event or time.

@@ -5,8 +5,7 @@ from typing import Sequence
 from typing import Union
 from typing import List
 
-from pydispatch import dispatcher
-
+from . import dispatcher
 from .events import HostEvent
 from .events import JobEvent
 from .jobs import Job
@@ -473,11 +472,8 @@ class Host(Identifier):
 
         self.__jobs.append(job)
 
-        dispatcher.connect(self.__start_computing,
-                           signal=JobEvent.STARTED,
-                           sender=job)
-
-        self.__dispatch(HostEvent.ALLOCATED)
+        dispatcher.subscribe(self.__start_computing, JobEvent.STARTED, job)
+        dispatcher.dispatch(HostEvent.ALLOCATED, self)
 
     def __start_computing(self, sender: Job) -> None:
         """ Start computing.
@@ -498,10 +494,7 @@ class Host(Identifier):
             raise SystemError('The host cannot find this job to execute, '
                               'got {}'.format(self.__jobs))
 
-        dispatcher.connect(self.__release,
-                           signal=JobEvent.COMPLETED,
-                           sender=sender)
-
+        dispatcher.subscribe(self.__release, JobEvent.COMPLETED, sender)
         self.__set_state(HostState.COMPUTING)
 
     def __release(self, sender: Job) -> None:
@@ -538,7 +531,8 @@ class Host(Identifier):
 
         if self.__pstate.type == PowerStateType.COMPUTATION and new_pstate.type == PowerStateType.COMPUTATION:
             self.__pstate = new_pstate
-            self.__dispatch(HostEvent.COMPUTATION_POWER_STATE_CHANGED)
+            dispatcher.dispatch(
+                HostEvent.COMPUTATION_POWER_STATE_CHANGED, self)
         else:
             self.__pstate = new_pstate
 
@@ -558,14 +552,7 @@ class Host(Identifier):
 
         if self.__state != new_state:
             self.__state = new_state
-            self.__dispatch(HostEvent.STATE_CHANGED)
-
-    def __dispatch(self, event_type) -> None:
-        """ Dispatch events.
-
-        This is an internal method to be used by the job instance only.
-        """
-        dispatcher.send(signal=event_type, sender=self)
+            dispatcher.dispatch(HostEvent.STATE_CHANGED, self)
 
 
 class Platform:

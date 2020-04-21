@@ -4,8 +4,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Union
 
-from pydispatch import dispatcher
-
+from . import dispatcher
 from .events import JobEvent
 from .utils.commons import Identifier
 
@@ -541,7 +540,7 @@ class Job(Identifier):
         else:
             return max(1., self.turnaround_time / self.runtime)
 
-    def _allocate(self, hosts: Sequence[Union[int, str]]) -> None:
+    def _allocate(self, hosts: Sequence[int]) -> None:
         """ Allocate hosts for the job. 
 
         This is an internal method to be used by the simulator only.
@@ -565,7 +564,7 @@ class Job(Identifier):
 
         self.__allocation = list(hosts)
         self.__state = JobState.ALLOCATED
-        self.__dispatch(JobEvent.ALLOCATED)
+        dispatcher.dispatch(JobEvent.ALLOCATED, self, unique=True)
 
     def _reject(self) -> None:
         """ Reject the job. 
@@ -576,7 +575,7 @@ class Job(Identifier):
             Event: JobEvent.REJECTED
         """
         self.__state == JobState.REJECTED
-        self.__dispatch(JobEvent.REJECTED)
+        dispatcher.dispatch(JobEvent.REJECTED, self, unique=True)
 
     def _submit(self, subtime: Union[int, float]) -> None:
         """ Submit the job. 
@@ -602,7 +601,7 @@ class Job(Identifier):
 
         self.__state = JobState.SUBMITTED
         self.__subtime = float(subtime)
-        self.__dispatch(JobEvent.SUBMITTED)
+        dispatcher.dispatch(JobEvent.SUBMITTED, self, unique=True)
 
     def _kill(self, current_time: Union[int, float]) -> None:
         """ Kill the job. 
@@ -629,7 +628,7 @@ class Job(Identifier):
 
         self.__stop_time = float(current_time)
         self.__state = JobState.COMPLETED_KILLED
-        self.__dispatch(JobEvent.KILLED)
+        dispatcher.dispatch(JobEvent.KILLED, self, unique=True)
 
     def _start(self, current_time: Union[int, float]) -> None:
         """ Start the job. 
@@ -661,7 +660,7 @@ class Job(Identifier):
 
         self.__start_time = float(current_time)
         self.__state = JobState.RUNNING
-        self.__dispatch(JobEvent.STARTED)
+        dispatcher.dispatch(JobEvent.STARTED, self, unique=True)
 
     def _terminate(self, current_time: Union[int, float], state: JobState) -> None:
         """ Terminate the job. 
@@ -696,28 +695,4 @@ class Job(Identifier):
 
         self.__stop_time = float(current_time)
         self.__state = state
-        self.__dispatch(JobEvent.COMPLETED)
-
-    def __dispatch(self, event_type: JobEvent) -> None:
-        """ Dispatch job events and cleanup unnecessary connections. 
-
-
-        It is not possible to occur two events of the same type in a single job. 
-        Thus, when an event is dispatched it automatically disconnect all listeners. 
-        This is an internal method to be used only by a job instance.
-
-        Args:
-            event_type: the event type to dispatch.
-
-        Raises:
-            AssertionError: In case of invalid arguments.
-        """
-        assert isinstance(event_type, JobEvent)
-
-        # dispatch event
-        dispatcher.send(signal=event_type, sender=self)
-
-        # disconnect listeners
-        listeners = dispatcher.getReceivers(self, event_type)
-        for r in list(dispatcher.liveReceivers(listeners)):
-            dispatcher.disconnect(r, signal=event_type, sender=self)
+        dispatcher.dispatch(JobEvent.COMPLETED, self, unique=True)

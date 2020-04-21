@@ -86,16 +86,16 @@ def get_platform_from_xml(platform_fn: str) -> Platform:
             ps_id = pstates_id.pop(sleep_pstates[1])
             watt = float(watt_per_state[ps_id].split(":")[0])
             switch_off_ps = PowerState(pstate_id=ps_id,
-                                      pstate_type=PowerStateType.SWITCHING_OFF,
-                                      power_profile=PowerProfile(watt, watt),
-                                      pstate_speed=speeds[ps_id])
+                                       pstate_type=PowerStateType.SWITCHING_OFF,
+                                       power_profile=PowerProfile(watt, watt),
+                                       pstate_speed=speeds[ps_id])
 
             ps_id = pstates_id.pop(sleep_pstates[2])
             watt = float(watt_per_state[ps_id].split(":")[0])
             switch_on_ps = PowerState(pstate_id=ps_id,
-                                     pstate_type=PowerStateType.SWITCHING_ON,
-                                     power_profile=PowerProfile(watt, watt),
-                                     pstate_speed=speeds[ps_id])
+                                      pstate_type=PowerStateType.SWITCHING_ON,
+                                      power_profile=PowerProfile(watt, watt),
+                                      pstate_speed=speeds[ps_id])
 
             power_states.append(sleep_ps)
             power_states.append(switch_off_ps)
