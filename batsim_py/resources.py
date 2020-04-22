@@ -125,6 +125,8 @@ class Host(Identifier):
             compute jobs when it's being switched On/Off or sleeping. If you only
             want to control the DVFS, there is no need to provide a sleep and
             a transition power state.
+        metadata: Extra host properties that can be used by some functions
+            beyond the scope of Batsim or Batsim-py. 
 
     Raises:
         TypeError: In case of invalid arguments.
@@ -140,7 +142,8 @@ class Host(Identifier):
     def __init__(self,
                  id: int,
                  name: str,
-                 pstates: Optional[Sequence[PowerState]] = None) -> None:
+                 pstates: Optional[Sequence[PowerState]] = None,
+                 metadata: Optional[dict] = None) -> None:
         if pstates and not all(isinstance(p, PowerState) for p in pstates):
             raise TypeError('Expected `pstates` argument to be a '
                             'sequence of `PowerState` instances, '
@@ -152,6 +155,7 @@ class Host(Identifier):
         self.__jobs: List[Job] = []
         self.__pstates = None
         self.__current_pstate = None
+        self.__metadata = metadata
 
         if pstates:
             self.__pstates = tuple(sorted(pstates, key=lambda p: int(p.id)))
@@ -188,6 +192,14 @@ class Host(Identifier):
         """ All power states of the host. """
         if self.__pstates:
             return list(self.__pstates)
+        else:
+            return None
+
+    @property
+    def metadata(self) -> Optional[dict]:
+        """ Host extra properties. """
+        if self.__metadata:
+            return dict(self.__metadata)
         else:
             return None
 

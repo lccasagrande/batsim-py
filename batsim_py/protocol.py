@@ -543,9 +543,9 @@ class SimulationBeginsBatsimEvent(BatsimEvent):
             props = r.get("properties", None)
             if props and "watt_per_state" in props:
                 pstates = SimulationBeginsBatsimEvent.get_power_states(props)
+                del props["watt_per_state"]
 
-            hosts.append(
-                Host(id=r['id'], name=r['name'], pstates=pstates))
+            hosts.append(Host(r['id'], r['name'], pstates, props))
 
         return Platform(hosts)
 
