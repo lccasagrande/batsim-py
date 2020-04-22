@@ -21,117 +21,8 @@ from .jobs import ParallelHomogeneousPFSJobProfile
 from .jobs import DataStagingJobProfile
 from .resources import PowerState
 from .resources import PowerStateType
-from .resources import PowerProfile
 from .resources import Host
 from .resources import Platform
-
-
-def get_platform_from_xml(platform_fn: str) -> Platform:
-    """ Instantiate a platfrom from a XML.
-
-    The XML must follow the definition adopted in Batsim and SimGrid.
-    Check their documentation for more information on how to define
-    a platform description file.
-
-    Args:
-        platform_fn: The XML file describing the platform.
-
-    Returns:
-        A platform instance.
-
-    Raises:
-        NotImplementedError: In case of not supported speed unit.
-        RuntimeError: In case of missing properties or attributes.
-    """
-
-    def get_speeds(data_speed: str) -> Sequence[float]:
-        """ Get speed values and convert it to flop/s. """
-        speeds = []
-        for speed in data_speed.split(","):
-            if "f" in speed:
-                speeds.append(float(speed.replace("f", "")))
-            elif "Mf" in speed:
-                speeds.append(float(speed.replace("Mf", "")) * 1000000)
-            else:
-                raise NotImplementedError('Host speed must be in Mega Flop/s (Mf) '
-                                          'or Flop/s (f), got {}.'.format(speed))
-        return speeds
-
-    def get_pstates(properties: dict) -> Sequence[PowerState]:
-        """ Get host power states.  """
-        if "watt_per_state" not in properties:
-            raise RuntimeError('Expected `watt_per_state` property to be '
-                               'defined in the host.')
-
-        if "speed" not in properties:
-            raise RuntimeError('Expected `speed` attribute to be '
-                               'defined in the host.')
-
-        speeds = get_speeds(properties['speed'])
-        watt_per_state: Sequence[str] = properties["watt_per_state"].split(",")
-        sleep_pstates = properties.get("sleep_pstates", None)
-
-        pstates_id = {i: i for i in range(len(watt_per_state))}
-        power_states = []
-        if sleep_pstates:
-            sleep_pstates = list(map(int, sleep_pstates.split(":")))  # values
-
-            ps_id = pstates_id.pop(sleep_pstates[0])
-            watt = float(watt_per_state[ps_id].split(":")[0])
-            sleep_ps = PowerState(pstate_id=ps_id,
-                                  pstate_type=PowerStateType.SLEEP,
-                                  power_profile=PowerProfile(watt, watt),
-                                  pstate_speed=speeds[ps_id])
-
-            ps_id = pstates_id.pop(sleep_pstates[1])
-            watt = float(watt_per_state[ps_id].split(":")[0])
-            switch_off_ps = PowerState(pstate_id=ps_id,
-                                       pstate_type=PowerStateType.SWITCHING_OFF,
-                                       power_profile=PowerProfile(watt, watt),
-                                       pstate_speed=speeds[ps_id])
-
-            ps_id = pstates_id.pop(sleep_pstates[2])
-            watt = float(watt_per_state[ps_id].split(":")[0])
-            switch_on_ps = PowerState(pstate_id=ps_id,
-                                      pstate_type=PowerStateType.SWITCHING_ON,
-                                      power_profile=PowerProfile(watt, watt),
-                                      pstate_speed=speeds[ps_id])
-
-            power_states.append(sleep_ps)
-            power_states.append(switch_off_ps)
-            power_states.append(switch_on_ps)
-
-        # Get Computation Power States
-        for ps_id in pstates_id.values():
-            watts = watt_per_state[ps_id].split(":")
-            pw_profile = PowerProfile(float(watts[0]), float(watts[1]))
-
-            comp_ps = PowerState(pstate_id=ps_id,
-                                 pstate_type=PowerStateType.COMPUTATION,
-                                 power_profile=pw_profile,
-                                 pstate_speed=speeds[ps_id])
-            power_states.append(comp_ps)
-
-        return power_states
-
-    platform = minidom.parse(platform_fn)
-    resources = platform.getElementsByTagName('host')
-    hosts, host_id = [], 0
-    for r in sorted(resources, key=lambda x: x.attributes['id'].value):
-        if r.getAttribute('id') == 'master_host':
-            continue
-
-        properties = {"speed": r.getAttribute('speed')}
-        for p in r.getElementsByTagName('prop'):
-            properties[p.getAttribute('id')] = p.getAttribute('value')
-
-        pstates = get_pstates(properties)
-        host = Host(host_id, r.getAttribute('id'), pstates)
-
-        hosts.append(host)
-        host_id += 1
-
-    return Platform(hosts)
 
 
 class BatsimEventType(Enum):
@@ -576,12 +467,87 @@ class SimulationBeginsBatsimEvent(BatsimEvent):
 
     def __init__(self, timestamp: float, data: dict) -> None:
         super().__init__(timestamp, BatsimEventType.SIMULATION_BEGINS)
-        self.__data = data
+        self.platform = SimulationBeginsBatsimEvent.get_platform(data)
 
-    @property
-    def data(self) -> dict:
-        """ The simulation config data dict following the Batsim format. """
-        return self.__data.copy()
+    @staticmethod
+    def get_power_states(properties: dict) -> Sequence[PowerState]:
+        """ Get Power States from Batsim json host properties.
+
+        Args:
+            data: the properties of the job in the json received by Batsim.
+
+        Returns:
+            A sequence of power states.
+        """
+        if "watt_per_state" not in properties:
+            raise RuntimeError('Expected `watt_per_state` property to be '
+                               'defined in the host.')
+
+        watt_per_state = properties["watt_per_state"].split(",")
+        sleep_pstates = properties.get("sleep_pstates", None)
+
+        pstates_id = {i: i for i in range(len(watt_per_state))}
+        power_states = []
+        if sleep_pstates:
+            sleep_pstates = list(map(int, sleep_pstates.split(":")))  # values
+
+            ps_id = pstates_id.pop(sleep_pstates[0])
+            watt = float(watt_per_state[ps_id].split(":")[0])
+            sleep_ps = PowerState(pstate_id=ps_id,
+                                  pstate_type=PowerStateType.SLEEP,
+                                  watt_idle=watt,
+                                  watt_full=watt)
+
+            ps_id = pstates_id.pop(sleep_pstates[1])
+            watt = float(watt_per_state[ps_id].split(":")[0])
+            switch_off_ps = PowerState(pstate_id=ps_id,
+                                       pstate_type=PowerStateType.SWITCHING_OFF,
+                                       watt_idle=watt,
+                                       watt_full=watt)
+
+            ps_id = pstates_id.pop(sleep_pstates[2])
+            watt = float(watt_per_state[ps_id].split(":")[0])
+            switch_on_ps = PowerState(pstate_id=ps_id,
+                                      pstate_type=PowerStateType.SWITCHING_ON,
+                                      watt_idle=watt,
+                                      watt_full=watt)
+
+            power_states.append(sleep_ps)
+            power_states.append(switch_off_ps)
+            power_states.append(switch_on_ps)
+
+        # Get Computation Power States
+        for ps_id in pstates_id.values():
+            watts = watt_per_state[ps_id].split(":")
+            comp_ps = PowerState(pstate_id=ps_id,
+                                 pstate_type=PowerStateType.COMPUTATION,
+                                 watt_idle=float(watts[0]),
+                                 watt_full=float(watts[1]))
+            power_states.append(comp_ps)
+
+        return power_states
+
+    @staticmethod
+    def get_platform(data: dict) -> Platform:
+        """ Get a `Platform` from Batsim json.
+
+        Args:
+            data: the Batsim json data.
+
+        Returns:
+            A platform with all hosts.
+        """
+        hosts = []
+        for r in data["compute_resources"]:
+            pstates = None
+            props = r.get("properties", None)
+            if props and "watt_per_state" in props:
+                pstates = SimulationBeginsBatsimEvent.get_power_states(props)
+
+            hosts.append(
+                Host(id=r['id'], name=r['name'], pstates=pstates))
+
+        return Platform(hosts)
 
 
 class SimulationEndsBatsimEvent(BatsimEvent):

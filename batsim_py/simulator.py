@@ -17,7 +17,7 @@ from typing import Optional
 from .dispatcher import dispatch
 from .events import SimulatorEvent
 from .jobs import Job
-from .protocol import get_platform_from_xml
+from .protocol import SimulationBeginsBatsimEvent
 from .protocol import NetworkHandler
 from .protocol import BatsimMessage
 from .protocol import ResourcePowerStateChangedBatsimEvent
@@ -75,6 +75,7 @@ class SimulatorHandler:
         # Batsim events handlers
         self.__batsim_event_handlers: Dict[Any, Any] = {
             BatsimEventType.SIMULATION_ENDS: self.__on_batsim_simulation_ends,
+            BatsimEventType.SIMULATION_BEGINS: self.__on_batsim_simulation_begins,
             BatsimEventType.JOB_COMPLETED: self.__on_batsim_job_completed,
             BatsimEventType.JOB_SUBMITTED: self.__on_batsim_job_submitted,
             BatsimEventType.RESOURCE_STATE_CHANGED: self.__on_batsim_host_state_changed,
@@ -158,7 +159,8 @@ class SimulatorHandler:
         Raises:
             ValueError: In case of invalid arguments value.
             RuntimeError: In case of invalid platform description or the 
-                simulation is already running.
+                simulation is already running or the platform could not be
+                loaded.
             NotImplementedError: In case of not supported properties in the
                 platform description.
 
@@ -173,7 +175,6 @@ class SimulatorHandler:
         if self.is_running:
             raise RuntimeError("The simulation is already running.")
 
-        self.__platform = get_platform_from_xml(platform)
         self.__jobs = []
         self.__current_time = 0.
         self.__simulation_time = simulation_time
@@ -194,6 +195,9 @@ class SimulatorHandler:
 
         self.__network.bind()
         self.__handle_batsim_events()
+
+        if not self.__platform:
+            raise RuntimeError("Could not load platfrom from Batsim.")
 
         if self.__simulation_time:
             self.__set_batsim_call_me_later(self.__simulation_time)
@@ -396,7 +400,7 @@ class SimulatorHandler:
             RuntimeError: In case of the simulation is not running or the host
                 cannot be switched on because there is no power state defined 
                 in the platform or it is not actually sleeping.
-            LookupError: In case of host not found.
+            LookupError: In case of host not found or power state could not be found.
         """
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
@@ -422,7 +426,7 @@ class SimulatorHandler:
             RuntimeError: In case of the simulation is not running or the host
                 cannot be switched off because there is no power state defined 
                 in the platform or it is not actually idle.
-            LookupError: In case of host not found.
+            LookupError: In case of host not found or power state could not be found.
         """
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
@@ -451,7 +455,8 @@ class SimulatorHandler:
             RuntimeError: In case of the simulation is not running or the 
                 power state is invalid or was not found or 
                 the current host state is not idle nor computing.
-            LookupError: In case of host not found.
+            LookupError: In case of host not found or power state could 
+                not be found or power state is invalid.
         """
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
@@ -463,6 +468,7 @@ class SimulatorHandler:
         host._set_computation_pstate(pstate_id)
 
         # Sync Batsim
+        assert host.pstate
         self.__set_batsim_host_pstate(host.id, host.pstate.id)
 
     def __start_runnable_jobs(self) -> None:
@@ -571,6 +577,9 @@ class SimulatorHandler:
         self.__network.send(msg)
         self.__batsim_requests.clear()
 
+    def __on_batsim_simulation_begins(self, event: SimulationBeginsBatsimEvent) -> None:
+        self.__platform = event.platform
+
     def __on_batsim_simulation_ends(self, _) -> None:
         """ Handle batsim simulation ends event. """
         if self.__simulator:
@@ -591,6 +600,8 @@ class SimulatorHandler:
 
         for h_id in event.resources:
             h = self.__platform.get(h_id)
+            assert h.pstate
+
             if h.is_switching_off:
                 h._set_off()
             elif h.is_switching_on:

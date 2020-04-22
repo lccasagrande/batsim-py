@@ -39,7 +39,7 @@ class Monitor(ABC):
     @property
     @abstractmethod
     def info(self) -> dict:
-        """ Get monitor info about the simulation. 
+        """ Get monitor info about the simulation.
 
         Returns:
             A dict with all the information collected.
@@ -99,7 +99,7 @@ class JobMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation. 
+        """ Get monitor info about the simulation.
 
         Returns:
             A dict with all the information collected.
@@ -189,7 +189,7 @@ class SchedulerMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation. 
+        """ Get monitor info about the simulation.
 
         Returns:
             A dict with all the information collected.
@@ -252,7 +252,7 @@ class SchedulerMonitor(Monitor):
 class HostMonitor(Monitor):
     """ Simulation Host Monitor class.
 
-    This monitor collects statistics about the time each host spent on each 
+    This monitor collects statistics about the time each host spent on each
     of its possible states. Moreover, it computes the total energy consumed
     and the total number of state switches.
 
@@ -265,7 +265,7 @@ class HostMonitor(Monitor):
 
     def __init__(self, simulator: SimulatorHandler) -> None:
         super().__init__(simulator)
-        self.__last_host_state: dict = {}
+        self.__last_state: dict = {}
         self.__info: dict = {
             'time_idle':  0,
             'time_computing':  0,
@@ -295,7 +295,7 @@ class HostMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation. 
+        """ Get monitor info about the simulation.
 
         Returns:
             A dict with all the information collected.
@@ -310,9 +310,10 @@ class HostMonitor(Monitor):
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         assert self._simulator.platform
         t_now = self._simulator.current_time
-        self.__last_host_state = {}
+
+        self.__last_state = {}
         for h in self._simulator.platform.hosts:
-            self.__last_host_state[h.id] = (h.pstate, h.state, t_now)
+            self.__last_state[h.id] = (t_now, h.power, h.state, h.pstate)
 
         self.__info = {k: 0 for k in self.__info.keys()}
         self.__info['nb_computing_machines'] = self._simulator.platform.size
@@ -325,44 +326,45 @@ class HostMonitor(Monitor):
     def __on_host_state_changed(self, sender: Host) -> None:
         self.__update_info(sender)
 
-    def __update_info(self, host: Host) -> None:
-        pstate, state, t_start = self.__last_host_state[host.id]
+    def __update_info(self, h: Host) -> None:
+        t_start, power, state, pstate = self.__last_state[h.id]
 
         # Update Info
         time_spent = self._simulator.current_time - t_start
+        energy_consumption = time_spent * (power or 0)
+        energy_wasted = 0
+
         if state == HostState.IDLE:
             self.__info['time_idle'] += time_spent
-            consumption = waste = pstate.power_profile.idle * time_spent
+            energy_wasted = energy_consumption
         elif state == HostState.COMPUTING:
             self.__info['time_computing'] += time_spent
-            consumption, waste = pstate.power_profile.full_load * time_spent, 0
         elif state == HostState.SWITCHING_OFF:
             self.__info['time_switching_off'] += time_spent
-            consumption = waste = pstate.power_profile.idle * time_spent
+            energy_wasted = energy_consumption
         elif state == HostState.SWITCHING_ON:
             self.__info['time_switching_on'] += time_spent
-            consumption = waste = pstate.power_profile.idle * time_spent
+            energy_wasted = energy_consumption
         elif state == HostState.SLEEPING:
             self.__info['time_sleeping'] += time_spent
-            consumption, waste = pstate.power_profile.idle * time_spent, 0
         else:
             raise NotImplementedError
 
-        self.__info['consumed_joules'] += consumption
-        self.__info['energy_waste'] += waste
+        self.__info['consumed_joules'] += energy_consumption
+        self.__info['energy_waste'] += energy_wasted
 
-        if pstate.id != host.pstate.id:
+        if h.pstate and pstate.id != h.pstate.id:
             self.__info['nb_switches'] += 1
 
         # Update Last State
         t_now = self._simulator.current_time
-        self.__last_host_state[host.id] = (host.pstate, host.state, t_now)
+        self.__last_state[h.id] = (t_now, h.power, h.state, h.pstate)
 
 
 class SimulationMonitor(Monitor):
     """ Simulation Monitor class.
 
-    This monitor collects statistics about the simulation. It merges the 
+    This monitor collects statistics about the simulation. It merges the
     statistics from the Scheduler Monitor with the Host Monitor.
 
     Args:
@@ -392,7 +394,7 @@ class SimulationMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation. 
+        """ Get monitor info about the simulation.
 
         Returns:
             A dict with all the information collected.
@@ -447,7 +449,7 @@ class HostStateSwitchMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation. 
+        """ Get monitor info about the simulation.
 
         Returns:
             A dict with all the information collected.
@@ -517,7 +519,7 @@ class HostPowerStateSwitchMonitor(Monitor):
     def __init__(self, simulator: SimulatorHandler) -> None:
         super().__init__(simulator)
 
-        self.__last_host_pstate_id: dict = {}
+        self.__last_pstate_id: dict = {}
         self.__info: dict = {'time': [], 'machine_id': [], 'new_pstate': []}
 
         subscribe(
@@ -532,7 +534,7 @@ class HostPowerStateSwitchMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation. 
+        """ Get monitor info about the simulation.
 
         Returns:
             A dict with all the information collected.
@@ -545,23 +547,29 @@ class HostPowerStateSwitchMonitor(Monitor):
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         assert self._simulator.platform
-        self.__last_host_pstate_id = {
-            h.id: h.pstate.id for h in self._simulator.platform.hosts
-        }
+
         self.__info = {k: [] for k in self.__info.keys()}
 
+        hosts = [h for h in self._simulator.platform.hosts if h.pstate]
+
+        self.__last_pstate_id = {
+            h.id: h.pstate.id for h in hosts}  # type:ignore
+
         # Record initial state
-        for pstate_id, hosts in groupby(self._simulator.platform.hosts, key=lambda h: h.pstate.id):
+        for p, hs in groupby(hosts, key=lambda h: h.pstate.id):  # type:ignore
             self.__info['time'].append(self._simulator.current_time)
-            procset = ProcSet(*[h.id for h in hosts])
+            procset = ProcSet(*[h.id for h in hs])
             self.__info['machine_id'].append(str(procset))
-            self.__info['new_pstate'].append(pstate_id)
+            self.__info['new_pstate'].append(p)
 
     def __on_host_power_state_changed(self, sender: Host) -> None:
-        if self.__last_host_pstate_id[sender.id] == sender.pstate.id:
+        assert sender.id in self.__last_pstate_id
+        assert sender.pstate
+
+        if self.__last_pstate_id[sender.id] == sender.pstate.id:
             return
 
-        self.__last_host_pstate_id[sender.id] = sender.pstate.id
+        self.__last_pstate_id[sender.id] = sender.pstate.id
         if sender.pstate.type == PowerStateType.SWITCHING_OFF:
             new_pstate_id = -2
         elif sender.pstate.type == PowerStateType.SWITCHING_ON:
@@ -584,7 +592,7 @@ class HostPowerStateSwitchMonitor(Monitor):
 class ConsumedEnergyMonitor(Monitor):
     """ Simulation Energy Monitor class.
 
-    This monitor collects energy statistics. It'll record the platform consumed 
+    This monitor collects energy statistics. It'll record the platform consumed
     energy when a job starts/finish or a host changes its state/power state.
 
     Args:
@@ -605,7 +613,7 @@ class ConsumedEnergyMonitor(Monitor):
 
     def __init__(self, simulator: SimulatorHandler) -> None:
         super().__init__(simulator)
-        self.__last_host_state: dict = {}
+        self.__last_state: dict = {}
         self.__info: dict = {
             'time': [], 'energy': [], 'event_type': [], 'wattmin': [], 'epower': []
         }
@@ -631,7 +639,7 @@ class ConsumedEnergyMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation. 
+        """ Get monitor info about the simulation.
 
         Returns:
             A dict with all the information collected.
@@ -644,9 +652,11 @@ class ConsumedEnergyMonitor(Monitor):
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         assert self._simulator.platform
+        t_now = self._simulator.current_time
         self.__info = {k: [] for k in self.__info.keys()}
-        self.__last_host_state = {
-            h.id: (h.pstate, h.state, self._simulator.current_time) for h in self._simulator.platform.hosts
+
+        self.__last_state = {
+            h.id: (t_now, h.power, h.pstate) for h in self._simulator.platform.hosts
         }
 
     def __handle_job_started_event(self, sender: Host) -> None:
@@ -661,19 +671,17 @@ class ConsumedEnergyMonitor(Monitor):
     def __update_info(self, event_type: str) -> None:
         assert self._simulator.platform
         consumed_energy = wattmin = epower = 0.
-        for host in self._simulator.platform.hosts:
-            pstate, state, t_start = self.__last_host_state[host.id]
-
-            time = self._simulator.current_time - t_start
-            wattage = pstate.power_profile.full_load if state == HostState.COMPUTING else pstate.power_profile.idle
+        for h in self._simulator.platform.hosts:
+            t_start, power, pstate = self.__last_state[h.id]
+            t_now = self._simulator.current_time
+            wattage = power or 0
 
             epower += wattage
-            consumed_energy += wattage * time
-            wattmin += host.pstate.power_profile.full_load
+            consumed_energy += wattage * (t_now - t_start)
+            wattmin += pstate.watt_full if pstate else 0
 
             # Update Last State
-            self.__last_host_state[host.id] = (
-                host.pstate, host.state, self._simulator.current_time)
+            self.__last_state[h.id] = (t_now, h.power, h.pstate)
 
         consumed_energy += self.__info['energy'][-1] if self.__info['energy'] else 0
         self.__info["time"].append(self._simulator.current_time)
