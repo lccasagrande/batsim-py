@@ -312,7 +312,7 @@ class HostMonitor(Monitor):
         t_now = self._simulator.current_time
 
         self.__last_state = {}
-        for h in self._simulator.platform.hosts:
+        for h in self._simulator.platform:
             self.__last_state[h.id] = (t_now, h.power, h.state, h.pstate)
 
         self.__info = {k: 0 for k in self.__info.keys()}
@@ -320,7 +320,7 @@ class HostMonitor(Monitor):
 
     def __on_simulation_ends(self, sender: SimulatorHandler) -> None:
         assert self._simulator.platform
-        for h in self._simulator.platform.hosts:
+        for h in self._simulator.platform:
             self.__update_info(h)
 
     def __on_host_state_changed(self, sender: Host) -> None:
@@ -467,7 +467,7 @@ class HostStateSwitchMonitor(Monitor):
 
         # Update initial state
         self.__info['time'][-1] = self._simulator.current_time
-        for h in self._simulator.platform.hosts:
+        for h in self._simulator.platform:
             key = self.__get_key_from_state(h.state)
             self.__last_host_state[h.id] = key
             self.__info[key][-1] += 1
@@ -550,7 +550,7 @@ class HostPowerStateSwitchMonitor(Monitor):
 
         self.__info = {k: [] for k in self.__info.keys()}
 
-        hosts = [h for h in self._simulator.platform.hosts if h.pstate]
+        hosts = [h for h in self._simulator.platform if h.pstate]
 
         self.__last_pstate_id = {
             h.id: h.pstate.id for h in hosts}  # type:ignore
@@ -656,7 +656,7 @@ class ConsumedEnergyMonitor(Monitor):
         self.__info = {k: [] for k in self.__info.keys()}
 
         self.__last_state = {
-            h.id: (t_now, h.power, h.pstate) for h in self._simulator.platform.hosts
+            h.id: (t_now, h.power, h.pstate) for h in self._simulator.platform
         }
 
     def __handle_job_started_event(self, sender: Host) -> None:
@@ -671,7 +671,7 @@ class ConsumedEnergyMonitor(Monitor):
     def __update_info(self, event_type: str) -> None:
         assert self._simulator.platform
         consumed_energy = wattmin = epower = 0.
-        for h in self._simulator.platform.hosts:
+        for h in self._simulator.platform:
             t_start, power, pstate = self.__last_state[h.id]
             t_now = self._simulator.current_time
             wattage = power or 0

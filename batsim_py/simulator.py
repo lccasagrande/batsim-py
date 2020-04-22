@@ -103,7 +103,7 @@ class SimulatorHandler:
     def agenda(self) -> Optional[Sequence[Tuple[Host, Sequence[Job]]]]:
         """ A sequence of hosts with their jobs queue."""
         if self.__platform:
-            return [(h, h.jobs) for h in self.__platform.hosts]
+            return [(h, h.jobs) for h in self.__platform]
         else:
             return None
 

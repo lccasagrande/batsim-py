@@ -1,4 +1,6 @@
 from enum import Enum
+from typing import Iterator
+from typing import Iterable
 from typing import Callable
 from typing import Optional
 from typing import Sequence
@@ -126,7 +128,7 @@ class Host(Identifier):
             want to control the DVFS, there is no need to provide a sleep and
             a transition power state.
         metadata: Extra host properties that can be used by some functions
-            beyond the scope of Batsim or Batsim-py. 
+            beyond the scope of Batsim or Batsim-py.
 
     Raises:
         TypeError: In case of invalid arguments.
@@ -558,7 +560,11 @@ class Platform:
         if not hosts:
             raise ValueError("A platform must contain at least one host.")
 
-        self.__hosts = {h.id: h for h in sorted(hosts, key=lambda h: h.id)}
+        if not all(h.id == i for i, h in enumerate(hosts)):
+            raise SystemError('The simulator expected hosts id to '
+                              'be a sequence starting from 0')
+
+        self.__hosts = tuple(sorted(hosts, key=lambda h: h.id))
 
     @property
     def size(self) -> int:
@@ -568,34 +574,15 @@ class Platform:
     @property
     def power(self) -> float:
         """ The current consumption (in Watts). """
-        return sum(h.power for h in self.__hosts.values() if h.power)
-
-    @property
-    def hosts(self) -> Sequence[Host]:
-        """ The platform resources. """
-        return list(self.__hosts.values())
+        return sum(h.power for h in self.__hosts if h.power)
 
     @property
     def state(self) -> Sequence[HostState]:
         """ The current platform state. """
-        return [h.state for h in self.__hosts.values()]
+        return [h.state for h in self.__hosts]
 
-    def get_all(self,
-                filtr: Optional[Callable[[Host], bool]] = None) -> Sequence[Host]:
-        """ Filter hosts.
-
-        Args:
-            filtr: A function that returns if the host must be included or not.
-
-        Returns:
-            A filtered list of hosts.
-        """
-        if filtr:
-            filtered = [h for h_id, h in self.__hosts.items() if filtr(h)]
-        else:
-            filtered = list(self.__hosts.values())
-
-        return filtered
+    def __iter__(self) -> Iterator[Host]:
+        return iter(self.__hosts)
 
     def get_available(self) -> Sequence[Host]:
         """ Get available hosts.
@@ -603,9 +590,9 @@ class Platform:
         An available host is a host that was not allocated for any job.
 
         Returns:
-            A list of available hosts.
+            A iterable object with available hosts.
         """
-        return self.get_all(lambda h: not h.is_allocated)
+        return list(filter(lambda h: not h.is_allocated, self.__hosts))
 
     def get(self, host_id: int) -> Host:
         """ Get host by id.
@@ -619,9 +606,8 @@ class Platform:
         Raises:
             LookupError: In case of host could not be found.
         """
-        host = self.__hosts.get(host_id, None)
-        if not host:
+        if host_id >= self.size:
             raise LookupError('Host with id {} was not found in '
                               'the platform.'.format(host_id))
 
-        return host
+        return self.__hosts[host_id]
