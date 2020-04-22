@@ -324,7 +324,7 @@ class SimulatorHandler:
 
         # Allocate
         for h_id in hosts_id:
-            host = self.__platform.get(h_id)
+            host = self.__platform.get_by_id(h_id)
             host._allocate(job)
 
         job._allocate(hosts_id)
@@ -409,7 +409,7 @@ class SimulatorHandler:
             raise SystemError("For some reason, the platform was not loaded.")
 
         for h_id in hosts_id:
-            host = self.__platform.get(h_id)
+            host = self.__platform.get_by_id(h_id)
             host._switch_on()
             ending_pstate = host.get_default_pstate()
 
@@ -435,7 +435,7 @@ class SimulatorHandler:
             raise SystemError("For some reason, the platform was not loaded.")
 
         for h_id in hosts_id:
-            host = self.__platform.get(h_id)
+            host = self.__platform.get_by_id(h_id)
             host._switch_off()
             ending_pstate = host.get_sleep_pstate()
 
@@ -464,7 +464,7 @@ class SimulatorHandler:
         if not self.__platform:
             raise SystemError("For some reason, the platform was not loaded.")
 
-        host = self.__platform.get(host_id)
+        host = self.__platform.get_by_id(host_id)
         host._set_computation_pstate(pstate_id)
 
         # Sync Batsim
@@ -497,7 +497,7 @@ class SimulatorHandler:
             is_ready = True
             # Check if all hosts are active and switch on sleeping hosts
             for h_id in job.allocation:
-                host = self.__platform.get(h_id)
+                host = self.__platform.get_by_id(h_id)
 
                 if not host.is_idle:
                     is_ready = False
@@ -599,7 +599,7 @@ class SimulatorHandler:
             raise SystemError("For some reason, the platform was not loaded.")
 
         for h_id in event.resources:
-            h = self.__platform.get(h_id)
+            h = self.__platform.get_by_id(h_id)
             assert h.pstate
 
             if h.is_switching_off:

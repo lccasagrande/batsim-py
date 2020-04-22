@@ -14,6 +14,16 @@ from .jobs import Job
 from .utils.commons import Identifier
 
 
+class HostRole(Enum):
+    """ Batsim Host Role
+
+    This class enumerates the distinct roles a host can be designed for.
+    """
+    UNKNOWN = 0
+    COMPUTE = 1
+    STORAGE = 2
+
+
 class HostState(Enum):
     """ Batsim Host State
 
@@ -118,6 +128,7 @@ class Host(Identifier):
     Args:
         id: The host id. Must be unique within a platform.
         name: The host name.
+        role: The host role. Defaults to Compute.
         pstates: The host power states. Defaults to None.
             A host can have several computing power states
             and only one sleep and transition (On/Off)
@@ -128,7 +139,7 @@ class Host(Identifier):
             want to control the DVFS, there is no need to provide a sleep and
             a transition power state.
         metadata: Extra host properties that can be used by some functions
-            beyond the scope of Batsim or Batsim-py.
+            beyond the scope of Batsim or Batsim-py. Defaults to None.
 
     Raises:
         TypeError: In case of invalid arguments.
@@ -144,6 +155,7 @@ class Host(Identifier):
     def __init__(self,
                  id: int,
                  name: str,
+                 role: HostRole = HostRole.COMPUTE,
                  pstates: Optional[Sequence[PowerState]] = None,
                  metadata: Optional[dict] = None) -> None:
         if pstates and not all(isinstance(p, PowerState) for p in pstates):
@@ -151,8 +163,13 @@ class Host(Identifier):
                             'sequence of `PowerState` instances, '
                             'got {}.'.format(pstates))
 
+        if not isinstance(role, HostRole):
+            raise TypeError('Expected `role` argument to be a '
+                            'instance of `HostRole`, got {}.'.format(role))
+
         super().__init__(int(id))
         self.__name = str(name)
+        self.__role = role
         self.__state: HostState = HostState.IDLE
         self.__jobs: List[Job] = []
         self.__pstates = None
@@ -173,6 +190,11 @@ class Host(Identifier):
     def name(self) -> str:
         """ Host name. """
         return self.__name
+
+    @property
+    def role(self) -> HostRole:
+        """ Host role. """
+        return self.__role
 
     @property
     def state(self) -> HostState:
@@ -594,7 +616,25 @@ class Platform:
         """
         return list(filter(lambda h: not h.is_allocated, self.__hosts))
 
-    def get(self, host_id: int) -> Host:
+    def get_by_role(self, host_role: HostRole) -> Sequence[Host]:
+        """ Get host by id.
+
+        Args:
+            host_role: The host role.
+
+        Returns:
+            The host with the corresponding role.
+
+        Raises:
+            TypeError: In case of invalid arguments type.
+        """
+        if not isinstance(host_role, HostRole):
+            raise TypeError('Expected `host_role` argument to be an instance '
+                            'of `HostRole`, got {}.'.format(host_role))
+
+        return list(filter(lambda h: h.role == host_role, self.__hosts))
+
+    def get_by_id(self, host_id: int) -> Host:
         """ Get host by id.
 
         Args:

@@ -22,6 +22,7 @@ from .jobs import DataStagingJobProfile
 from .resources import PowerState
 from .resources import PowerStateType
 from .resources import Host
+from .resources import HostRole
 from .resources import Platform
 
 
@@ -537,15 +538,21 @@ class SimulationBeginsBatsimEvent(BatsimEvent):
         Returns:
             A platform with all hosts.
         """
-        hosts = []
-        for r in data["compute_resources"]:
+        def get_host(r, role):
             pstates = None
             props = r.get("properties", None)
             if props and "watt_per_state" in props:
                 pstates = SimulationBeginsBatsimEvent.get_power_states(props)
                 del props["watt_per_state"]
 
-            hosts.append(Host(r['id'], r['name'], pstates, props))
+            return Host(r['id'], r['name'], role, pstates, props)
+
+        hosts = []
+        for r in data["compute_resources"]:
+            hosts.append(get_host(r, HostRole.COMPUTE))
+
+        for r in data["storage_resources"]:
+            hosts.append(get_host(r, HostRole.STORAGE))
 
         return Platform(hosts)
 

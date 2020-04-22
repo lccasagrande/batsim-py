@@ -563,7 +563,9 @@ class HostPowerStateSwitchMonitor(Monitor):
             self.__info['new_pstate'].append(p)
 
     def __on_host_power_state_changed(self, sender: Host) -> None:
-        assert sender.id in self.__last_pstate_id
+        if sender.id not in self.__last_pstate_id:
+            return
+
         assert sender.pstate
 
         if self.__last_pstate_id[sender.id] == sender.pstate.id:
