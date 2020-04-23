@@ -9,10 +9,13 @@ from typing import Callable
 from typing import Sequence
 from typing import Dict
 from typing import List
-from typing import Tuple
 from typing import Any
 from typing import DefaultDict
 from typing import Optional
+from typing import Iterator
+from typing import NamedTuple
+
+import numpy as np
 
 from .dispatcher import dispatch
 from .events import SimulatorEvent
@@ -34,6 +37,12 @@ from .protocol import SetResourceStateBatsimRequest
 from .resources import Host
 from .resources import Platform
 from .utils.commons import get_free_tcp_address
+
+
+class Reservation(NamedTuple):
+    """ Describes a host reservation. """
+    host_id: int
+    release_time: float
 
 
 class SimulatorHandler:
@@ -96,16 +105,24 @@ class SimulatorHandler:
 
     @property
     def queue(self) -> Sequence[Job]:
-        """ A sequence of all jobs waiting in the queue."""
+        """ A sequence of all jobs waiting in the queue.  """
         return [j for j in self.__jobs if j.is_submitted]
 
     @property
-    def agenda(self) -> Optional[Sequence[Tuple[Host, Sequence[Job]]]]:
-        """ A sequence of hosts with their jobs queue."""
+    def agenda(self) -> Iterator[Reservation]:
+        """ A sequence of the expected release time for each host. """
         if self.__platform:
-            return [(h, h.jobs) for h in self.__platform]
-        else:
-            return None
+            for host in self.__platform:
+                release_t = 0.
+                for job in host.jobs:
+                    if job.walltime:
+                        runtime = self.current_time - job.subtime
+                        job_release_t = job.walltime - runtime
+                    else:
+                        job_release_t = np.inf
+
+                    release_t = max(release_t, job_release_t)
+                yield Reservation(host.id, release_t)
 
     @property
     def platform(self) -> Optional[Platform]:
