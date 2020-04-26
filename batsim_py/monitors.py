@@ -51,6 +51,11 @@ class Monitor(ABC):
         """ Dump info to a csv file. """
         raise NotImplementedError
 
+    @abstractmethod
+    def to_dataframe(self) -> pd.DataFrame:
+        """ Return a Dataframe object. """
+        raise NotImplementedError
+
 
 class JobMonitor(Monitor):
     """ Simulation Job Monitor class.
@@ -108,7 +113,11 @@ class JobMonitor(Monitor):
 
     def to_csv(self, fn: str) -> None:
         """ Dump info to a csv file. """
-        pd.DataFrame.from_dict(self.__info).to_csv(fn, index=False)
+        self.to_dataframe().to_csv(fn, index=False)
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """ Return a Dataframe object. """
+        return pd.DataFrame.from_dict(self.__info)
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         self.__info = {k: [] for k in self.__info.keys()}
@@ -198,9 +207,11 @@ class SchedulerMonitor(Monitor):
 
     def to_csv(self, fn: str) -> None:
         """ Dump info to a csv file. """
-        pd.DataFrame.from_dict(
-            self.__info,
-            orient='index').T.to_csv(fn, index=False)
+        self.to_dataframe().to_csv(fn, index=False)
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """ Return a Dataframe object. """
+        return pd.DataFrame.from_dict(self.__info, orient='index').T
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         self.__info = {k: 0 for k in self.__info.keys()}
@@ -304,8 +315,11 @@ class HostMonitor(Monitor):
 
     def to_csv(self, fn: str) -> None:
         """ Dump info to a csv file. """
-        pd.DataFrame.from_dict(
-            self.__info, orient='index').T.to_csv(fn, index=False)
+        self.to_dataframe().to_csv(fn, index=False)
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """ Return a Dataframe object. """
+        return pd.DataFrame.from_dict(self.__info, orient='index').T
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         assert self._simulator.platform
@@ -405,8 +419,11 @@ class SimulationMonitor(Monitor):
 
     def to_csv(self, fn: str) -> None:
         """ Dump info to a csv file. """
-        pd.DataFrame.from_dict(
-            self.info, orient='index').T.to_csv(fn, index=False)
+        self.to_dataframe().to_csv(fn, index=False)
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """ Return a Dataframe object. """
+        return pd.DataFrame.from_dict(self.info, orient='index').T
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         self.__sim_start_time = tm.time()
@@ -458,7 +475,11 @@ class HostStateSwitchMonitor(Monitor):
 
     def to_csv(self, fn: str) -> None:
         """ Dump info to a csv file. """
-        pd.DataFrame.from_dict(self.__info).to_csv(fn, index=False)
+        self.to_dataframe().to_csv(fn, index=False)
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """ Return a Dataframe object. """
+        return pd.DataFrame.from_dict(self.__info)
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         assert self._simulator.platform
@@ -543,7 +564,11 @@ class HostPowerStateSwitchMonitor(Monitor):
 
     def to_csv(self, fn: str) -> None:
         """ Dump info to a csv file. """
-        pd.DataFrame.from_dict(self.__info).to_csv(fn, index=False)
+        self.to_dataframe().to_csv(fn, index=False)
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """ Return a Dataframe object. """
+        return pd.DataFrame.from_dict(self.__info)
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         assert self._simulator.platform
@@ -650,7 +675,11 @@ class ConsumedEnergyMonitor(Monitor):
 
     def to_csv(self, fn: str) -> None:
         """ Dump info to a csv file. """
-        pd.DataFrame.from_dict(self.__info).to_csv(fn, index=False)
+        self.to_dataframe().to_csv(fn, index=False)
+
+    def to_dataframe(self) -> pd.DataFrame:
+        """ Return a Dataframe object. """
+        return pd.DataFrame.from_dict(self.__info)
 
     def __on_simulation_begins(self, sender: SimulatorHandler) -> None:
         assert self._simulator.platform
