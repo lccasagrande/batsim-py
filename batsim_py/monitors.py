@@ -139,8 +139,7 @@ class JobMonitor(Monitor):
         self.__info['waiting_time'].append(sender.waiting_time)
         self.__info['turnaround_time'].append(sender.turnaround_time)
         self.__info['stretch'].append(sender.slowdown)
-        self.__info['allocated_resources'].append(
-            str(ProcSet(*sender.allocation)))
+        self.__info['allocated_resources'].append(ProcSet(*sender.allocation))
         self.__info['consumed_energy'].append(-1)
 
 
