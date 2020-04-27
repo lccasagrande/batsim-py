@@ -3,6 +3,8 @@ from typing import Any
 from typing import Callable
 
 from pydispatch import dispatcher
+from pydispatch import errors
+from pydispatch import saferef
 
 from .events import Event
 
@@ -30,7 +32,7 @@ def subscribe(listener: Callable[[Any], None],
         raise TypeError('Expected `event` argument to be an instance of '
                         '`Event`, got {}.'.format(event))
 
-    dispatcher.connect(listener, signal=event, sender=sender)
+    dispatcher.connect(listener, signal=event, sender=sender, weak=True)
 
 
 def dispatch(event: Event,
@@ -80,7 +82,64 @@ def unsubscribe(listener: Callable[[Any], None],
         raise TypeError('Expected `event` argument to be an instance of '
                         '`Event`, got {}.'.format(event))
 
-    dispatcher.disconnect(listener, signal=event, sender=sender)
+    dispatcher.disconnect(listener, signal=event, sender=sender, weak=True)
+
+
+def __disconnect_by_id(receiver: Any,
+                       signal: Any,
+                       sender_id: Any,
+                       weak: bool = True) -> None:
+    """Disconnect receiver from sender for signal using sender ID.
+
+    receiver -- the registered receiver to disconnect
+    signal -- the registered signal to disconnect
+    sender_id -- the registered sender id to disconnect
+    weak -- the weakref state to disconnect
+
+    disconnect reverses the process of connect,
+    the semantics for the individual elements are
+    logically equivalent to a tuple of
+    (receiver, signal, sender, weak) used as a key
+    to be deleted from the internal routing tables.
+    (The actual process is slightly more complex
+    but the semantics are basically the same).
+
+    Note:
+        Using disconnect is not required to cleanup
+        routing when an object is deleted, the framework
+        will remove routes for deleted objects
+        automatically.  It's only necessary to disconnect
+        if you want to stop routing to a live object.
+
+    returns None, may raise DispatcherTypeError or
+        DispatcherKeyError
+    """
+    if signal is None:
+        raise errors.DispatcherTypeError('Signal cannot be None (receiver={} '
+                                         'sender={})'.format(receiver, sender_id))
+    if weak:
+        receiver = saferef.safeRef(receiver)
+    try:
+        signals = dispatcher.connections[sender_id]
+        receivers = signals[signal]
+    except KeyError:
+        raise errors.DispatcherKeyError('No receivers found for signal {} from '
+                                        'sender {}'.format(signal, sender_id))
+    try:
+        dispatcher._removeOldBackRefs(sender_id, signal, receiver, receivers)
+    except ValueError:
+        raise errors.DispatcherKeyError('No connection to receiver {} for '
+                                        'signal {} from sender {}'
+                                        ''.format(receiver, signal, sender_id))
+
+    dispatcher._cleanupConnections(sender_id, signal)
+
+
+def close_connections():
+    for sender_id, events in list(dispatcher.connections.items()):
+        for event, listeners in list(events.items()):
+            for l in list(dispatcher.liveReceivers(listeners)):
+                __disconnect_by_id(l, event, sender_id)
 
 
 def unsubscribe_listeners(event: Event,

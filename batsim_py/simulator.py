@@ -17,7 +17,7 @@ from typing import NamedTuple
 
 import numpy as np
 
-from .dispatcher import dispatch
+from . import dispatcher
 from .events import SimulatorEvent
 from .jobs import Job
 from .protocol import SimulationBeginsBatsimEvent
@@ -219,7 +219,7 @@ class SimulatorHandler:
         if self.__simulation_time:
             self.__set_batsim_call_me_later(self.__simulation_time)
 
-        dispatch(SimulatorEvent.SIMULATION_BEGINS, self)
+        dispatcher.dispatch(SimulatorEvent.SIMULATION_BEGINS, self)
 
     def close(self) -> None:
         """ Close the simulation process.
@@ -234,7 +234,8 @@ class SimulatorHandler:
         self.__simulation_time = None
         self.__batsim_requests.clear()
         self.__callbacks.clear()
-        dispatch(SimulatorEvent.SIMULATION_ENDS, self)
+        dispatcher.dispatch(SimulatorEvent.SIMULATION_ENDS, self)
+        dispatcher.close_connections()
 
     def proceed_time(self, time: Optional[float] = None) -> None:
         """ Proceed the simulation process to the next event or time.
