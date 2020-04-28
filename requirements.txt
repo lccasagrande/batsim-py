@@ -1,5 +1,5 @@
 
 zmq==0.0.0
-procset>=1.0
-pydispatcher>=2.0.5
-pandas>=1.0.1
+procset==1.0
+pydispatcher==2.0.5
+pandas==0.25.3
