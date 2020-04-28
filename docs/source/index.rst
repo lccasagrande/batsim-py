@@ -20,3 +20,4 @@
     api_doc/monitors
     api_doc/jobs
     api_doc/resources
+    api_doc/dispatcher

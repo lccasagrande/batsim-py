@@ -81,9 +81,11 @@ The API documentation provides information on classes and modules in the Batsim-
 - `Monitors`_
 - `Jobs`_
 - `Resources`_
+- `Dispatcher`_
 
 .. _`Simulator`: https://lccasagrande.github.io/batsim-py/api_doc/simulator.html
 .. _`Events`: https://lccasagrande.github.io/batsim-py/api_doc/events.html
 .. _`Monitors`: https://lccasagrande.github.io/batsim-py/api_doc/monitors.html
 .. _`Resources`: https://lccasagrande.github.io/batsim-py/api_doc/resources.html
 .. _`Jobs`: https://lccasagrande.github.io/batsim-py/api_doc/jobs.html
+.. _`Dispatcher`: https://lccasagrande.github.io/batsim-py/api_doc/dispatcher.html
