@@ -3,19 +3,22 @@ language: python
 python:
   - "3.7"
   
+before_install:
+    - sudo apt-get install pandoc
+
 install:
-  - pip install .[docs]
+    - pip install .[docs]
 
 script:
-  - python -m unittest
+    - python -m unittest
   
 after_success:
-  - cd docs && make html
+    - cd docs && make html
 
 deploy:
-  provider: pages
-  skip_cleanup: true
-  github_token: $GITHUB_TOKEN
-  local_dir: docs/build/html
-  on:
-    branch: master
+    provider: pages
+    skip_cleanup: true
+    github_token: $GITHUB_TOKEN
+    local_dir: docs/build/html
+    on:
+        branch: master
