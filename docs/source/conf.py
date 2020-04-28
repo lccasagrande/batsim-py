@@ -10,11 +10,12 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import batsim_py
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
-import batsim_py
 
+package_path = os.path.abspath('..')
+sys.path.insert(0, package_path)
 
 
 # -- Project information -----------------------------------------------------
@@ -34,6 +35,8 @@ release = batsim_py.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'nbsphinx',
+    'sphinx.ext.mathjax',
     'sphinx.ext.todo',
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
@@ -41,8 +44,15 @@ extensions = [
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
     'sphinx_autodoc_typehints',
-    'sphinx_copybutton',
+    'sphinx_copybutton', 
 ]
+
+# nbsphinx settings
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg', 'pdf'}",
+    "--InlineBackend.rc={'figure.dpi': 96}",
+]
+nbsphinx_execute = 'never'
 
 # Napoleon settings
 napoleon_google_docstring = True
