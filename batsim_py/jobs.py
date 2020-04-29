@@ -93,7 +93,8 @@ class ParallelJobProfile(JobProfile):
             to be transferred between allocated hosts.
 
     Raises:
-        ValueError: In case of `com` argument invalid size or `cpu` is empty.
+        ValueError: In case of `com` argument invalid size or `cpu` is empty
+            or values are less than zero.
 
     Examples:
         Two hosts computing 10E6 flop/s each with local communication only.
@@ -121,6 +122,14 @@ class ParallelJobProfile(JobProfile):
             raise ValueError('Expected `com` argument to be a '
                              'list of size [host x host], got {}'.format(com))
 
+        if not all(c >= 0 for c in cpu):
+            raise ValueError('Expected `cpu` argument to have values '
+                             'not less than zero.')
+
+        if not all(c >= 0 for c in com):
+            raise ValueError('Expected `com` argument to have values '
+                             'not less than zero.')
+
         super().__init__(name)
         self.__cpu = list(cpu)
         self.__com = list(com)
@@ -146,6 +155,11 @@ class ParallelHomogeneousJobProfile(JobProfile):
         name: The profile name. Must be unique within a workload.
         cpu: The amount of flop/s to be computed on each allocated host.
         com: The amount of bytes to send and receive between each pair of hosts.
+            The loopback communication of each machine defaults to 0.
+
+    Raises:
+        ValueError: In case of both `com` and `cpu` arguments are not greater
+            than zero or any of them is negative.
 
     Examples:
         >>> profile = ParallelHomogeneousJobProfile("name", cpu=10e6, com=5e6)
@@ -155,6 +169,16 @@ class ParallelHomogeneousJobProfile(JobProfile):
                  name: str,
                  cpu: Union[int, float],
                  com: Union[int, float]) -> None:
+        if cpu == 0 and com == 0:
+            raise ValueError('Expected `cpu` or `com` arguments '
+                             ' to be greater than zero.')
+        if cpu < 0:
+            raise ValueError('Expected `cpu` argument to be '
+                             'not less than zero.')
+        if com < 0:
+            raise ValueError('Expected `cpu` argument to be '
+                             'not less than zero.')
+
         super().__init__(name)
         self.__cpu = float(cpu)
         self.__com = float(com)
@@ -182,6 +206,10 @@ class ParallelHomogeneousTotalJobProfile(JobProfile):
         com: The total amount of bytes to be sent and received on each
             pair of hosts.
 
+    Raises:
+        ValueError: In case of both `com` and `cpu` arguments are not greater
+            than zero or any of them is negative.
+
     Examples:
         >>> profile = ParallelHomogeneousTotalJobProfile("name", cpu=10e6, com=5e6)
     """
@@ -190,6 +218,16 @@ class ParallelHomogeneousTotalJobProfile(JobProfile):
                  name: str,
                  cpu:  Union[int, float],
                  com:  Union[int, float]) -> None:
+        if cpu == 0 and com == 0:
+            raise ValueError('Expected `cpu` or `com` arguments '
+                             ' to be greater than zero.')
+        if cpu < 0:
+            raise ValueError('Expected `cpu` argument to be '
+                             'not less than zero.')
+        if com < 0:
+            raise ValueError('Expected `cpu` argument to be '
+                             'not less than zero.')
+
         super().__init__(name)
         self.__cpu = float(cpu)
         self.__com = float(com)
@@ -217,7 +255,8 @@ class ComposedJobProfile(JobProfile):
 
     Raises:
         TypeError: In case of invalid arguments.
-        ValueError: In case of `repeat` argument is less than 1.
+        ValueError: In case of `repeat` argument is less than 1 or profiles
+            is empty.
 
     Examples:
         >>> profile_1 = ParallelHomogeneousTotalJobProfile("prof1", cpu=10e6, com=5e6)
@@ -232,6 +271,11 @@ class ComposedJobProfile(JobProfile):
         if repeat <= 0:
             raise ValueError('Expected `repeat` argument to be greater'
                              'than 0, got {}'.format(repeat))
+
+        if not profiles:
+            raise ValueError('Expected `profiles` argument to be a non '
+                             'empty sequence, got {}.'.format(profiles))
+
         if not all(isinstance(p, JobProfile) for p in profiles):
             raise TypeError('Expected `profiles` argument to be a '
                             'sequence of `JobProfile`, got {}'.format(profiles))
@@ -264,9 +308,9 @@ class ParallelHomogeneousPFSJobProfile(JobProfile):
         storage: The storage resource label.
 
     Raises:
-        ValueError: In case of `bytes_to_read` and `bytes_to_write` arguments
-            are not greater than or equal to zero and `storage` argument is 
-            not a valid string.
+        ValueError: In case of both `bytes_to_read` and `bytes_to_write` arguments
+            are not greater than zero or any of them is negative and `storage` 
+            argument is not a valid string.
 
     Examples:
         >>> pfs = ParallelHomogeneousPFSJobProfile("pfs", bytes_to_read=10e6, bytes_to_write=1e6, storage="pfs")
@@ -277,12 +321,15 @@ class ParallelHomogeneousPFSJobProfile(JobProfile):
                  bytes_to_read: Union[int, float],
                  bytes_to_write: Union[int, float],
                  storage: str = 'pfs') -> None:
+        if bytes_to_read == 0 and bytes_to_write == 0:
+            raise ValueError('Expected `bytes_to_read` or `bytes_to_write` '
+                             'arguments to be greater than zero.')
         if bytes_to_read < 0:
             raise ValueError('Expected `bytes_to_read` argument to be '
-                             'a positive number, got {}'.format(bytes_to_read))
+                             'not less than zero, got {}'.format(bytes_to_read))
         if bytes_to_write < 0:
             raise ValueError('Expected `bytes_to_write` argument to be '
-                             'a positive number, got {}'.format(bytes_to_write))
+                             'not less than zero, got {}'.format(bytes_to_write))
         if not storage:
             raise ValueError('Expected `storage` argument to be a '
                              'valid string, got {}'.format(storage))
@@ -334,7 +381,7 @@ class DataStagingJobProfile(JobProfile):
                  src: str,
                  dest: str) -> None:
 
-        if nb_bytes < 0:
+        if nb_bytes <= 0:
             raise ValueError('Expected `nb_bytes` argument to be a '
                              'positive number, got {}'.format(nb_bytes))
 
