@@ -11,10 +11,11 @@ install:
     - pip install .[docs]
 
 script:
-    - python setup.py test
+    - coverage run setup.py test
   
 after_success:
-    - cd docs && make html
+    - coveralls
+    - make -C docs html
 
 deploy:
     provider: pages
