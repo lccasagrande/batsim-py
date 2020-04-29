@@ -14,13 +14,13 @@ script:
     - coverage run setup.py test
   
 after_success:
-    - coveralls
     - make -C docs html
+    - coveralls
 
 deploy:
     provider: pages
     cleanup: true
     github_token: $GITHUB_TOKEN
-    local_dir: build/html
+    local_dir: docs/build/html
     on:
         branch: master
