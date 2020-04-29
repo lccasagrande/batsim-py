@@ -85,7 +85,7 @@ class ParallelJobProfile(JobProfile):
         com: A list [host x host] that defines the amount of bytes 
             to be transferred between allocated hosts.
     Raises:
-        ValueError: In case of `com` argument invalid size.
+        ValueError: In case of `com` argument invalid size or `cpu` is empty.
 
     Examples:
         Two hosts computing 10E6 flop/s each with local communication only.
@@ -105,6 +105,10 @@ class ParallelJobProfile(JobProfile):
                  name: str,
                  cpu: Sequence[Union[int, float]],
                  com: Sequence[Union[int, float]]) -> None:
+        if not cpu:
+            raise ValueError('Expected `cpu` argument to be a non '
+                             'empty sequence, got {}.'.format(cpu))
+
         if len(com) != len(cpu) * len(cpu):
             raise ValueError('Expected `com` argument to be a '
                              'list of size [host x host], got {}'.format(com))
