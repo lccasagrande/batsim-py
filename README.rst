@@ -1,11 +1,11 @@
-Batsim-py
-=========
+Batsim-py |build| |coverage| |doc| |license|
+==============================================
 `Batsim <https://batsim.readthedocs.io/en/latest/>`_ is a scientific simulator commonly used to 
 **evaluate Resource and Job Management System (RJMS) policies. Batsim-py allows using Batsim from Python 3** following 
 an event-based approach or a time-based approach.
 
 Policies that adopts an event-based approach acts in response of specific events while policies 
-following a time-based approach acts periodically. Both approaches can coexist in the same policy,
+following a time-based approach acts periodically. Both approaches can coexist in the same policy, 
 read the API documentation to understand how this can be done and what events are dispatched.
 
 Main Features
@@ -89,3 +89,19 @@ The API documentation provides information on classes and modules in the Batsim-
 .. _`Resources`: https://lccasagrande.github.io/batsim-py/api_doc/resources.html
 .. _`Jobs`: https://lccasagrande.github.io/batsim-py/api_doc/jobs.html
 .. _`Dispatcher`: https://lccasagrande.github.io/batsim-py/api_doc/dispatcher.html
+
+.. |build| image:: https://travis-ci.org/lccasagrande/batsim-py.svg?branch=master
+    :alt: coverage
+    :target: https://travis-ci.org/lccasagrande/batsim-py
+
+.. |coverage| image:: https://coveralls.io/repos/github/lccasagrande/batsim-py/badge.svg?branch=master&kill_cache=1
+    :alt: coverage
+    :target: https://coveralls.io/github/lccasagrande/batsim-py?branch=master&kill_cache=1
+
+.. |doc| image:: https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat
+    :alt: doc
+    :target: https://lccasagrande.github.io/batsim-py/index.html
+
+.. |license| image:: https://img.shields.io/github/license/lccasagrande/batsim-py
+    :alt: GitHub
+    :target: https://github.com/lccasagrande/batsim-py/blob/master/LICENSE
