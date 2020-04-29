@@ -434,6 +434,7 @@ class Job(Identifier):
 
     Raises:
         TypeError: In case of invalid arguments.
+        ValueError: In case of invalid arguments value.
     """
 
     WORKLOAD_SEPARATOR: str = "!"
@@ -447,9 +448,30 @@ class Job(Identifier):
                  walltime: Optional[Union[int, float]] = None,
                  user: Optional[str] = None) -> None:
 
+        if not name:
+            raise ValueError('Expected `name` argument to be a '
+                             'valid string, got {}'.format(name))
+
+        if not workload:
+            raise ValueError('Expected `workload` argument to be a '
+                             'valid string, got {}'.format(workload))
+
+        if res <= 0:
+            raise ValueError('Expected `res` argument to be greater '
+                             'than zero, got {}'.format(res))
+
         if not isinstance(profile, JobProfile):
             raise TypeError('Expected `profile` argument to be a '
                             'instance of JobProfile, got {}'.format(profile))
+
+        if subtime < 0:
+            raise ValueError('Expected `subtime` argument to be greater '
+                             'than or equal to zero, got {}'.format(subtime))
+
+        if walltime is not None and walltime <= 0:
+            raise ValueError('Expected `walltime` argument to be greater '
+                             'than zero, got {}'.format(walltime))
+                             
 
         job_id = "%s%s%s" % (str(workload), self.WORKLOAD_SEPARATOR, str(name))
         super().__init__(job_id)
@@ -531,7 +553,17 @@ class Job(Identifier):
     @property
     def is_finished(self) -> bool:
         """ Whether this job finished. """
-        return self.stop_time is not None
+        states = (JobState.COMPLETED_SUCCESSFULLY,
+                  JobState.COMPLETED_FAILED,
+                  JobState.COMPLETED_WALLTIME_REACHED,
+                  JobState.COMPLETED_KILLED)
+
+        return self.__state in states
+
+    @property
+    def is_rejected(self) -> bool:
+        """ Whether this job was rejected. """
+        return self.__state == JobState.REJECTED
 
     @property
     def start_time(self) -> Optional[float]:
@@ -608,17 +640,17 @@ class Job(Identifier):
             hosts: A sequence containing the allocated hosts ids.
 
         Raises:
-            RuntimeError: In case of the job is already allocated or 
-                the number of resources does not match the request.
+            RuntimeError: In case of the job is already allocated or is not in
+                the queue or the number of resources does not match the request.
 
         Dispatch:
             Event: JobEvent.ALLOCATED
         """
-        if self.__allocation is not None:
-            raise RuntimeError('This job was already allocated.'
-                               'got, {}'.format(self.state))
+        if not self.is_submitted:
+            raise RuntimeError('This job was already allocated or is not in '
+                               'the queue, got {}'.format(self.state))
         if len(hosts) != self.res:
-            raise RuntimeError('Expected `hosts` argument to be a list of hosts '
+            raise RuntimeError('Expected `hosts` argument to be a list '
                                'of length {}, got {}'.format(self.res, hosts))
 
         self.__allocation = list(hosts)
@@ -630,10 +662,17 @@ class Job(Identifier):
 
         This is an internal method to be used by the simulator only.
 
+        Raises:
+            RuntimeError: In case of the job is not in the queue.
+
         Dispatch:
             Event: JobEvent.REJECTED
         """
-        self.__state == JobState.REJECTED
+        if not self.is_submitted:
+            raise RuntimeError('Cannot reject a job that is not in the '
+                               'queue, got {}'.format(self.state))
+
+        self.__state = JobState.REJECTED
         dispatcher.dispatch(JobEvent.REJECTED, self, unique=True)
 
     def _submit(self, subtime: Union[int, float]) -> None:
@@ -677,7 +716,7 @@ class Job(Identifier):
         Dispatch:
             Event: JobEvent.KILLED
         """
-        if self.start_time is None:
+        if not self.is_running or self.start_time is None:
             raise RuntimeError('The job cannot be killed if it is not running'
                                'got, {}'.format(self.state))
 
@@ -698,16 +737,12 @@ class Job(Identifier):
             current_time: The current simulation time.
 
         Raises:
-            RuntimeError: In case of the job is was already started or 
-                the job is not runnable or the current time is less than
-                the job submission time.
+            RuntimeError: In case of the job is not runnable or the current 
+                time is less than the submission time.
 
         Dispatch:
             Event: JobEvent.STARTED
         """
-        if self.start_time is not None:
-            raise RuntimeError('The job was already started '
-                               'at {}'.format(self.start_time))
         if not self.is_runnable:
             raise RuntimeError('The job cannot start if it is not '
                                'runnable, got {}'.format(self.state))
@@ -739,7 +774,7 @@ class Job(Identifier):
             Event: JobEvent.COMPLETED
 
         """
-        if self.start_time is None:
+        if not self.is_running or self.start_time is None:
             raise RuntimeError('The job cannot be finished if it is not running'
                                'got, {}'.format(self.state))
 
