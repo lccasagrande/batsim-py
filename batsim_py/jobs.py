@@ -56,6 +56,9 @@ class DelayJobProfile(JobProfile):
         name: The profile name. Must be unique within a workload.
         delay: The seconds to sleep.
 
+    Raises:
+        ValueError: In case of delay is not greater than zero.
+
     Examples:
         A job that will sleep for 100 seconds.
 
@@ -63,6 +66,10 @@ class DelayJobProfile(JobProfile):
     """
 
     def __init__(self, name: str, delay: Union[int, float]) -> None:
+        if delay <= 0:
+            raise ValueError('Expected `delay` argument to be a number '
+                             'greater than zero, got {}'.format(delay))
+
         super().__init__(name)
         self.__delay = float(delay)
 
@@ -84,6 +91,7 @@ class ParallelJobProfile(JobProfile):
             computed on each allocated host.
         com: A list [host x host] that defines the amount of bytes 
             to be transferred between allocated hosts.
+
     Raises:
         ValueError: In case of `com` argument invalid size or `cpu` is empty.
 
