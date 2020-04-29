@@ -1,7 +1,8 @@
 language: python
 
 python:
-  - "3.7"
+  - 3.7
+  - 3.8
   
 before_install:
     - sudo apt-get install pandoc
@@ -10,7 +11,7 @@ install:
     - pip install .[docs]
 
 script:
-    - python -m unittest
+    - python setup.py test
   
 after_success:
     - cd docs && make html
