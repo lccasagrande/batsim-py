@@ -8,6 +8,7 @@ before_install:
     - sudo apt-get install pandoc
 
 install:
+    - pip install coveralls
     - pip install .[docs]
 
 script:
