@@ -2,7 +2,6 @@ language: python
 
 python:
   - 3.7
-  - 3.8
   
 before_install:
     - sudo apt-get install pandoc
@@ -20,7 +19,7 @@ after_success:
 
 deploy:
     provider: pages
-    skip_cleanup: true
+    cleanup: true
     github_token: $GITHUB_TOKEN
     local_dir: docs/build/html
     on:
