@@ -27,6 +27,9 @@ setup(
     author='lccasagrande',
     author_email='lcamelocasagrande@gmail.com',
     url='https://github.com/lccasagrande/batsim-py',
+    project_urls={
+        'Docs': 'https://lccasagrande.github.io/batsim-py/',
+    },
     license='MIT',
     description="Batsim-py allows using Batsim from Python 3.",
     long_description=long_description,
