@@ -176,6 +176,10 @@ class Host(Identifier):
             raise ValueError('The host must have at least one COMPUTATION '
                              'power state, got {}.'.format(pstates))
 
+        if pstates and len(set(p.id for p in pstates)) != len(pstates):
+            raise ValueError('Expected `pstates` argument to be unique '
+                            'ids, got {}.'.format(pstates))
+
         if not isinstance(role, HostRole):
             raise TypeError('Expected `role` argument to be a '
                             'instance of `HostRole`, got {}.'.format(role))
@@ -322,9 +326,9 @@ class Host(Identifier):
             raise RuntimeError('Cannot get undefined power states. Make sure the '
                                'power states are defined in the '
                                'platform description (XML).')
-        try:
-            ps = self.__pstates[pstate_id]
-        except IndexError:
+
+        ps = next((p for p in self.__pstates if p.id == pstate_id), None)
+        if not ps:
             raise LookupError('Power state with id {} could not '
                               'be found.'.format(pstate_id))
         return ps
@@ -441,7 +445,7 @@ class Host(Identifier):
 
         if not self.is_switching_off:
             raise SystemError('A host must be switching off to sleep, '
-                        'got {}'.format(self.state))
+                              'got {}'.format(self.state))
 
         try:
             ps = self.get_pstate_by_type(PowerStateType.SLEEP)
