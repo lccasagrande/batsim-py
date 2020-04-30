@@ -22,15 +22,10 @@ def subscribe(listener: Callable[[Any], None],
             Defaults to Any. If Any, listener will receive the 
             indicated event from any sender.
     Raises:
-        TypeError: In case of invalid arguments type.
+        AssertionError: In case of invalid arguments type.
     """
-    if not callable(listener):
-        raise TypeError('Expected `listener` argument to be callable '
-                        'got {}.'.format(listener))
-
-    if not isinstance(event, Event):
-        raise TypeError('Expected `event` argument to be an instance of '
-                        '`Event`, got {}.'.format(event))
+    assert callable(listener)
+    assert isinstance(event, Event)
 
     dispatcher.connect(listener, signal=event, sender=sender, weak=True)
 
@@ -49,12 +44,9 @@ def dispatch(event: Event,
             disconnected after the event is dispatched.
 
     Raises:
-        TypeError: In case of invalid arguments type.
+        AssertionError: In case of invalid arguments type.
     """
-    if not isinstance(event, Event):
-        raise TypeError('Expected `event` argument to be an instance of '
-                        '`Event`, got {}.'.format(event))
-
+    assert isinstance(event, Event)
     dispatcher.send(signal=event, sender=sender)
 
     if unique:
@@ -72,15 +64,10 @@ def unsubscribe(listener: Callable[[Any], None],
         sender: the sender to which the listener should unsubscribe. 
             Defaults to Any.
     Raises:
-        TypeError: In case of invalid arguments type.
+        AssertionError: In case of invalid arguments type.
     """
-    if not callable(listener):
-        raise TypeError('Expected `listener` argument to be callable '
-                        'got {}.'.format(listener))
-
-    if not isinstance(event, Event):
-        raise TypeError('Expected `event` argument to be an instance of '
-                        '`Event`, got {}.'.format(event))
+    assert callable(listener)
+    assert isinstance(event, Event)
 
     dispatcher.disconnect(listener, signal=event, sender=sender, weak=True)
 
@@ -151,11 +138,9 @@ def unsubscribe_listeners(event: Event,
         sender: the sender to which the listener should unsubscribe.
             Defaults to Any.
     Raises:
-        TypeError: In case of invalid arguments type.
+        AssertionError: In case of invalid arguments type.
     """
-    if not isinstance(event, Event):
-        raise TypeError('Expected `event` argument to be an instance of '
-                        '`Event`, got {}.'.format(event))
+    assert isinstance(event, Event)
 
     listeners = dispatcher.getReceivers(sender, event)
     for l in list(dispatcher.liveReceivers(listeners)):

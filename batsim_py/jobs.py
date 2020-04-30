@@ -254,7 +254,7 @@ class ComposedJobProfile(JobProfile):
         repeat: The number of times to repeat the sequence.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments type.
         ValueError: In case of `repeat` argument is less than 1 or profiles
             is empty.
 
@@ -276,9 +276,7 @@ class ComposedJobProfile(JobProfile):
             raise ValueError('Expected `profiles` argument to be a non '
                              'empty sequence, got {}.'.format(profiles))
 
-        if not all(isinstance(p, JobProfile) for p in profiles):
-            raise TypeError('Expected `profiles` argument to be a '
-                            'sequence of `JobProfile`, got {}'.format(profiles))
+        assert all(isinstance(p, JobProfile) for p in profiles)
 
         super().__init__(name)
         self.__repeat = int(repeat)
@@ -433,7 +431,7 @@ class Job(Identifier):
         user: The job owner name.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments type.
         ValueError: In case of invalid arguments value.
     """
 
@@ -460,10 +458,6 @@ class Job(Identifier):
             raise ValueError('Expected `res` argument to be greater '
                              'than zero, got {}'.format(res))
 
-        if not isinstance(profile, JobProfile):
-            raise TypeError('Expected `profile` argument to be a '
-                            'instance of JobProfile, got {}'.format(profile))
-
         if subtime < 0:
             raise ValueError('Expected `subtime` argument to be greater '
                              'than or equal to zero, got {}'.format(subtime))
@@ -472,7 +466,7 @@ class Job(Identifier):
             raise ValueError('Expected `walltime` argument to be greater '
                              'than zero, got {}'.format(walltime))
                              
-
+        assert isinstance(profile, JobProfile)
         job_id = "%s%s%s" % (str(workload), self.WORKLOAD_SEPARATOR, str(name))
         super().__init__(job_id)
 

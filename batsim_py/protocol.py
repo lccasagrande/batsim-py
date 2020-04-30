@@ -86,15 +86,11 @@ class BatsimRequest(ABC):
         request_type: the type of the request.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments.
     """
 
     def __init__(self, timestamp: float, request_type: BatsimRequestType) -> None:
-        if not isinstance(request_type, BatsimRequestType):
-            raise TypeError('Expected `request_type` argument to be an '
-                            'instance of `BatsimRequestType`, '
-                            'got {}.'.format(request_type))
-
+        assert isinstance(request_type, BatsimRequestType)
         self.__timestamp = float(timestamp)
         self.__type = request_type
 
@@ -154,14 +150,11 @@ class BatsimNotify:
         notify_type: the type of the notification.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments.
     """
 
     def __init__(self, timestamp: float, notify_type: BatsimNotifyType) -> None:
-        if not isinstance(notify_type, BatsimNotifyType):
-            raise TypeError('Expected `notify_type` argument to be an '
-                            'instance of `BatsimNotifyType`, '
-                            'got {}.'.format(notify_type))
+        assert isinstance(notify_type, BatsimNotifyType)
 
         self.__timestamp = float(timestamp)
         self.__type = notify_type
@@ -198,15 +191,11 @@ class BatsimEvent(ABC):
         event_type: the type of the event.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments.
     """
 
     def __init__(self, timestamp: float, event_type: BatsimEventType) -> None:
-        if not isinstance(event_type, BatsimEventType):
-            raise TypeError('Expected `event_type` argument to be an '
-                            'instance of `BatsimEventType`, '
-                            'got {}.'.format(event_type))
-
+        assert isinstance(event_type, BatsimEventType)
         self.__timestamp = float(timestamp)
         self.__type = event_type
 
@@ -581,7 +570,7 @@ class RejectJobBatsimRequest(BatsimRequest):
         job_id: the id of the job to be rejected.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments.
 
     Attributes:
         job_id: The job id to be rejected.
@@ -611,7 +600,7 @@ class ExecuteJobBatsimRequest(BatsimRequest):
         alloc: the job allocated resources.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments.
 
     Attributes:
         job_id: The id of the job to execute.
@@ -642,7 +631,7 @@ class CallMeLaterBatsimRequest(BatsimRequest):
         at: the time to be called back.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments.
         ValueError: In case of the callback time is not greater than
             the timestamp.
 
@@ -680,7 +669,7 @@ class KillJobBatsimRequest(BatsimRequest):
         *job_id: Variable length of job ids.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments.
 
     Attributes:
         job_ids: A sequence of ids of the jobs to be killed.
@@ -712,7 +701,7 @@ class RegisterJobBatsimRequest(BatsimRequest):
         job: The job to be registered.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments.
 
     Attributes:
         job: The registered job.
@@ -720,9 +709,7 @@ class RegisterJobBatsimRequest(BatsimRequest):
 
     def __init__(self, timestamp: float, job: Job) -> None:
         super().__init__(timestamp, BatsimRequestType.REGISTER_JOB)
-        if not isinstance(job, Job):
-            raise TypeError('Expected `job` argument to be an '
-                            'instance of `Job`, got {}.'.format(job))
+        assert isinstance(job, Job)
         self.job = job
 
     def _get_data_dict(self) -> dict:
@@ -758,7 +745,7 @@ class RegisterProfileBatsimRequest(BatsimRequest):
         profile: The job profile.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments.
 
     Attributes:
         workload_name: The profile workload name.
@@ -767,9 +754,7 @@ class RegisterProfileBatsimRequest(BatsimRequest):
 
     def __init__(self, timestamp: float, workload_name: str, profile: JobProfile) -> None:
         super().__init__(timestamp, BatsimRequestType.REGISTER_PROFILE)
-        if not isinstance(profile, JobProfile):
-            raise TypeError('Expected `profile` argument to be a '
-                            '`JobProfile` instance, got {}.'.format(profile))
+        assert isinstance(profile, JobProfile)
 
         self.workload_name = str(workload_name)
         self.profile = profile
@@ -838,7 +823,7 @@ class SetResourceStateBatsimRequest(BatsimRequest):
 
     Raises:
         ValueError: In case of invalid sequence size.
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments.
 
     Attributes:
         resources: A set of resources id.
@@ -887,7 +872,7 @@ class ChangeJobStateBatsimRequest(BatsimRequest):
         kill_reason: The motivation to change the job state.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments.
 
     Attributes:
         job_id: The id of the job.
@@ -902,10 +887,7 @@ class ChangeJobStateBatsimRequest(BatsimRequest):
                  kill_reason: str) -> None:
 
         super().__init__(timestamp, BatsimRequestType.CHANGE_JOB_STATE)
-        if not isinstance(job_state, JobState):
-            raise TypeError('Expected `job_state` argument to be a '
-                            '`JobState` instance, got {}.'.format(job_state))
-
+        assert isinstance(job_state, JobState)
         self.job_id = str(job_id)
         self.job_state = job_state
         self.kill_reason = str(kill_reason)
@@ -1020,12 +1002,10 @@ class NetworkHandler:
             msg: The message to be sent.
 
         Raises:
-            TypeError: In case of invalid argument type.
+            AssertionError: In case of invalid argument type.
             SystemError: In case of there is no connection opened.
         """
-        if not isinstance(msg, BatsimMessage):
-            raise TypeError('Expected `msg` argument to be a '
-                            '`BatsimMessage` instance, got {}.'.format(msg))
+        assert isinstance(msg, BatsimMessage)
 
         if not self.__socket:
             raise SystemError("Connection not opened.")
@@ -1052,7 +1032,7 @@ class NetworkHandler:
             msg: The message to be sent.
 
         Raises:
-            TypeError: In case of invalid argument type.
+            AssertionError: In case of invalid argument type.
             SystemError: In case of there is no connection opened.
         """
         self.send(msg)
