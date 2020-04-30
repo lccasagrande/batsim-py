@@ -11,7 +11,7 @@ from . import dispatcher
 from .events import HostEvent
 from .events import JobEvent
 from .jobs import Job
-from .utils.commons import Identifier
+from .utils import Identifier
 
 
 class HostRole(Enum):

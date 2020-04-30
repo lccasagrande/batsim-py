@@ -6,7 +6,7 @@ from typing import Union
 
 from . import dispatcher
 from .events import JobEvent
-from .utils.commons import Identifier
+from .utils import Identifier
 
 
 class JobState(Enum):

@@ -36,7 +36,7 @@ from .protocol import RejectJobBatsimRequest
 from .protocol import SetResourceStateBatsimRequest
 from .resources import Host
 from .resources import Platform
-from .utils.commons import get_free_tcp_address
+from .utils import get_free_tcp_address
 
 
 class Reservation(NamedTuple):
