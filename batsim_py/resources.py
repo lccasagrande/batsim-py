@@ -468,7 +468,7 @@ class Host(Identifier):
         """
 
         if not self.is_switching_on:
-            SystemError('A host must be switching on to wake up, '
+            raise SystemError('A host must be switching on to wake up, '
                         'got {}'.format(self.state))
 
         try:
