@@ -71,7 +71,8 @@ class PowerState(Identifier):
     Raises:
         TypeError: In case of invalid arguments.
         ValueError: In case of power profile values are not equal when the
-            power state type is not a computation one.
+            power state type is not a computation one or watts are negative 
+            values.
 
     Examples:
         >>> ps = PowerState(0, PowerStateType.COMPUTATION, 90, 160)
@@ -86,6 +87,14 @@ class PowerState(Identifier):
         if not isinstance(pstate_type, PowerStateType):
             raise TypeError('Expected `pstate_type` argument to be a '
                             '`PowerStateType` instance, got {}.'.format(pstate_type))
+
+        if watt_idle < 0:
+            raise ValueError('Expected `watt_idle` argument to be greater '
+                             'than or equal to zero, got {}'.format(watt_idle))
+
+        if watt_full < 0:
+            raise ValueError('Expected `subtime` argument to be greater '
+                             'than or equal to zero, got {}'.format(watt_full))
 
         if pstate_type != PowerStateType.COMPUTATION and watt_idle != watt_full:
             raise ValueError('Expected `watt_idle` and `watt_full` '
@@ -143,13 +152,13 @@ class Host(Identifier):
 
     Raises:
         TypeError: In case of invalid arguments.
+        ValueError: In case of pstates are provided without at least one 
+            COMPUTATION power state.
 
     Examples:
-        >>> profile1 = PowerProfile(idle=90, full_load=190)
-        >>> profile2 = PowerProfile(idle=120, full_load=250)
-        >>> ps1 = PowerState(0, PowerStateType.COMPUTATION, profile1, 1e6)
-        >>> ps2 = PowerState(1, PowerStateType.COMPUTATION, profile2, 2e6)
-        >>> h = Host(0, "Host_0", [ps1, ps2])
+        >>> ps1 = PowerState(0, PowerStateType.COMPUTATION, 10, 100)
+        >>> ps2 = PowerState(1, PowerStateType.COMPUTATION, 15, 150)
+        >>> h = Host(0, "Host_0", HostRole.COMPUTE, [ps1, ps2])
     """
 
     def __init__(self,
@@ -162,6 +171,10 @@ class Host(Identifier):
             raise TypeError('Expected `pstates` argument to be a '
                             'sequence of `PowerState` instances, '
                             'got {}.'.format(pstates))
+
+        if pstates and not any(p.type == PowerStateType.COMPUTATION for p in pstates):
+            raise ValueError('The host must have at least one COMPUTATION '
+                             'power state, got {}.'.format(pstates))
 
         if not isinstance(role, HostRole):
             raise TypeError('Expected `role` argument to be a '
