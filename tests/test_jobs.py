@@ -1,8 +1,10 @@
-from batsim_py.events import JobEvent
-import batsim_py.dispatcher as dispatcher
-import batsim_py.jobs as jobs
-import pytest
 import random
+
+import pytest
+
+import batsim_py.dispatcher as dispatcher
+from batsim_py.events import JobEvent
+import batsim_py.jobs as jobs
 
 
 class TestDelayJobProfile:
@@ -230,6 +232,10 @@ class TestJob:
         assert j.walltime is None and j.user is None and j.allocation is None
         assert j.start_time is None and j.stop_time is None
 
+    def test_repr(self):
+        j = jobs.Job("a", "w", 1, jobs.DelayJobProfile("p", 100), 1)
+        assert repr(j) == "Job_{}".format(j.id)
+
     def test_id_follows_batsim_format(self):
         workload, name = "w", "1"
         j = jobs.Job(name, workload, 1, jobs.DelayJobProfile("p", 100), 1)
@@ -297,11 +303,13 @@ class TestJob:
 
     def test_allocation_size_bigger_than_requested_must_raise(self):
         j = jobs.Job("1", "w", 3, jobs.DelayJobProfile("p", 100), 0)
+        j._submit(0)
         with pytest.raises(RuntimeError):
             j._allocate([3, 2, 5, 10])
 
     def test_allocation_size_less_than_requested_must_raise(self):
         j = jobs.Job("1", "w", 3, jobs.DelayJobProfile("p", 100), 0)
+        j._submit(0)
         with pytest.raises(RuntimeError):
             j._allocate([3, 2])
 
@@ -494,6 +502,18 @@ class TestJob:
         j._terminate(10, jobs.JobState.COMPLETED_SUCCESSFULLY)
         assert self.__called
 
+    def test_terminate_invalid_state_must_raise(self):
+        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
+        j._submit(0)
+        j._allocate([1])
+        j._start(0)
+
+        with pytest.raises(RuntimeError):
+            j._terminate(10, jobs.JobState.COMPLETED_KILLED)
+
+        with pytest.raises(RuntimeError):
+            j._terminate(10, jobs.JobState.REJECTED)
+
     def test_terminate_successfully_valid(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
@@ -555,6 +575,12 @@ class TestJob:
         j._start(10)
         assert j.waiting_time == 10
 
+    def test_waiting_time_when_not_started_must_not_raise(self):
+        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
+        j._submit(0)
+        j._allocate([1])
+        assert j.waiting_time is None
+
     def test_runtime(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
@@ -562,6 +588,13 @@ class TestJob:
         j._start(0)
         j._terminate(10, jobs.JobState.COMPLETED_SUCCESSFULLY)
         assert j.runtime == 10
+
+    def test_runtime_when_not_finished_must_not_raise(self):
+        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
+        j._submit(0)
+        j._allocate([1])
+        j._start(0)
+        assert j.runtime is None
 
     def test_stretch_with_walltime(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0, 100)
@@ -587,20 +620,40 @@ class TestJob:
         j._terminate(30, jobs.JobState.COMPLETED_SUCCESSFULLY)
         assert j.turnaround_time == j.waiting_time + j.runtime
 
-    def test_per_processor_slowdown(self):
+    def test_turnaround_time_when_not_finished_must_not_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._allocate([1])
+        j._start(10)
+        assert j.turnaround_time is None
+
+    def test_per_processor_slowdown(self):
+        j = jobs.Job("1", "w", 2, jobs.DelayJobProfile("p", 100), 0)
+        j._submit(0)
+        j._allocate([1, 2])
         j._start(10)
         j._terminate(30, jobs.JobState.COMPLETED_SUCCESSFULLY)
         assert j.per_processor_slowdown == max(
             1, j.turnaround_time / (j.res * j.runtime))
 
-    def test_slowdown(self):
+    def test_per_processor_slowdown_when_not_finished_must_not_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._allocate([1])
         j._start(10)
+        assert j.per_processor_slowdown is None
+
+    def test_slowdown(self):
+        j = jobs.Job("1", "w", 2, jobs.DelayJobProfile("p", 100), 0)
+        j._submit(0)
+        j._allocate([1, 2])
+        j._start(10)
         j._terminate(30, jobs.JobState.COMPLETED_SUCCESSFULLY)
-        assert j.per_processor_slowdown == max(
-            1, j.turnaround_time / j.runtime)
+        assert j.slowdown == max(1, j.turnaround_time / j.runtime)
+
+    def test_slowdown_when_not_finished_must_not_raise(self):
+        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
+        j._submit(0)
+        j._allocate([1])
+        j._start(10)
+        assert j.slowdown is None
