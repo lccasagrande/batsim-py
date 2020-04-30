@@ -508,7 +508,7 @@ class Host(Identifier):
                 computation one or the job was not allocated for this host.
         """
 
-        if not self.is_idle or self.is_computing:
+        if not self.is_idle and not self.is_computing:
             raise SystemError('A host must be in idle or computing to be able to '
                               'start a new job, got {}'.format(self.state))
         if not any(j.id == sender.id for j in self.__jobs):
