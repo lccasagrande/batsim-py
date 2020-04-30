@@ -98,8 +98,6 @@ class JobMonitor(Monitor):
 
         subscribe(self.__update_info, JobEvent.COMPLETED)
 
-        subscribe(self.__update_info, JobEvent.KILLED)
-
         subscribe(self.__update_info, JobEvent.REJECTED)
 
     @property
@@ -188,8 +186,6 @@ class SchedulerMonitor(Monitor):
         )
 
         subscribe(self.__on_job_completed, JobEvent.COMPLETED)
-
-        subscribe(self.__on_job_completed, JobEvent.KILLED)
 
         subscribe(self.__on_job_submitted, JobEvent.SUBMITTED)
 
@@ -653,8 +649,6 @@ class ConsumedEnergyMonitor(Monitor):
         subscribe(self.__handle_job_started_event, JobEvent.STARTED)
 
         subscribe(self.__handle_job_completed_event, JobEvent.COMPLETED)
-
-        subscribe(self.__handle_job_completed_event, JobEvent.KILLED)
 
         subscribe(self.__handle_host_event, HostEvent.STATE_CHANGED)
 

@@ -397,7 +397,7 @@ class TestJob:
             self.__called = True
 
         self.__called = False
-        dispatcher.subscribe(foo, JobEvent.KILLED)
+        dispatcher.subscribe(foo, JobEvent.COMPLETED)
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._allocate([1])

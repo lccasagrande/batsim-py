@@ -30,8 +30,7 @@ class JobEvent(Event):
     COMPLETED = 1
     STARTED = 2
     REJECTED = 3
-    KILLED = 4
-    ALLOCATED = 5
+    ALLOCATED = 4
 
 
 class SimulatorEvent(Event):

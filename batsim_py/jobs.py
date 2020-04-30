@@ -714,7 +714,7 @@ class Job(Identifier):
                 the current time is less than the job start time.
 
         Dispatch:
-            Event: JobEvent.KILLED
+            Event: JobEvent.COMPLETED
         """
         if not self.is_running or self.start_time is None:
             raise RuntimeError('The job cannot be killed if it is not running'
@@ -726,7 +726,7 @@ class Job(Identifier):
 
         self.__stop_time = float(current_time)
         self.__state = JobState.COMPLETED_KILLED
-        dispatcher.dispatch(JobEvent.KILLED, self, unique=True)
+        dispatcher.dispatch(JobEvent.COMPLETED, self, unique=True)
 
     def _start(self, current_time: Union[int, float]) -> None:
         """ Start the job. 
