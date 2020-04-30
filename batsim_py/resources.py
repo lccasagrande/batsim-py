@@ -69,7 +69,7 @@ class PowerState(Identifier):
         watt_full: Consumption (Watts) when the host cpu is at 100%.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments type.
         ValueError: In case of power profile values are not equal when the
             power state type is not a computation one or watts are negative 
             values.
@@ -83,10 +83,6 @@ class PowerState(Identifier):
                  pstate_type: PowerStateType,
                  watt_idle: Union[int, float],
                  watt_full: Union[int, float]) -> None:
-
-        if not isinstance(pstate_type, PowerStateType):
-            raise TypeError('Expected `pstate_type` argument to be a '
-                            '`PowerStateType` instance, got {}.'.format(pstate_type))
 
         if watt_idle < 0:
             raise ValueError('Expected `watt_idle` argument to be greater '
@@ -102,6 +98,7 @@ class PowerState(Identifier):
                              'power state type is not COMPUTATION, '
                              'got {} and {}.'.format(watt_idle, watt_full))
 
+        assert isinstance(pstate_type, PowerStateType)
         super().__init__(int(pstate_id))
         self.__type = pstate_type
         self.__watt_idle = float(watt_idle)
@@ -151,9 +148,9 @@ class Host(Identifier):
             beyond the scope of Batsim or Batsim-py. Defaults to None.
 
     Raises:
-        TypeError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments type.
         ValueError: In case of pstates are provided without at least one 
-            COMPUTATION power state.
+            COMPUTATION power state or the pstates ids are not unique.
 
     Examples:
         >>> ps1 = PowerState(0, PowerStateType.COMPUTATION, 10, 100)
@@ -167,23 +164,6 @@ class Host(Identifier):
                  role: HostRole = HostRole.COMPUTE,
                  pstates: Optional[Sequence[PowerState]] = None,
                  metadata: Optional[dict] = None) -> None:
-        if pstates and not all(isinstance(p, PowerState) for p in pstates):
-            raise TypeError('Expected `pstates` argument to be a '
-                            'sequence of `PowerState` instances, '
-                            'got {}.'.format(pstates))
-
-        if pstates and not any(p.type == PowerStateType.COMPUTATION for p in pstates):
-            raise ValueError('The host must have at least one COMPUTATION '
-                             'power state, got {}.'.format(pstates))
-
-        if pstates and len(set(p.id for p in pstates)) != len(pstates):
-            raise ValueError('Expected `pstates` argument to be unique '
-                            'ids, got {}.'.format(pstates))
-
-        if not isinstance(role, HostRole):
-            raise TypeError('Expected `role` argument to be a '
-                            'instance of `HostRole`, got {}.'.format(role))
-
         super().__init__(int(id))
         self.__name = str(name)
         self.__role = role
@@ -193,7 +173,17 @@ class Host(Identifier):
         self.__current_pstate = None
         self.__metadata = metadata
 
+        assert isinstance(role, HostRole)
         if pstates:
+            assert all(isinstance(p, PowerState) for p in pstates)
+
+            if not any(p.type == PowerStateType.COMPUTATION for p in pstates):
+                raise ValueError('The host must have at least one COMPUTATION '
+                                 'power state, got {}.'.format(pstates))
+
+            if len(set(p.id for p in pstates)) != len(pstates):
+                raise ValueError('Expected `pstates` argument to be unique '
+                                 'ids, got {}.'.format(pstates))
             self.__pstates = tuple(sorted(pstates, key=lambda p: int(p.id)))
             self.__current_pstate = self.get_default_pstate()
 
@@ -438,21 +428,14 @@ class Host(Identifier):
         This is an internal method to be used by the simulator only.
 
         Raises:
-            LookupError: In case of sleep power state could not be found.
-            SystemError: In case of the current host state is not switching off or
-                power state were not defined.
+            SystemError: In case of the current host state is not switching off.
         """
 
         if not self.is_switching_off:
             raise SystemError('A host must be switching off to sleep, '
                               'got {}'.format(self.state))
 
-        try:
-            ps = self.get_pstate_by_type(PowerStateType.SLEEP)
-        except RuntimeError:
-            raise SystemError('Something bad happened and the simulator is '
-                              'trying to set off an host without power states.')
-
+        ps = self.get_pstate_by_type(PowerStateType.SLEEP)
         self.__set_pstate(ps[0])
         self.__set_state(HostState.SLEEPING)
 
@@ -462,21 +445,14 @@ class Host(Identifier):
         This is an internal method to be used by the simulator only.
 
         Raises:
-            LookupError: In case of default power state could not be found.
-            SystemError: In case of the current host state is not switching on or
-                power states were not defined.
+            SystemError: In case of the current host state is not switching on.
         """
 
         if not self.is_switching_on:
             raise SystemError('A host must be switching on to wake up, '
-                        'got {}'.format(self.state))
+                              'got {}'.format(self.state))
 
-        try:
-            ps = self.get_default_pstate()
-        except RuntimeError:
-            raise SystemError('Something bad happened and the simulator is '
-                              'trying to set on an host without power states.')
-
+        ps = self.get_default_pstate()
         self.__set_pstate(ps)
         self.__set_state(HostState.IDLE)
 
@@ -504,16 +480,15 @@ class Host(Identifier):
         we catch this event to know if the host must start computing.
 
         Raises:
-            SystemError: In case of the current host power state is not a
-                computation one or the job was not allocated for this host.
+            SystemError: In case of the current host power state is not a 
+                computation one.
         """
 
         if not self.is_idle and not self.is_computing:
             raise SystemError('A host must be in idle or computing to be able to '
                               'start a new job, got {}'.format(self.state))
-        if not any(j.id == sender.id for j in self.__jobs):
-            raise SystemError('The host cannot find this job to execute, '
-                              'got {}'.format(self.__jobs))
+
+        assert any(j.id == sender.id for j in self.__jobs)
 
         dispatcher.subscribe(self.__release, JobEvent.COMPLETED, sender)
         self.__set_state(HostState.COMPUTING)
@@ -524,16 +499,8 @@ class Host(Identifier):
         This is an internal method to be used by the job instance only.
         When a job finish it'll dispatch an event, we catch this event to
         know if the host must deallocate it.
-
-        Raises:
-            SystemError: In case of the job could not be found.
         """
-        try:
-            self.__jobs.remove(sender)
-        except ValueError:
-            raise SystemError('The job could not be found, '
-                              'got {}.'.format(self.__jobs))
-
+        self.__jobs.remove(sender)
         if not self.__jobs:
             self.__set_state(HostState.IDLE)
 
@@ -541,16 +508,12 @@ class Host(Identifier):
         """ Set the power state and dispatch an event.
 
         This is an internal method to be used by the job instance only.
-
+        
         Raises:
-            TypeError: In case of the new power state is not an instance
-                of PowerState.
+            AssertionError: In case of invalid argument type.
         """
         assert self.__current_pstate
-
-        if not isinstance(new_pstate, PowerState):
-            raise TypeError('The new power state is not an instance of '
-                            'the `PowerState` class, got {}.'.format(new_pstate))
+        assert isinstance(new_pstate, PowerState)
 
         if self.__current_pstate.type == PowerStateType.COMPUTATION and new_pstate.type == PowerStateType.COMPUTATION:
             self.__current_pstate = new_pstate
@@ -565,14 +528,9 @@ class Host(Identifier):
         This is an internal method to be used by the job instance only.
 
         Raises:
-            TypeError: In case of the new state is not an instance
-                of HostState.
+            AssertionError: In case of invalid argument type.
         """
-
-        if not isinstance(new_state, HostState):
-            raise TypeError('The new state is not an instance of '
-                            'the `HostState` class, got {}.'.format(new_state))
-
+        assert isinstance(new_state, HostState)
         if self.__state != new_state:
             self.__state = new_state
             dispatcher.dispatch(HostEvent.STATE_CHANGED, self)
@@ -587,21 +545,19 @@ class Platform:
         hosts: the computing resources.
 
     Raises:
-        TypeError: In case of invalid arguments.
         ValueError: In case of invalid platform size.
+        AssertionError: In case of invalid arguments type.
     """
 
     def __init__(self, hosts: Sequence[Host]) -> None:
-        if not all(isinstance(h, Host) for h in hosts):
-            raise TypeError('A platform must contain a list of hosts of'
-                            'type `Host`, got {}.'.format(hosts))
-
         if not hosts:
             raise ValueError("A platform must contain at least one host.")
 
         if not all(h.id == i for i, h in enumerate(hosts)):
             raise SystemError('The simulator expected hosts id to '
                               'be a sequence starting from 0')
+
+        assert all(isinstance(h, Host) for h in hosts)
 
         self.__hosts = tuple(sorted(hosts, key=lambda h: h.id))
 
@@ -643,12 +599,9 @@ class Platform:
             The host with the corresponding role.
 
         Raises:
-            TypeError: In case of invalid arguments type.
+            AssertionError: In case of invalid argument type.
         """
-        if not isinstance(host_role, HostRole):
-            raise TypeError('Expected `host_role` argument to be an instance '
-                            'of `HostRole`, got {}.'.format(host_role))
-
+        assert isinstance(host_role, HostRole)
         return list(filter(lambda h: h.role == host_role, self.__hosts))
 
     def get_by_id(self, host_id: int) -> Host:
