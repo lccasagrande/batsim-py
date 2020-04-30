@@ -440,7 +440,7 @@ class Host(Identifier):
         """
 
         if not self.is_switching_off:
-            SystemError('A host must be switching off to sleep, '
+            raise SystemError('A host must be switching off to sleep, '
                         'got {}'.format(self.state))
 
         try:
