@@ -1,11 +1,15 @@
-from batsim_py.jobs import DelayJobProfile, Job, JobProfile, JobState
-import random
-
 import pytest
 
 import batsim_py.dispatcher as dispatcher
 from batsim_py.events import HostEvent
-from batsim_py.resources import Host, HostRole, HostState, Platform, PowerState
+from batsim_py.jobs import DelayJobProfile
+from batsim_py.jobs import Job
+from batsim_py.jobs import JobState
+from batsim_py.resources import Host
+from batsim_py.resources import HostRole
+from batsim_py.resources import HostState
+from batsim_py.resources import Platform
+from batsim_py.resources import PowerState
 from batsim_py.resources import PowerStateType
 
 
@@ -50,6 +54,13 @@ class TestHost:
 
         assert h.id == i and h.name == n and h.role == r
         assert h.pstates == p and h.metadata == m and not h.jobs
+
+    def test_repr(self):
+        assert repr(Host(0, "n")) == "Host_{}".format(0)
+
+    def test_str(self):
+        s = str(Host(0, "n"))
+        assert s == "Host_{}: {}".format(0, str(HostState.IDLE))
 
     def test_initial_state_must_be_idle(self):
         p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
@@ -682,6 +693,13 @@ class TestHost:
         assert h.jobs[0] == j1
         assert h.jobs[1] == j2
 
+    def test_allocate_job_twice_must_not_raise(self):
+        h = Host(0, "n")
+        j1 = Job("j1", "w", 1, DelayJobProfile("p", 100), 1)
+        h._allocate(j1)
+        h._allocate(j1)
+        assert h.jobs and len(h.jobs) == 1
+
     def test_start_computing_valid(self):
         p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         h = Host(0, "n", pstates=[p1])
@@ -889,3 +907,10 @@ class TestPlatform:
         p = Platform([h1, h2])
 
         assert p.get_by_id(1) == h2
+
+    def test_get_by_id_not_found_must_raise(self):
+        h1 = Host(0, "n", role=HostRole.STORAGE)
+        h2 = Host(1, "n")
+        p = Platform([h1, h2])
+        with pytest.raises(LookupError):
+            p.get_by_id(2)
