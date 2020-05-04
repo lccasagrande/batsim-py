@@ -1,7 +1,3 @@
-import random
-
-import pytest
-
 import batsim_py.dispatcher as dispatcher
 import batsim_py.events as events
 import batsim_py.jobs as jobs
