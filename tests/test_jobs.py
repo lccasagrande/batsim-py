@@ -149,13 +149,12 @@ class TestComposedJobProfile:
             jobs.ComposedJobProfile("n", [])
 
     def test_repeat_less_than_zero_must_raise(self):
-        profiles = [jobs.DelayJobProfile("p1", 100)]
 
         with pytest.raises(ValueError):
-            jobs.ComposedJobProfile("n", profiles, -1)
+            jobs.ComposedJobProfile("n", ["p1"], -1)
 
         with pytest.raises(ValueError):
-            jobs.ComposedJobProfile("n", profiles, 0)
+            jobs.ComposedJobProfile("n", ["p1"], 0)
 
 
 class TestParallelHomogeneousPFSJobProfile:
