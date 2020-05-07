@@ -13,6 +13,18 @@ from batsim_py.resources import PowerState
 from batsim_py.resources import PowerStateType
 
 
+class TestHostState:
+    def test_str(self):
+        for s in HostState:
+            assert str(s) == s.name.upper()
+
+
+class TestPowerStateType:
+    def test_str(self):
+        for s in PowerStateType:
+            assert str(s) == s.name.upper()
+
+
 class TestPowerState:
     def test_valid_instance(self):
         i, tp, idle, full = 0, PowerStateType.COMPUTATION, 100, 250

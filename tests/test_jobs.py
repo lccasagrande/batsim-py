@@ -7,6 +7,12 @@ from batsim_py.events import JobEvent
 import batsim_py.jobs as jobs
 
 
+class TestJobState:
+    def test_str(self):
+        for s in jobs.JobState:
+            assert str(s) == s.name.upper()
+
+
 class TestDelayJobProfile:
     def test_valid_instance(self):
         delay, name = 250, "n"
