@@ -35,7 +35,10 @@ from batsim_py.protocol import RequestedCallBatsimEvent
 from batsim_py.protocol import ResourcePowerStateChangedBatsimEvent
 from batsim_py.protocol import SimulationEndsBatsimEvent
 from batsim_py.protocol import SimulationBeginsBatsimEvent
+from batsim_py.protocol import Converters
 from batsim_py.resources import HostRole
+from batsim_py.resources import Platform
+from batsim_py.resources import PowerStateType
 
 from .utils import BatsimAPI
 from .utils import BatsimPlatformAPI
@@ -577,6 +580,12 @@ class TestNetworkHandler:
         protocol.zmq.Socket.bind.assert_called_once_with(
             "tcp://localhost:28000")
 
+    def test_bind_when_connected_must_raise(self):
+        p = NetworkHandler("tcp://localhost:28000")
+        p.bind()
+        with pytest.raises(SystemError):
+            p.bind()
+
     def test_close(self):
         p = NetworkHandler("tcp://localhost:28000")
         p.bind()
@@ -624,3 +633,129 @@ class TestNetworkHandler:
         assert m == msg
         protocol.zmq.Socket.recv_json.assert_called_once()
         protocol.zmq.Socket.send_json.assert_called_once_with(msg.to_json())
+
+
+class TestConverters:
+    def test_profile_to_json_delay(self):
+        api = BatsimJobProfileAPI.get_delay(10)
+        p = DelayJobProfile("p", 10)
+        jsn = Converters.profile_to_json(p)
+        assert api == jsn
+
+    def test_profile_to_json_parallel(self):
+        api = BatsimJobProfileAPI.get_parallel(10)
+        p = ParallelJobProfile("p", api["cpu"], api["com"])
+        jsn = Converters.profile_to_json(p)
+        assert api == jsn
+
+    def test_profile_to_json_parallel_homogeneous(self):
+        api = BatsimJobProfileAPI.get_parallel_homogeneous(10, 10)
+        p = ParallelHomogeneousJobProfile("p", 10, 10)
+        jsn = Converters.profile_to_json(p)
+        assert api == jsn
+
+    def test_profile_to_json_parallel_homogeneous_total(self):
+        api = BatsimJobProfileAPI.get_parallel_homogeneous_total(10, 10)
+        p = ParallelHomogeneousTotalJobProfile("p", 10, 10)
+        jsn = Converters.profile_to_json(p)
+        assert api == jsn
+
+    def test_profile_to_json_composed(self):
+        api = BatsimJobProfileAPI.get_composed(1, ["1", "2"])
+        p = ComposedJobProfile("p", ["1", "2"], 1)
+        jsn = Converters.profile_to_json(p)
+        assert api == jsn
+
+    def test_profile_to_json_parallel_homogeneous_pfs(self):
+        api = BatsimJobProfileAPI.get_parallel_homogeneous_pfs("nfs", 1, 1)
+        p = ParallelHomogeneousPFSJobProfile("p", 1, 1, "nfs")
+        jsn = Converters.profile_to_json(p)
+        assert api == jsn
+
+    def test_profile_to_json_data_staging(self):
+        api = BatsimJobProfileAPI.get_data_staging("src", "dest", 10)
+        p = DataStagingJobProfile("p", 10, "src", "dest")
+        jsn = Converters.profile_to_json(p)
+        assert api == jsn
+
+    def test_profile_to_json_invalid_type_must_raise(self):
+        class NewJobProfile(JobProfile):
+            pass
+        with pytest.raises(NotImplementedError):
+            Converters.profile_to_json(NewJobProfile("p"))
+
+    def test_json_to_profile_delay(self):
+        api = BatsimJobProfileAPI.get_delay(10)
+        p = Converters.json_to_profile("p", api)
+        assert isinstance(p, DelayJobProfile)
+
+    def test_json_to_profile_parallel(self):
+        api = BatsimJobProfileAPI.get_parallel(10)
+        p = Converters.json_to_profile("p", api)
+        assert isinstance(p, ParallelJobProfile)
+
+    def test_json_to_profile_parallel_homogeneous(self):
+        api = BatsimJobProfileAPI.get_parallel_homogeneous(10, 10)
+        p = Converters.json_to_profile("p", api)
+        assert isinstance(p, ParallelHomogeneousJobProfile)
+
+    def test_json_to_profile_parallel_homogeneous_total(self):
+        api = BatsimJobProfileAPI.get_parallel_homogeneous_total(10, 10)
+        p = Converters.json_to_profile("p", api)
+        assert isinstance(p, ParallelHomogeneousTotalJobProfile)
+
+    def test_json_to_profile_parallel_composed(self):
+        api = BatsimJobProfileAPI.get_composed(1, ["1", "2"])
+        p = Converters.json_to_profile("p", api)
+        assert isinstance(p, ComposedJobProfile)
+
+    def test_json_to_profile_parallel_homogeneous_pfs(self):
+        api = BatsimJobProfileAPI.get_parallel_homogeneous_pfs("nfs", 1, 1)
+        p = Converters.json_to_profile("p", api)
+        assert isinstance(p, ParallelHomogeneousPFSJobProfile)
+
+    def test_json_to_profile_data_staging(self):
+        api = BatsimJobProfileAPI.get_data_staging("src", "dest", 10)
+        p = Converters.json_to_profile("p", api)
+        assert isinstance(p, DataStagingJobProfile)
+
+    def test_json_to_profile_invalid_type_must_raise(self):
+        api = BatsimJobProfileAPI.get_parallel_homogeneous_pfs("nfs", 1, 1)
+        api["type"] = "NewType"
+        with pytest.raises(NotImplementedError):
+            Converters.json_to_profile("n", api)
+
+    def test_json_to_power_states_without_property_must_raise(self):
+        prop = BatsimPlatformAPI.get_resource_properties()
+        del prop["watt_per_state"]
+        with pytest.raises(RuntimeError):
+            Converters.json_to_power_states(prop)
+
+    def test_json_to_power_states(self):
+        prop = BatsimPlatformAPI.get_resource_properties(
+            watt_off=10,
+            watt_switch_off=50,
+            watt_switch_on=75,
+            watt_on=[(10, 100)],
+        )
+        ps = Converters.json_to_power_states(prop)
+        assert len(ps) == 4
+
+        sleep_ps = next(p for p in ps if p.type == PowerStateType.SLEEP)
+        s_off_ps = next(p for p in ps if p.type ==
+                        PowerStateType.SWITCHING_OFF)
+        s_on_ps = next(p for p in ps if p.type == PowerStateType.SWITCHING_ON)
+        on_ps = next(p for p in ps if p.type == PowerStateType.COMPUTATION)
+
+        assert sleep_ps.watt_full == 10 and sleep_ps.id == 0
+        assert s_off_ps.watt_full == 50 and s_off_ps.id == 1
+        assert s_on_ps.watt_full == 75 and s_on_ps.id == 2
+        assert on_ps.watt_full == 100 and on_ps.watt_idle == 10 and on_ps.id == 3
+
+    def test_json_to_platform(self):
+        api = BatsimEventAPI.get_simulation_begins()["data"]
+        platform = Converters.json_to_platform(api)
+
+        assert isinstance(platform, Platform)
+        assert platform.size == api["nb_resources"]
+
