@@ -35,11 +35,10 @@ class BatsimEventType(Enum):
     SIMULATION_ENDS = 1
     JOB_SUBMITTED = 2
     JOB_COMPLETED = 3
-    JOB_STARTED = 4
-    JOB_KILLED = 5
-    REQUESTED_CALL = 6
-    NOTIFY = 7
-    RESOURCE_STATE_CHANGED = 8
+    JOB_KILLED = 4
+    REQUESTED_CALL = 5
+    NOTIFY = 6
+    RESOURCE_STATE_CHANGED = 7
 
     def __str__(self) -> str:
         return self.name
@@ -139,7 +138,6 @@ class BatsimRequest(ABC):
 
         for k, v in extra_p.items():
             params[k] = v
-
         return params
 
 
@@ -994,7 +992,7 @@ class BatsimMessageDecoder:
         A platform instance.
 
     Raises:
-        NotImplementedError: In case of not supported simulation config.
+        NotImplementedError: In case of not supported simulation config or event type.
     """
 
     def __init__(self) -> None:
@@ -1013,10 +1011,8 @@ class BatsimMessageDecoder:
         if "type" in msg and msg["type"] in list(map(str, BatsimEventType)):
             event_type = BatsimEventType[msg["type"]]
             event_constructor = self.constructors.get(event_type, None)
-            if event_constructor:
-                return event_constructor(msg["timestamp"], msg["data"])
-            else:
-                return msg
+            assert event_constructor
+            return event_constructor(msg["timestamp"], msg["data"])
         elif "now" in msg:
             return BatsimMessage(msg["now"], msg["events"])
         else:
