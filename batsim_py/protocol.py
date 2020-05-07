@@ -127,17 +127,15 @@ class BatsimRequest(ABC):
         Returns:
             A dict with all parameters following the Batsim format.
         """
-        data = self._get_data_dict()
-        extra_p = self._get_extra_params_dict()
 
         params = {
             "timestamp": self.timestamp,
             "type": str(self.type),
-            "data": data
+            "data": self._get_data_dict()
         }
 
-        for k, v in extra_p.items():
-            params[k] = v
+        extra_params = self._get_extra_params_dict()
+        params.update(extra_params)
         return params
 
 
