@@ -1,10 +1,7 @@
 from enum import Enum
 from typing import Iterator
-from typing import Iterable
-from typing import Callable
 from typing import Optional
 from typing import Sequence
-from typing import Union
 from typing import List
 
 from . import dispatcher
@@ -81,8 +78,8 @@ class PowerState(Identifier):
     def __init__(self,
                  pstate_id: int,
                  pstate_type: PowerStateType,
-                 watt_idle: Union[int, float],
-                 watt_full: Union[int, float]) -> None:
+                 watt_idle: float,
+                 watt_full: float) -> None:
 
         if watt_idle < 0:
             raise ValueError('Expected `watt_idle` argument to be greater '
@@ -99,7 +96,7 @@ class PowerState(Identifier):
                              'got {} and {}.'.format(watt_idle, watt_full))
 
         assert isinstance(pstate_type, PowerStateType)
-        super().__init__(int(pstate_id))
+        super().__init__(str(pstate_id))
         self.__type = pstate_type
         self.__watt_idle = float(watt_idle)
         self.__watt_full = float(watt_full)
@@ -109,6 +106,10 @@ class PowerState(Identifier):
 
     def __repr__(self) -> str:
         return str(self)
+
+    @property
+    def id(self):
+        return int(super().id)
 
     @property
     def watt_idle(self) -> float:
@@ -164,7 +165,7 @@ class Host(Identifier):
                  role: HostRole = HostRole.COMPUTE,
                  pstates: Optional[Sequence[PowerState]] = None,
                  metadata: Optional[dict] = None) -> None:
-        super().__init__(int(id))
+        super().__init__(str(id))
         self.__name = str(name)
         self.__role = role
         self.__state: HostState = HostState.IDLE
@@ -192,6 +193,10 @@ class Host(Identifier):
 
     def __str__(self) -> str:
         return "Host_%i: %s" % (self.id, str(self.state))
+
+    @property
+    def id(self):
+        return int(super().id)
 
     @property
     def name(self) -> str:
@@ -508,7 +513,7 @@ class Host(Identifier):
         """ Set the power state and dispatch an event.
 
         This is an internal method to be used by the job instance only.
-        
+
         Raises:
             AssertionError: In case of invalid argument type.
         """
@@ -546,7 +551,6 @@ class Platform:
 
     Raises:
         ValueError: In case of invalid platform size.
-        AssertionError: In case of invalid arguments type.
     """
 
     def __init__(self, hosts: Sequence[Host]) -> None:
@@ -556,9 +560,6 @@ class Platform:
         if not all(h.id == i for i, h in enumerate(hosts)):
             raise SystemError('The simulator expected hosts id to '
                               'be a sequence starting from 0')
-
-        assert all(isinstance(h, Host) for h in hosts)
-
         self.__hosts = tuple(sorted(hosts, key=lambda h: h.id))
 
     @property

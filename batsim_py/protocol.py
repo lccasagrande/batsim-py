@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from enum import Enum
 from typing import Dict
 from typing import Sequence
 from typing import Union
 from typing import Any
-from xml.dom import minidom
 
 from procset import ProcSet
 import zmq
@@ -59,6 +59,7 @@ class BatsimRequestType(Enum):
     SET_RESOURCE_STATE = 6
     SET_JOB_METADATA = 7
     CHANGE_JOB_STATE = 8
+    NOTIFY = 9
 
     def __str__(self) -> str:
         return self.name
@@ -142,47 +143,6 @@ class BatsimRequest(ABC):
         return params
 
 
-class BatsimNotify:
-    """ Batsim notify class.
-
-    Args:
-        timestamp: the time which the notification ocurred or will be sent.
-        notify_type: the type of the notification.
-
-    Raises:
-        AssertionError: In case of invalid arguments.
-    """
-
-    def __init__(self, timestamp: float, notify_type: BatsimNotifyType) -> None:
-        assert isinstance(notify_type, BatsimNotifyType)
-
-        self.__timestamp = float(timestamp)
-        self.__type = notify_type
-
-    @property
-    def timestamp(self) -> float:
-        """ The time the notification ocurred. """
-        return self.__timestamp
-
-    @property
-    def type(self) -> BatsimNotifyType:
-        """ The notify type. """
-        return self.__type
-
-    def to_json(self) -> dict:
-        """ Export properties to the json format expected by Batsim.
-
-        Returns:
-            A dict with all parameters following the Batsim format.
-        """
-        jsn = {
-            "timestamp": self.timestamp,
-            "type": str(BatsimEventType.NOTIFY),
-            "data": {"type": str(self.type).lower()}
-        }
-        return jsn
-
-
 class BatsimEvent(ABC):
     """ Batsim event base class.
 
@@ -209,36 +169,27 @@ class BatsimEvent(ABC):
         """ The event type. """
         return self.__type
 
-    def _get_data_dict(self) -> dict:
-        """ Batsim data dict. """
-        return {}
-
-    def to_json(self) -> dict:
-        """ Export properties to the json format expected by Batsim.
-
-        Returns:
-            A dict with all parameters following the Batsim format.
-        """
-        params = {
-            "timestamp": self.timestamp,
-            "type": str(self.type),
-            "data": self._get_data_dict()
-        }
-
-        return params
-
 
 class BatsimMessage:
     """ Batsim Message class.
 
     Args:
         now: current simulation time.
-        batsim_events: a sequence of batsim events/requests/notifications.
+        batsim_events: a sequence of batsim events and requests.
+
+    Raises:
+        ValueError: In case of `now` is not greather than or equal to every
+            event timestamp.
     """
 
     def __init__(self,
                  now: float,
-                 batsim_events: Sequence[Union[BatsimRequest, BatsimEvent, BatsimNotify]]) -> None:
+                 batsim_events: Sequence[Union[BatsimRequest, BatsimEvent]] = ()) -> None:
+
+        if any(e.timestamp > now for e in batsim_events):
+            raise ValueError('Expected `now` argument to be greather than '
+                             'or equal to every event timestamp, got now={} '
+                             'and events={}'.format(now, batsim_events))
         self.__now = float(now)
         # Events timestamps must be in (non-strictly) ascending order.
         self.__events = sorted(batsim_events, key=lambda e: e.timestamp)
@@ -249,48 +200,44 @@ class BatsimMessage:
         return self.__now
 
     @property
-    def events(self) -> Sequence[Union[BatsimRequest, BatsimEvent, BatsimNotify]]:
+    def events(self) -> Sequence[Union[BatsimRequest, BatsimEvent]]:
         """ The list of events/requests/notifications. """
         return list(self.__events)
 
     def to_json(self) -> dict:
-        """ Converts to the json format expected by Batsim
+        """ Convert requests to the json format expected by Batsim
 
         Returns:
             A dict with all parameters following the Batsim format.
         """
         jsn = {
             "now": self.now,
-            "events": [e.to_json() for e in self.events]
+            "events": [
+                e.to_json() for e in self.events if isinstance(e, BatsimRequest)
+            ]
         }
         return jsn
 
 
-class JobStartedBatsimEvent(BatsimEvent):
-    """ Batsim job started event class.
-
-    This event is dispatched by Batsim when a job starts.
+class NotifyBatsimEvent(BatsimEvent):
+    """ Batsim notify event class.
 
     Args:
-        timestamp: the time which the event occurred.
-        job_id: the job id.
-        alloc: the resources allocated for the job.
+        timestamp: the time which the notification ocurred.
+        notify_type: the notification type.
+
+    Raises:
+        ValueError: In case of invalid notification type.
     """
 
-    def __init__(self, timestamp: float, job_id: str, alloc: str) -> None:
-        super().__init__(timestamp, BatsimEventType.JOB_STARTED)
-        self.__job_id = str(job_id)
-        self.__alloc = list(ProcSet.from_str(alloc))
+    def __init__(self, timestamp: float, data: dict) -> None:
+        super().__init__(timestamp, BatsimEventType.NOTIFY)
+        self.__notify_type = BatsimNotifyType[data["type"].upper()]
 
     @property
-    def job_id(self) -> str:
-        """ The job id. """
-        return self.__job_id
-
-    @property
-    def alloc(self) -> Sequence[int]:
-        """ The allocated resources id for the job. """
-        return self.__alloc
+    def notify_type(self) -> BatsimNotifyType:
+        """ The notification type. """
+        return self.__notify_type
 
 
 class JobCompletedBatsimEvent(BatsimEvent):
@@ -307,7 +254,7 @@ class JobCompletedBatsimEvent(BatsimEvent):
         super().__init__(timestamp, BatsimEventType.JOB_COMPLETED)
         self.__job_id = str(data["job_id"])
         self.__job_state = JobState[data["job_state"]]
-        self.__return_code = str(data["return_code"])
+        self.__return_code = int(data["return_code"])
         self.__alloc = list(ProcSet.from_str(data["alloc"]))
 
     @property
@@ -321,7 +268,7 @@ class JobCompletedBatsimEvent(BatsimEvent):
         return self.__job_state
 
     @property
-    def return_code(self) -> str:
+    def return_code(self) -> int:
         """ The last state of the job. """
         return self.__return_code
 
@@ -357,39 +304,73 @@ class ResourcePowerStateChangedBatsimEvent(BatsimEvent):
         return self.__state
 
 
-class JobSubmittedBatsimEvent(BatsimEvent):
-    """ Batsim Job Submitted event class.
-
-    This event is dispatched by Batsim when a job is submitted to the system.
-
-    Args:
-        timestamp: the time which the event ocurred.
-        data: the event data dict following the Batsim format.
-    """
-
-    def __init__(self, timestamp: float, data: dict) -> None:
-        super().__init__(timestamp, BatsimEventType.JOB_SUBMITTED)
-        self.__job = Job(
-            name=data["job_id"].split(Job.WORKLOAD_SEPARATOR)[1],
-            workload=data["job_id"].split(Job.WORKLOAD_SEPARATOR)[0],
-            res=data["job"]["res"],
-            profile=self.get_profile(data["job"]["profile"], data["profile"]),
-            subtime=timestamp,
-            walltime=data["job"].get("walltime", None),
-            user=data["job"].get("user", None),
-        )
-
-    @property
-    def job(self) -> Job:
-        """ The job. """
-        return self.__job
-
+class Converters:
     @staticmethod
-    def get_profile(name: str, data: dict) -> JobProfile:
-        """ Get a job profile instance from batsim data dict.
+    def profile_to_json(profile: JobProfile) -> dict:
+        """ Convert a job profile to a json following the batsim format.
 
         Args:
-            name: the profile name. 
+            profile: the profile to be converted.
+
+        Returns:
+            A data dict following batsim format.
+
+        Raises:
+            AssertionError: In case of incorrect arguments type.
+            NotImplementedError: In case of not supported job profile type.
+        """
+        assert isinstance(profile, JobProfile)
+
+        if isinstance(profile, DelayJobProfile):
+            return {"type": "delay", "delay": profile.delay}
+        elif isinstance(profile, ParallelJobProfile):
+            return {
+                "type": "parallel",
+                "cpu": profile.cpu,
+                "com": profile.com,
+            }
+        elif isinstance(profile, ParallelHomogeneousJobProfile):
+            return {
+                "type": "parallel_homogeneous",
+                "cpu": profile.cpu,
+                "com": profile.com,
+            }
+        elif isinstance(profile, ParallelHomogeneousTotalJobProfile):
+            return {
+                "type": "parallel_homogeneous_total",
+                "cpu": profile.cpu,
+                "com": profile.com,
+            }
+        elif isinstance(profile, ComposedJobProfile):
+            return {
+                "type": "composed",
+                "repeat": profile.repeat,
+                "seq": profile.profiles,
+            }
+        elif isinstance(profile, ParallelHomogeneousPFSJobProfile):
+            return {
+                "type": "parallel_homogeneous_pfs",
+                "bytes_to_read": profile.bytes_to_read,
+                "bytes_to_write": profile.bytes_to_write,
+                "storage": profile.storage,
+            }
+        elif isinstance(profile, DataStagingJobProfile):
+            return {
+                "type": "data_staging",
+                "nb_bytes": profile.nb_bytes,
+                "from": profile.src,
+                "to": profile.dest,
+            }
+        else:
+            raise NotImplementedError('Job profile type not currently supported, '
+                                      'got {}.'.format(profile))
+
+    @staticmethod
+    def json_to_profile(name: str, data: dict) -> JobProfile:
+        """ Convert a json following the Batsim format to a job profile instance.
+
+        Args:
+            name: the profile name.
             data: the profile data dict following batsim format.
 
         Returns:
@@ -406,65 +387,29 @@ class JobSubmittedBatsimEvent(BatsimEvent):
             return ParallelHomogeneousJobProfile(name, data['cpu'], data['com'])
         elif data['type'] == "parallel_homogeneous_total":
             return ParallelHomogeneousTotalJobProfile(name, data['cpu'], data['com'])
+        elif data['type'] == "composed":
+            return ComposedJobProfile(name, data['seq'], data['repeat'])
+        elif data['type'] == "parallel_homogeneous_pfs":
+            return ParallelHomogeneousPFSJobProfile(name,
+                                                    data['bytes_to_read'],
+                                                    data['bytes_to_write'],
+                                                    data['storage'])
+        elif data['type'] == "data_staging":
+            return DataStagingJobProfile(name, data['nb_bytes'], data['from'], data['to'])
         else:
             raise NotImplementedError('Job profile type not currently supported, '
                                       'got {}.'.format(data['type']))
 
-
-class JobKilledBatsimEvent(BatsimEvent):
-    """ Batsim Job Killed event class.
-
-    This event is dispatched by Batsim when a job is killed.
-
-    Args:
-        timestamp: the time which the event ocurred.
-        data: the event data dict following the Batsim format.
-    """
-
-    def __init__(self, timestamp: float, data: dict) -> None:
-        super().__init__(timestamp, BatsimEventType.JOB_KILLED)
-        self.__job_ids = list(data["job_ids"])
-
-    @property
-    def job_ids(self) -> Sequence[str]:
-        """ The id of all jobs killed. """
-        return list(self.__job_ids)
-
-
-class RequestedCallBatsimEvent(BatsimEvent):
-    """ Batsim Requested Call event class.
-
-    This event is dispatched by Batsim as a response from a call me back request.
-
-    Args:
-        timestamp: the time which the event ocurred.
-    """
-
-    def __init__(self, timestamp: float) -> None:
-        super().__init__(timestamp, BatsimEventType.REQUESTED_CALL)
-
-
-class SimulationBeginsBatsimEvent(BatsimEvent):
-    """ Batsim Simulation Begins event class.
-
-    This event is dispatched by Batsim when the simulation begins and includes
-    all configuration parameters.
-
-    Args:
-        timestamp: the time which the event ocurred.
-        data: the event data dict following the Batsim format.
-    """
-
-    def __init__(self, timestamp: float, data: dict) -> None:
-        super().__init__(timestamp, BatsimEventType.SIMULATION_BEGINS)
-        self.platform = SimulationBeginsBatsimEvent.get_platform(data)
-
     @staticmethod
-    def get_power_states(properties: dict) -> Sequence[PowerState]:
+    def json_to_power_states(properties: dict) -> Sequence[PowerState]:
         """ Get Power States from Batsim json host properties.
 
         Args:
-            data: the properties of the job in the json received by Batsim.
+            data: the properties of the job in the json sent by Batsim.
+
+        Raises:
+            RuntimeError: In case of `watt_per_state` property is not defined
+                in properties.
 
         Returns:
             A sequence of power states.
@@ -518,7 +463,7 @@ class SimulationBeginsBatsimEvent(BatsimEvent):
         return power_states
 
     @staticmethod
-    def get_platform(data: dict) -> Platform:
+    def json_to_platform(data: dict) -> Platform:
         """ Get a `Platform` from Batsim json.
 
         Args:
@@ -531,7 +476,7 @@ class SimulationBeginsBatsimEvent(BatsimEvent):
             pstates = None
             props = r.get("properties", None)
             if props and "watt_per_state" in props:
-                pstates = SimulationBeginsBatsimEvent.get_power_states(props)
+                pstates = Converters.json_to_power_states(props)
                 del props["watt_per_state"]
 
             return Host(r['id'], r['name'], role, pstates, props)
@@ -546,6 +491,136 @@ class SimulationBeginsBatsimEvent(BatsimEvent):
         return Platform(hosts)
 
 
+class JobSubmittedBatsimEvent(BatsimEvent):
+    """ Batsim Job Submitted event class.
+
+    This event is dispatched by Batsim when a job is submitted to the system.
+
+    Args:
+        timestamp: the time which the event ocurred.
+        data: the event data dict following the Batsim format.
+    """
+
+    def __init__(self, timestamp: float, data: dict) -> None:
+        super().__init__(timestamp, BatsimEventType.JOB_SUBMITTED)
+        profile = Converters.json_to_profile(
+            data["job"]["profile"], data["profile"])
+        self.__job = Job(
+            name=data["job_id"].split(Job.WORKLOAD_SEPARATOR)[1],
+            workload=data["job_id"].split(Job.WORKLOAD_SEPARATOR)[0],
+            res=data["job"]["res"],
+            profile=profile,
+            subtime=timestamp,
+            walltime=data["job"].get("walltime", None),
+            user=data["job"].get("user", None),
+        )
+
+    @property
+    def job(self) -> Job:
+        """ The job. """
+        return self.__job
+
+
+class JobKilledBatsimEvent(BatsimEvent):
+    """ Batsim Job Killed event class.
+
+    This event is dispatched by Batsim when a job is killed.
+
+    Args:
+        timestamp: the time which the event ocurred.
+        data: the event data dict following the Batsim format.
+    """
+
+    def __init__(self, timestamp: float, data: dict) -> None:
+        super().__init__(timestamp, BatsimEventType.JOB_KILLED)
+        self.__job_ids = list(data["job_ids"])
+
+    @property
+    def job_ids(self) -> Sequence[str]:
+        """ The id of all jobs killed. """
+        return list(self.__job_ids)
+
+
+class RequestedCallBatsimEvent(BatsimEvent):
+    """ Batsim Requested Call event class.
+
+    This event is dispatched by Batsim as a response from a call me back request.
+
+    Args:
+        timestamp: the time which the event ocurred.
+    """
+
+    def __init__(self, timestamp: float, data: dict = None) -> None:
+        super().__init__(timestamp, BatsimEventType.REQUESTED_CALL)
+
+
+class RedisConfig:
+    """ Batsim Redis Config class.
+
+    Args:
+        config: the config data dict following Batsim format.
+    """
+
+    def __init__(self, config) -> None:
+        self.enabled: bool = config['redis-enabled']
+        self.hostname: str = config['redis-hostname']
+        self.port: int = config['redis-port']
+        self.prefix: str = config['redis-prefix']
+
+
+class BatsimConfig:
+    """ Batsim Config class.
+
+    Args:
+        data: the simulation begins event data dict following Batsim format.
+    """
+
+    def __init__(self, data) -> None:
+        cfg = data['config']
+        self.redis = RedisConfig(cfg)
+        self.allow_compute_sharing: bool = data['allow_compute_sharing']
+        self.allow_storage_sharing: bool = data['allow_storage_sharing']
+        self.profiles_forwarded_on_submission: bool = cfg['profiles-forwarded-on-submission']
+        self.dynamic_jobs_enabled: bool = cfg['dynamic-jobs-enabled']
+        self.dynamic_jobs_acknowledged: bool = cfg['dynamic-jobs-acknowledged']
+        self.profile_reuse_enabled: bool = cfg['profile-reuse-enabled']
+        self.forward_unknown_events: bool = cfg['forward-unknown-events']
+
+
+class SimulationBeginsBatsimEvent(BatsimEvent):
+    """ Batsim Simulation Begins event class.
+
+    This event is dispatched by Batsim when the simulation begins and includes
+    all configuration parameters.
+
+    Args:
+        timestamp: the time which the event ocurred.
+        data: the event data dict following Batsim format.
+    """
+
+    def __init__(self, timestamp: float, data: dict) -> None:
+        super().__init__(timestamp, BatsimEventType.SIMULATION_BEGINS)
+        self.platform = Converters.json_to_platform(data)
+        self.config = BatsimConfig(data)
+        self.__workloads: Dict[str, str] = data['workloads']
+        self.__profiles: Dict[str, Dict[str, JobProfile]] = defaultdict(dict)
+
+        for w, profiles in data['profiles'].items():
+            for p_name, data in profiles.items():
+                profile = Converters.json_to_profile(p_name, data)
+                self.__profiles[w][p_name] = profile
+
+    @property
+    def workloads(self) -> Dict[str, str]:
+        """ The workloads loaded in the simulation. """
+        return self.__workloads.copy()
+
+    @property
+    def profiles(self) -> Dict[str, Dict[str, JobProfile]]:
+        """ The job profiles loaded from the workloads. """
+        return self.__profiles.copy()
+
+
 class SimulationEndsBatsimEvent(BatsimEvent):
     """ Batsim Simulation Ends event class.
 
@@ -555,8 +630,29 @@ class SimulationEndsBatsimEvent(BatsimEvent):
         timestamp: the time which the event ocurred.
     """
 
-    def __init__(self, timestamp: float) -> None:
+    def __init__(self, timestamp: float, data: dict = None) -> None:
         super().__init__(timestamp, BatsimEventType.SIMULATION_ENDS)
+
+
+class NotifyBatsimRequest(BatsimRequest):
+    """ Batsim notify request class.
+
+    Args:
+        timestamp: the time which the notification ocurred or will be sent.
+        notify_type: the type of the notification.
+
+    Raises:
+        ValueError: In case of invalid notification type.
+    """
+
+    def __init__(self, timestamp: float, notify_type: BatsimNotifyType) -> None:
+        assert isinstance(notify_type, BatsimNotifyType)
+        super().__init__(timestamp, BatsimRequestType.NOTIFY)
+        self.notify_type = notify_type
+
+    def _get_data_dict(self) -> dict:
+        """ Export data dict following Batsim format. """
+        return {"type": str(self.notify_type).lower()}
 
 
 class RejectJobBatsimRequest(BatsimRequest):
@@ -584,7 +680,7 @@ class RejectJobBatsimRequest(BatsimRequest):
         """ Batsim data dict.
 
         Returns:
-            A dict with the properties following the Batsim format.
+            A dict with the properties following Batsim format.
         """
         return {"job_id": self.job_id}
 
@@ -598,27 +694,43 @@ class ExecuteJobBatsimRequest(BatsimRequest):
         timestamp: the time which the request should occur.
         job_id: the id of the job to execute.
         alloc: the job allocated resources.
+        storage_mapping: a dict that maps a storage to a host id.
 
     Raises:
-        AssertionError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments types.
 
     Attributes:
         job_id: The id of the job to execute.
         alloc: the job allocated resources.
     """
 
-    def __init__(self, timestamp: float, job_id: str, alloc: Sequence[int]) -> None:
+    def __init__(self,
+                 timestamp: float,
+                 job_id: str,
+                 alloc: Sequence[int],
+                 storage_mapping: Dict[str, int] = None) -> None:
         super().__init__(timestamp, BatsimRequestType.EXECUTE_JOB)
+
+        if storage_mapping:
+            assert isinstance(storage_mapping, dict)
+            assert all(isinstance(k, str) and isinstance(v, int)
+                       for k, v in storage_mapping.items())
+
         self.job_id = job_id
+        self.storage_mapping = storage_mapping
         self.alloc = ProcSet(*alloc)
 
     def _get_data_dict(self) -> dict:
         """ Batsim data dict.
 
         Returns:
-            A dict with the properties following the Batsim format.
+            A dict with the properties following Batsim format.
         """
-        return {"job_id": self.job_id, "alloc": str(self.alloc)}
+        d: dict = {"job_id": self.job_id, "alloc": str(self.alloc)}
+        if self.storage_mapping:
+            d["storage_mapping"] = self.storage_mapping
+
+        return d
 
 
 class CallMeLaterBatsimRequest(BatsimRequest):
@@ -652,7 +764,7 @@ class CallMeLaterBatsimRequest(BatsimRequest):
         """ Batsim data dict.
 
         Returns:
-            A dict with the properties following the Batsim format.
+            A dict with the properties following Batsim format.
         """
         return {"timestamp": self.at}
 
@@ -683,7 +795,7 @@ class KillJobBatsimRequest(BatsimRequest):
         """ Batsim data dict.
 
         Returns:
-            A dict with the properties following the Batsim format.
+            A dict with the properties following Batsim format.
         """
         return {"job_ids": self.job_ids}
 
@@ -716,19 +828,23 @@ class RegisterJobBatsimRequest(BatsimRequest):
         """ Batsim data dict.
 
         Returns:
-            A dict with the properties following the Batsim format.
+            A dict with the properties following Batsim format.
         """
-        job = {
-            "profile": self.job.profile.name,
-            "res": self.job.res,
-            "subtime": self.job.subtime,
-            "id": self.job.id,
-            "user": self.job.user
+        d: dict = {
+            "job_id": self.job.id,
+            "job": {
+                "profile": self.job.profile.name,
+                "res": self.job.res,
+                "id": self.job.id,
+            }
         }
         if self.job.walltime:
-            job['walltime'] = self.job.walltime
+            d['job']['walltime'] = self.job.walltime
 
-        return {"job_id": self.job.id, "job": job}
+        if self.job.user:
+            d['job']['user'] = self.job.user
+
+        return d
 
 
 class RegisterProfileBatsimRequest(BatsimRequest):
@@ -759,54 +875,16 @@ class RegisterProfileBatsimRequest(BatsimRequest):
         self.workload_name = str(workload_name)
         self.profile = profile
 
-    def __get_profile_params(self) -> Dict[str, Any]:
-        """ Convert a job profile to the batsim format. """
-        params: Dict[str, Any] = {}
-        if isinstance(self.profile, DelayJobProfile):
-            params['delay'] = self.profile.delay
-            params['type'] = 'delay'
-        elif isinstance(self.profile, ParallelJobProfile):
-            params['cpu'] = self.profile.cpu
-            params['com'] = self.profile.cpu
-            params['type'] = 'parallel'
-        elif isinstance(self.profile, ParallelHomogeneousJobProfile):
-            params['cpu'] = self.profile.cpu
-            params['com'] = self.profile.cpu
-            params['type'] = 'parallel_homogeneous'
-        elif isinstance(self.profile, ParallelHomogeneousTotalJobProfile):
-            params['cpu'] = self.profile.cpu
-            params['com'] = self.profile.cpu
-            params['type'] = 'parallel_homogeneous_total'
-        elif isinstance(self.profile, ComposedJobProfile):
-            params['repeat'] = self.profile.repeat
-            params['seq'] = [p.name for p in self.profile.profiles]
-            params['type'] = "composed"
-        elif isinstance(self.profile, ParallelHomogeneousPFSJobProfile):
-            params['bytes_to_read'] = self.profile.bytes_to_read
-            params['bytes_to_write'] = self.profile.bytes_to_write
-            params['storage'] = self.profile.storage
-            params['type'] = "parallel_homogeneous_pfs"
-        elif isinstance(self.profile, DataStagingJobProfile):
-            params['nb_bytes'] = self.profile.nb_bytes
-            params['from'] = self.profile.src
-            params['to'] = self.profile.dest
-            params['type'] = "data_staging"
-        else:
-            raise NotImplementedError('Profile not supported, '
-                                      'got {}.'.format(self.profile))
-
-        return params
-
     def _get_data_dict(self) -> dict:
         """ Batsim data dict. 
 
         Returns:
-            A dict with the properties following the Batsim format.
+            A dict with the properties following Batsim format.
         """
         data = {
             "workload_name": self.workload_name,
             "profile_name": self.profile.name,
-            "profile": self.__get_profile_params()
+            "profile": Converters.profile_to_json(self.profile)
         }
         return data
 
@@ -855,7 +933,7 @@ class SetResourceStateBatsimRequest(BatsimRequest):
         """ Batsim data dict. 
 
         Returns:
-            A dict with the properties following the Batsim format.
+            A dict with the properties following Batsim format.
         """
         return {"resources": str(self.resources), "state": str(self.state)}
 
@@ -896,11 +974,11 @@ class ChangeJobStateBatsimRequest(BatsimRequest):
         """ Batsim data dict. 
 
         Returns:
-            A dict with the properties following the Batsim format.
+            A dict with the properties following Batsim format.
         """
         d = {
             "job_id": self.job_id,
-            "job_state": self.job_state,
+            "job_state": str(self.job_state),
             "kill_reason": self.kill_reason,
         }
         return d
@@ -919,33 +997,24 @@ class BatsimMessageDecoder:
         NotImplementedError: In case of not supported simulation config.
     """
 
+    def __init__(self) -> None:
+        self.constructors = {
+            BatsimEventType.JOB_SUBMITTED: JobSubmittedBatsimEvent,
+            BatsimEventType.JOB_COMPLETED: JobCompletedBatsimEvent,
+            BatsimEventType.JOB_KILLED: JobKilledBatsimEvent,
+            BatsimEventType.RESOURCE_STATE_CHANGED: ResourcePowerStateChangedBatsimEvent,
+            BatsimEventType.REQUESTED_CALL: RequestedCallBatsimEvent,
+            BatsimEventType.SIMULATION_BEGINS: SimulationBeginsBatsimEvent,
+            BatsimEventType.SIMULATION_ENDS: SimulationEndsBatsimEvent,
+            BatsimEventType.NOTIFY: NotifyBatsimEvent,
+        }
+
     def __call__(self, msg: dict) -> Any:
         if "type" in msg and msg["type"] in list(map(str, BatsimEventType)):
             event_type = BatsimEventType[msg["type"]]
-            if event_type == BatsimEventType.JOB_SUBMITTED:
-                return JobSubmittedBatsimEvent(msg["timestamp"], msg["data"])
-            elif event_type == BatsimEventType.JOB_COMPLETED:
-                return JobCompletedBatsimEvent(msg["timestamp"], msg["data"])
-            elif event_type == BatsimEventType.JOB_KILLED:
-                return JobKilledBatsimEvent(msg["timestamp"], msg["data"])
-            elif event_type == BatsimEventType.RESOURCE_STATE_CHANGED:
-                return ResourcePowerStateChangedBatsimEvent(
-                    msg["timestamp"],
-                    msg["data"])
-            elif event_type == BatsimEventType.REQUESTED_CALL:
-                return RequestedCallBatsimEvent(msg["timestamp"])
-            elif event_type == BatsimEventType.SIMULATION_BEGINS:
-                allow_sharing = msg["data"].get("allow_compute_sharing", False)
-                if allow_sharing:
-                    raise NotImplementedError('Sharing resources is currently '
-                                              'not supported.')
-                return SimulationBeginsBatsimEvent(msg["timestamp"], msg["data"])
-            elif event_type == BatsimEventType.SIMULATION_ENDS:
-                return SimulationEndsBatsimEvent(msg["timestamp"])
-            elif event_type == BatsimEventType.NOTIFY:
-                return BatsimNotify(
-                    msg["timestamp"],
-                    BatsimNotifyType[msg["data"]["type"].upper()])
+            event_constructor = self.constructors.get(event_type, None)
+            if event_constructor:
+                return event_constructor(msg["timestamp"], msg["data"])
             else:
                 return msg
         elif "now" in msg:
@@ -976,6 +1045,11 @@ class NetworkHandler:
     def address(self) -> str:
         """ The address. """
         return self.__address
+
+    @property
+    def is_connected(self):
+        """ Whether a socket remains opened """
+        return bool(self.__socket)
 
     def bind(self) -> None:
         """ Create and bind a socket to the address. 

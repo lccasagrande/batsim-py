@@ -2,7 +2,6 @@ from abc import ABC
 from enum import Enum
 from typing import Optional
 from typing import Sequence
-from typing import Union
 
 from . import dispatcher
 from .events import JobEvent
@@ -65,7 +64,7 @@ class DelayJobProfile(JobProfile):
         >>> profile = DelayJobProfile(name="delay", delay=100)
     """
 
-    def __init__(self, name: str, delay: Union[int, float]) -> None:
+    def __init__(self, name: str, delay: float) -> None:
         if delay <= 0:
             raise ValueError('Expected `delay` argument to be a number '
                              'greater than zero, got {}'.format(delay))
@@ -112,8 +111,8 @@ class ParallelJobProfile(JobProfile):
 
     def __init__(self,
                  name: str,
-                 cpu: Sequence[Union[int, float]],
-                 com: Sequence[Union[int, float]]) -> None:
+                 cpu: Sequence[float],
+                 com: Sequence[float]) -> None:
         if not cpu:
             raise ValueError('Expected `cpu` argument to be a non '
                              'empty sequence, got {}.'.format(cpu))
@@ -135,12 +134,12 @@ class ParallelJobProfile(JobProfile):
         self.__com = list(com)
 
     @property
-    def cpu(self) -> Sequence[Union[int, float]]:
+    def cpu(self) -> Sequence[float]:
         """The amount of flop/s to be computed on each host."""
         return self.__cpu
 
     @property
-    def com(self) -> Sequence[Union[int, float]]:
+    def com(self) -> Sequence[float]:
         """The amount of bytes to be transferred between hosts."""
         return self.__com
 
@@ -167,8 +166,8 @@ class ParallelHomogeneousJobProfile(JobProfile):
 
     def __init__(self,
                  name: str,
-                 cpu: Union[int, float],
-                 com: Union[int, float]) -> None:
+                 cpu: float,
+                 com: float) -> None:
         if cpu == 0 and com == 0:
             raise ValueError('Expected `cpu` or `com` arguments '
                              ' to be greater than zero.')
@@ -216,8 +215,8 @@ class ParallelHomogeneousTotalJobProfile(JobProfile):
 
     def __init__(self,
                  name: str,
-                 cpu:  Union[int, float],
-                 com:  Union[int, float]) -> None:
+                 cpu:  float,
+                 com:  float) -> None:
         if cpu == 0 and com == 0:
             raise ValueError('Expected `cpu` or `com` arguments '
                              ' to be greater than zero.')
@@ -250,23 +249,20 @@ class ComposedJobProfile(JobProfile):
 
     Args:
         name: The profile name. Must be unique within a workload.
-        profiles: The profiles to execute.
+        profiles: The profiles name to execute sequentially.
         repeat: The number of times to repeat the sequence.
 
     Raises:
-        AssertionError: In case of invalid arguments type.
         ValueError: In case of `repeat` argument is less than 1 or profiles
             is empty.
 
     Examples:
-        >>> profile_1 = ParallelHomogeneousTotalJobProfile("prof1", cpu=10e6, com=5e6)
-        >>> profile_2 = ParallelHomogeneousTotalJobProfile("prof2", cpu=1e6, com=2e6)
-        >>> composed = ComposedJobProfile("composed", profiles=[profile_1, profile_2], repeat=2)
+        >>> composed = ComposedJobProfile("composed", profiles=["p1", "p2"], repeat=2)
     """
 
     def __init__(self,
                  name: str,
-                 profiles: Sequence[JobProfile],
+                 profiles: Sequence[str],
                  repeat: int = 1) -> None:
         if repeat <= 0:
             raise ValueError('Expected `repeat` argument to be greater'
@@ -275,8 +271,6 @@ class ComposedJobProfile(JobProfile):
         if not profiles:
             raise ValueError('Expected `profiles` argument to be a non '
                              'empty sequence, got {}.'.format(profiles))
-
-        assert all(isinstance(p, JobProfile) for p in profiles)
 
         super().__init__(name)
         self.__repeat = int(repeat)
@@ -288,7 +282,7 @@ class ComposedJobProfile(JobProfile):
         return self.__repeat
 
     @property
-    def profiles(self) -> Sequence[JobProfile]:
+    def profiles(self) -> Sequence[str]:
         """The sequence of profiles to execute."""
         return self.__profiles
 
@@ -316,8 +310,8 @@ class ParallelHomogeneousPFSJobProfile(JobProfile):
 
     def __init__(self,
                  name: str,
-                 bytes_to_read: Union[int, float],
-                 bytes_to_write: Union[int, float],
+                 bytes_to_read: float,
+                 bytes_to_write: float,
                  storage: str = 'pfs') -> None:
         if bytes_to_read == 0 and bytes_to_write == 0:
             raise ValueError('Expected `bytes_to_read` or `bytes_to_write` '
@@ -375,7 +369,7 @@ class DataStagingJobProfile(JobProfile):
 
     def __init__(self,
                  name: str,
-                 nb_bytes: Union[int, float],
+                 nb_bytes: float,
                  src: str,
                  dest: str) -> None:
 
@@ -442,8 +436,8 @@ class Job(Identifier):
                  workload: str,
                  res: int,
                  profile: JobProfile,
-                 subtime: Union[int, float],
-                 walltime: Optional[Union[int, float]] = None,
+                 subtime: float,
+                 walltime: Optional[float] = None,
                  user: Optional[str] = None) -> None:
 
         if not name:
@@ -465,7 +459,7 @@ class Job(Identifier):
         if walltime is not None and walltime <= 0:
             raise ValueError('Expected `walltime` argument to be greater '
                              'than zero, got {}'.format(walltime))
-                             
+
         assert isinstance(profile, JobProfile)
         job_id = "%s%s%s" % (str(workload), self.WORKLOAD_SEPARATOR, str(name))
         super().__init__(job_id)
@@ -510,7 +504,7 @@ class Job(Identifier):
         return self.__profile
 
     @property
-    def walltime(self) -> Optional[Union[int, float]]:
+    def walltime(self) -> Optional[float]:
         """ The job maximum execution time. """
         return self.__walltime
 
@@ -669,7 +663,7 @@ class Job(Identifier):
         self.__state = JobState.REJECTED
         dispatcher.dispatch(JobEvent.REJECTED, self, unique=True)
 
-    def _submit(self, subtime: Union[int, float]) -> None:
+    def _submit(self, subtime: float) -> None:
         """ Submit the job. 
 
         This is an internal method to be used by the simulator only.
@@ -695,7 +689,7 @@ class Job(Identifier):
         self.__subtime = float(subtime)
         dispatcher.dispatch(JobEvent.SUBMITTED, self, unique=True)
 
-    def _kill(self, current_time: Union[int, float]) -> None:
+    def _kill(self, current_time: float) -> None:
         """ Kill the job. 
 
         This is an internal method to be used by the simulator only.
@@ -722,7 +716,7 @@ class Job(Identifier):
         self.__state = JobState.COMPLETED_KILLED
         dispatcher.dispatch(JobEvent.COMPLETED, self, unique=True)
 
-    def _start(self, current_time: Union[int, float]) -> None:
+    def _start(self, current_time: float) -> None:
         """ Start the job. 
 
         This is an internal method to be used by the simulator only.
@@ -750,7 +744,7 @@ class Job(Identifier):
         self.__state = JobState.RUNNING
         dispatcher.dispatch(JobEvent.STARTED, self, unique=True)
 
-    def _terminate(self, current_time: Union[int, float], state: JobState) -> None:
+    def _terminate(self, current_time: float, state: JobState) -> None:
         """ Terminate the job. 
 
         This is an internal method to be used by the simulator only.

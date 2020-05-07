@@ -20,11 +20,11 @@ import numpy as np
 from . import dispatcher
 from .events import SimulatorEvent
 from .jobs import Job
+from .protocol import BatsimNotifyType
 from .protocol import SimulationBeginsBatsimEvent
 from .protocol import NetworkHandler
 from .protocol import BatsimMessage
 from .protocol import ResourcePowerStateChangedBatsimEvent
-from .protocol import BatsimNotifyType
 from .protocol import BatsimEventType
 from .protocol import JobCompletedBatsimEvent
 from .protocol import JobSubmittedBatsimEvent
@@ -34,7 +34,6 @@ from .protocol import KillJobBatsimRequest
 from .protocol import ExecuteJobBatsimRequest
 from .protocol import RejectJobBatsimRequest
 from .protocol import SetResourceStateBatsimRequest
-from .resources import Host
 from .resources import Platform
 from .utils import get_free_tcp_address
 
@@ -625,7 +624,7 @@ class SimulatorHandler:
             elif h.is_switching_on:
                 h._set_on()
             elif (h.is_idle or h.is_computing) and h.pstate.id != event.state:
-                h._set_computation_pstate(int(event.state))
+                h._set_computation_pstate(event.state)
 
             if h.pstate.id != event.state:
                 raise SystemError('For some reason, the internal platform differs '
