@@ -161,7 +161,7 @@ class SimulatorHandler:
                 on how to describe a platform.
             workload: A JSON file describing the jobs and their profiles.
                 The simulation process will only submit the jobs that are
-                defined in this json. Moreover, the Batsim is responsable for
+                defined in this json. Moreover, the Batsim is responsible for
                 the submission process. 
             verbosity: The Batsim verbosity level. Defaults to "quiet". Available 
                 values: quiet, network-only, information, debug. It controls the
@@ -610,7 +610,7 @@ class SimulatorHandler:
 
         When a host is switched on/off, the batsim simulates the transition costs
         and tells the scheduler only when the host is sleeping or idle. Thus, 
-        Batsim is the responsable to tell when the host finished its transition.
+        Batsim is the responsible to tell when the host finished its transition.
         """
         if not self.__platform:
             raise SystemError("For some reason, the platform was not loaded.")
