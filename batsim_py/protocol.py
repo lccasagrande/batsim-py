@@ -97,7 +97,7 @@ class BatsimRequest(ABC):
 
     @property
     def timestamp(self) -> float:
-        """ The time the request ocurred. """
+        """ The time the request occurred. """
         return self.__timestamp
 
     @property
@@ -161,7 +161,7 @@ class BatsimEvent(ABC):
 
     @property
     def timestamp(self) -> float:
-        """ The time the event ocurred. """
+        """ The time the event occurred. """
         return self.__timestamp
 
     @property
@@ -223,7 +223,7 @@ class NotifyBatsimEvent(BatsimEvent):
     """ Batsim notify event class.
 
     Args:
-        timestamp: the time which the notification ocurred.
+        timestamp: the time which the notification occurred.
         notify_type: the notification type.
 
     Raises:
@@ -246,7 +246,7 @@ class JobCompletedBatsimEvent(BatsimEvent):
     This event is dispatched by Batsim when a job finishes.
 
     Args:
-        timestamp: the time which the event ocurred.
+        timestamp: the time which the event occurred.
         data: the event data dict following the Batsim format.
     """
 
@@ -284,7 +284,7 @@ class ResourcePowerStateChangedBatsimEvent(BatsimEvent):
     This event is dispatched by Batsim when a resource changes its power state.
 
     Args:
-        timestamp: the time which the event ocurred.
+        timestamp: the time which the event occurred.
         data: the event data dict following the Batsim format.
     """
 
@@ -497,7 +497,7 @@ class JobSubmittedBatsimEvent(BatsimEvent):
     This event is dispatched by Batsim when a job is submitted to the system.
 
     Args:
-        timestamp: the time which the event ocurred.
+        timestamp: the time which the event occurred.
         data: the event data dict following the Batsim format.
     """
 
@@ -527,7 +527,7 @@ class JobKilledBatsimEvent(BatsimEvent):
     This event is dispatched by Batsim when a job is killed.
 
     Args:
-        timestamp: the time which the event ocurred.
+        timestamp: the time which the event occurred.
         data: the event data dict following the Batsim format.
     """
 
@@ -547,7 +547,7 @@ class RequestedCallBatsimEvent(BatsimEvent):
     This event is dispatched by Batsim as a response from a call me back request.
 
     Args:
-        timestamp: the time which the event ocurred.
+        timestamp: the time which the event occurred.
     """
 
     def __init__(self, timestamp: float, data: dict = None) -> None:
@@ -594,7 +594,7 @@ class SimulationBeginsBatsimEvent(BatsimEvent):
     all configuration parameters.
 
     Args:
-        timestamp: the time which the event ocurred.
+        timestamp: the time which the event occurred.
         data: the event data dict following Batsim format.
     """
 
@@ -627,7 +627,7 @@ class SimulationEndsBatsimEvent(BatsimEvent):
     This event is dispatched by Batsim when the simulation ends.
 
     Args:
-        timestamp: the time which the event ocurred.
+        timestamp: the time which the event occurred.
     """
 
     def __init__(self, timestamp: float, data: dict = None) -> None:
@@ -638,7 +638,7 @@ class NotifyBatsimRequest(BatsimRequest):
     """ Batsim notify request class.
 
     Args:
-        timestamp: the time which the notification ocurred or will be sent.
+        timestamp: the time which the notification occurred or will be sent.
         notify_type: the type of the notification.
 
     Raises:

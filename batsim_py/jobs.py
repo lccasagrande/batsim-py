@@ -564,11 +564,6 @@ class Job(Identifier):
         return self.__stop_time
 
     @property
-    def dependencies(self) -> Optional[Sequence[str]]:
-        """ The id of the jobs it depends. """
-        return None
-
-    @property
     def waiting_time(self) -> Optional[float]:
         """ The job waiting time. """
         if self.start_time is None:
