@@ -11,7 +11,7 @@ Any = dispatcher.Any
 
 def subscribe(listener: Callable[[AnyType], None],
               event: Event,
-              sender: AnyType = dispatcher.Any) -> None:
+              sender: AnyType = Any) -> None:
     """ Subscribe to an event 
 
     Args:
@@ -31,7 +31,7 @@ def subscribe(listener: Callable[[AnyType], None],
 
 
 def dispatch(event: Event,
-             sender: AnyType = dispatcher.Any,
+             sender: AnyType = Any,
              unique: bool = False) -> None:
     """ Dispatch an event 
 
@@ -55,7 +55,7 @@ def dispatch(event: Event,
 
 def unsubscribe(listener: Callable[[AnyType], None],
                 event: Event,
-                sender: AnyType = dispatcher.Any) -> None:
+                sender: AnyType = Any) -> None:
     """ Unsubscribe to an event 
 
     Args:
@@ -82,7 +82,7 @@ def close_connections():
 
 
 def unsubscribe_listeners(event: Event,
-                          sender: AnyType = dispatcher.Any) -> None:
+                          sender: AnyType = Any) -> None:
     """ Unsubscribe all listeners from an event 
 
     Args:
