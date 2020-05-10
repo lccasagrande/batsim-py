@@ -297,8 +297,8 @@ class SimulatorHandler:
         Raises:
             ValueError: In case of invalid arguments value.
             RuntimeError: In case of the simulation is not running.
-            TypeError: In case the call function is not callable.
         """
+        assert callable(call)
 
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
@@ -307,9 +307,6 @@ class SimulatorHandler:
             raise ValueError('Expected `at` argument to be a number '
                              'greater than the current simulation time'
                              ', got {}.'.format(at))
-
-        if not callable(call):
-            raise TypeError('Expected `call` argument to be callable ')
 
         self.__callbacks[at].append(call)
         self.__set_batsim_call_me_later(at)

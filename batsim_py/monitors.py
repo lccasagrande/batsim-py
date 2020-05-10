@@ -23,17 +23,10 @@ class Monitor(ABC):
 
     Args:
         simulator: the simulator handler.
-
-    Raises:
-        TypeError: In case of invalid arguments.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
-        if not isinstance(simulator, SimulatorHandler):
-            raise TypeError('Expected `simulator` argument to be an '
-                            'instance of `SimulatorHandler`, '
-                            'got {}.'.format(simulator))
-
+        assert isinstance(simulator, SimulatorHandler)
         self._simulator = simulator
 
     @property
@@ -64,9 +57,6 @@ class JobMonitor(Monitor):
 
     Args:
         simulator: the simulator handler.
-
-    Raises:
-        TypeError: In case of invalid arguments.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -148,9 +138,6 @@ class SchedulerMonitor(Monitor):
 
     Args:
         simulator: the simulator handler.
-
-    Raises:
-        TypeError: In case of invalid arguments.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -264,9 +251,6 @@ class HostMonitor(Monitor):
 
     Args:
         simulator: the simulator handler.
-
-    Raises:
-        TypeError: In case of invalid arguments.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -378,9 +362,6 @@ class SimulationMonitor(Monitor):
 
     Args:
         simulator: the simulator handler.
-
-    Raises:
-        TypeError: In case of invalid arguments.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -435,9 +416,6 @@ class HostStateSwitchMonitor(Monitor):
 
     Args:
         simulator: the simulator handler.
-
-    Raises:
-        TypeError: In case of invalid arguments.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -527,9 +505,6 @@ class HostPowerStateSwitchMonitor(Monitor):
 
     Args:
         simulator: the simulator handler.
-
-    Raises:
-        TypeError: In case of invalid arguments.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -619,9 +594,6 @@ class ConsumedEnergyMonitor(Monitor):
 
     Args:
         simulator: the simulator handler.
-
-    Raises:
-        TypeError: In case of invalid arguments.
 
     Attributes:
         POWER_STATE_TYPE: A signal that a power state switch ocurred.
