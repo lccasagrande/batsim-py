@@ -473,7 +473,6 @@ class Converters:
             props = r.get("properties", None)
             if props and "watt_per_state" in props:
                 pstates = Converters.json_to_power_states(props)
-                del props["watt_per_state"]
 
             return Host(r['id'], r['name'], role, pstates, props)
 
