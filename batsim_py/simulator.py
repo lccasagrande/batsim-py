@@ -21,6 +21,7 @@ from . import dispatcher
 from .events import SimulatorEvent
 from .jobs import Job
 from .protocol import BatsimNotifyType
+from .protocol import NotifyBatsimEvent
 from .protocol import SimulationBeginsBatsimEvent
 from .protocol import NetworkHandler
 from .protocol import BatsimMessage
@@ -47,8 +48,7 @@ class Reservation(NamedTuple):
 class SimulatorHandler:
     """ Simulator handler class.
 
-    This class will handle the Batsim simulation process which, includes the 
-    management of resources and jobs.
+    This class will handle the Batsim simulation process.
 
     Args:
         tcp_address: An address string consisting of three parts  as follows: 
@@ -76,9 +76,8 @@ class SimulatorHandler:
         self.__no_more_jobs_to_submit = False
         self.__batsim_requests: List[BatsimRequest] = []
         self.__jobs: List[Job] = []
-        self.__callbacks: DefaultDict[float,
-                                      List[Callable[[float], None]],
-                                      ] = defaultdict(list)
+        self.__callbacks: DefaultDict[float, List[Callable[[
+            float], None]]] = defaultdict(list)
 
         # Batsim events handlers
         self.__batsim_event_handlers: Dict[Any, Any] = {
@@ -88,7 +87,7 @@ class SimulatorHandler:
             BatsimEventType.JOB_SUBMITTED: self.__on_batsim_job_submitted,
             BatsimEventType.RESOURCE_STATE_CHANGED: self.__on_batsim_host_state_changed,
             BatsimEventType.REQUESTED_CALL: self.__on_batsim_requested_call,
-            BatsimNotifyType.NO_MORE_STATIC_JOB_TO_SUBMIT: self.__on_batsim_no_more_jobs_to_submit
+            BatsimEventType.NOTIFY: self.__on_batsim_notify
         }
 
         atexit.register(self.__close_simulator)
@@ -109,7 +108,7 @@ class SimulatorHandler:
 
     @property
     def agenda(self) -> Iterator[Reservation]:
-        """ A sequence of the expected release time for each host. """
+        """ The expected release time of each host. """
         if self.__platform:
             for host in self.__platform:
                 release_t = 0.
@@ -149,45 +148,41 @@ class SimulatorHandler:
     def start(self,
               platform: str,
               workload: str,
-              verbosity: Optional[str] = "quiet",
+              verbosity: str = "quiet",
               simulation_time: Optional[float] = None) -> None:
         """ Starts the simulation process.
 
-        It'll load the platform and submit the jobs defined in the workload.
-
         Args:
-            platform: The XML file describing the platform. It must follow the
+            platform: The XML file defining the platform. It must follow the
                 format expected by Batsim and SimGrid. Check their documentation
-                on how to describe a platform.
-            workload: A JSON file describing the jobs and their profiles.
+                on how to describe the platform.
+            workload: A JSON file defining the jobs and their profiles.
                 The simulation process will only submit the jobs that are
                 defined in this json. Moreover, the Batsim is responsible for
                 the submission process. 
             verbosity: The Batsim verbosity level. Defaults to "quiet". Available 
-                values: quiet, network-only, information, debug. It controls the
-                verbosity of the Batsim only.
+                values: quiet, network-only, information, debug. 
             simulation_time: The maximum simulation time. Defaults to None.
                 If this argument is set, the simulation will stop only when this
                 time is reached, no matter if there are jobs to be submitted or 
                 running. Otherwise, the simulation will only stop when all jobs
-                in the workload were submitted and completed/rejected.
+                in the workload were completed or rejected.
 
         Raises:
-            ValueError: In case of invalid arguments value.
-            RuntimeError: In case of invalid platform description or the 
-                simulation is already running or the platform could not be
-                loaded.
-            NotImplementedError: In case of not supported properties in the
-                platform description.
+            RuntimeError: In case of simulation already running.
+            ValueError: In case of `simulation_time` is less than or equal to 
+                the current simulation time.
 
         Dispatch:
-            A simulation begins event.
+            SIMULATION_BEGINS
 
         Examples:
             >>> handler = SimulatorHandler("tcp://localhost:28000")
             >>> handler.start("platform.xml", "workload.json", "information", 1440)
 
         """
+        assert workload and platform
+
         if self.is_running:
             raise RuntimeError("The simulation is already running.")
 
@@ -212,10 +207,11 @@ class SimulatorHandler:
         self.__network.bind()
         self.__handle_batsim_events()
 
-        if not self.__platform:
-            raise RuntimeError("Could not load platfrom from Batsim.")
-
-        if self.__simulation_time:
+        if self.__simulation_time is not None:
+            if self.__simulation_time <= self.current_time:
+                raise ValueError('Expected `simulation_time` to be greater '
+                                 'than current time ({}) , got {}.'
+                                 ''.format(self.current_time, simulation_time))
             self.__set_batsim_call_me_later(self.__simulation_time)
 
         dispatcher.dispatch(SimulatorEvent.SIMULATION_BEGINS, self)
@@ -224,7 +220,7 @@ class SimulatorHandler:
         """ Close the simulation process.
 
         Dispatch:
-            A simulation ends event.
+            SIMULATION_ENDS
         """
         if not self.is_running:
             return
@@ -236,16 +232,14 @@ class SimulatorHandler:
         dispatcher.dispatch(SimulatorEvent.SIMULATION_ENDS, self)
         dispatcher.close_connections()
 
-    def proceed_time(self, time: Optional[float] = None) -> None:
+    def proceed_time(self, time: float = 0) -> None:
         """ Proceed the simulation process to the next event or time.
 
         Args:
-            time: The time to proceed. Defaults to None.
+            time: The time to proceed. Defaults to 0.
                 It's possible to proceed directly to the next event or to
-                a specific time. It allows the implementation of policies
-                that acts periodically or only when a specific event happened
-                (like, a job submission or a job completed). For the latter 
-                case, time must be None.
+                a specific time. If the time is unset (equals 0), the simulation
+                will proceed to the next event. 
 
         Raises:
             ValueError: In case of invalid arguments value.
@@ -253,7 +247,7 @@ class SimulatorHandler:
                 a deadlock happened. The latter case occurs only when 
                 there are no more events to happen and no time was specified. 
                 Consequently, the simulation does not know what to do and a 
-                deadlock error is raised.
+                deadlock error is raised by Batsim.
         """
 
         def unflag(_):
@@ -263,7 +257,7 @@ class SimulatorHandler:
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
 
-        if time and time <= 0:
+        if time and time < 0:
             raise ValueError('Expected `time` argument to be a number '
                              'greater than zero, got {}.'.format(time))
 
@@ -326,11 +320,12 @@ class SimulatorHandler:
             RuntimeError: In case of the simulation is not running.
             LookupError: In case of job or resource not found.
         """
+        assert job_id and hosts_id
+
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
 
-        if not self.__platform:
-            raise SystemError("For some reason, the platform was not loaded")
+        assert self.__platform, "For some reason the platform was not loaded"
 
         job = next((j for j in self.__jobs if j.id == job_id), None)
         if not job:
@@ -356,7 +351,8 @@ class SimulatorHandler:
             job_id: The job id.
 
         Raises:
-            RuntimeError: In case of the simulation is not running.
+            RuntimeError: In case of the simulation is not running or the job
+                cannot be killed.
             LookupError: In case of job not found.
         """
         if not self.is_running:
@@ -366,6 +362,7 @@ class SimulatorHandler:
         if not job:
             raise LookupError("The job {} was not found.".format(job_id))
 
+        job._kill(self.current_time)
         self.__jobs.remove(job)
 
         # Sync Batsim
@@ -382,8 +379,8 @@ class SimulatorHandler:
             job_id: The job id.
 
         Raises:
-            RuntimeError: In case of the simulation is not running or a invalid
-                job is selected.
+            RuntimeError: In case of the simulation is not running or the job
+                cannot be rejected.
             LookupError: In case of job not found.
         """
 
@@ -394,10 +391,7 @@ class SimulatorHandler:
         if not job:
             raise LookupError("The job {} was not found.".format(job_id))
 
-        if not job.is_submitted:
-            raise RuntimeError('Only jobs in the queue can be rejected, '
-                               'got {}.'.format(job.state))
-
+        job._reject()
         self.__jobs.remove(job)
 
         # Sync Batsim
@@ -411,16 +405,14 @@ class SimulatorHandler:
             hosts_id: The sequence of hosts id to be switched on.
 
         Raises:
-            RuntimeError: In case of the simulation is not running or the host
-                cannot be switched on because there is no power state defined 
-                in the platform or it is not actually sleeping.
-            LookupError: In case of host not found or power state could not be found.
+            RuntimeError: In case of the simulation is not running or the 
+                host cannot switch on.
+            LookupError: In case of host not found.
         """
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
 
-        if not self.__platform:
-            raise SystemError("For some reason, the platform was not loaded.")
+        assert self.__platform, "For some reason, the platform was not loaded."
 
         for h_id in hosts_id:
             host = self.__platform.get_by_id(h_id)
@@ -437,16 +429,14 @@ class SimulatorHandler:
             hosts_id: The sequence of hosts id to be switched off.
 
         Raises:
-            RuntimeError: In case of the simulation is not running or the host
-                cannot be switched off because there is no power state defined 
-                in the platform or it is not actually idle.
+            RuntimeError: In case of the simulation is not running or the 
+                host cannot switch off.
             LookupError: In case of host not found or power state could not be found.
         """
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
 
-        if not self.__platform:
-            raise SystemError("For some reason, the platform was not loaded.")
+        assert self.__platform, "For some reason, the platform was not loaded."
 
         for h_id in hosts_id:
             host = self.__platform.get_by_id(h_id)
@@ -467,16 +457,13 @@ class SimulatorHandler:
 
         Raises:
             RuntimeError: In case of the simulation is not running or the 
-                power state is invalid or was not found or 
-                the current host state is not idle nor computing.
-            LookupError: In case of host not found or power state could 
-                not be found or power state is invalid.
+                power state were not defined or the host cannot switch.
+            LookupError: In case of host or power state were not found.
         """
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
 
-        if not self.__platform:
-            raise SystemError("For some reason, the platform was not loaded.")
+        assert self.__platform, "For some reason, the platform was not loaded."
 
         host = self.__platform.get_by_id(host_id)
         host._set_computation_pstate(pstate_id)
@@ -491,22 +478,15 @@ class SimulatorHandler:
         This is an internal method used to starts jobs that were allocated.
         A job can only starts if the hosts are idle. Thus, this method ensures
         that the host can compute the job.
-
-        Raises:
-            SystemError: In case of the job has no allocated resources or the 
-                platform was not loaded.
         """
         if not self.is_running:
             return
 
-        if not self.__platform:
-            raise SystemError("For some reason, the platform was not loaded.")
+        assert self.__platform, "For some reason, the platform was not loaded."
 
         runnable_jobs = [j for j in self.__jobs if j.is_runnable]
         for job in runnable_jobs:
-            if not job.allocation:
-                raise SystemError('For some reason, the job has no resources to '
-                                  'start, got {}.'.format(job))
+            assert job.allocation, "For some reason, the job was not allocated."
 
             is_ready = True
             # Check if all hosts are active and switch on sleeping hosts
@@ -538,13 +518,11 @@ class SimulatorHandler:
         """ Close the simulator process. """
         if self.__simulator:
             self.__simulator.terminate()
-            outs, errs = self.__simulator.communicate()
+            self.__simulator.communicate()
             self.__simulator = None
 
     def __set_batsim_call_me_later(self, at: float) -> None:
         """ Setup a call me later request. """
-        if at <= self.current_time:
-            return
         request = CallMeLaterBatsimRequest(self.current_time, at)
         if not any(isinstance(r, CallMeLaterBatsimRequest) and r.at == request.at for r in self.__batsim_requests):
             self.__batsim_requests.append(request)
@@ -554,13 +532,7 @@ class SimulatorHandler:
         def get_old_request() -> Optional[SetResourceStateBatsimRequest]:
             """ Get the request with the same properties. """
             for r in self.__batsim_requests:
-                if r.timestamp != self.current_time:
-                    continue
-                elif not isinstance(r, SetResourceStateBatsimRequest):
-                    continue
-                elif r.state != pstate_id:
-                    continue
-                else:
+                if r.timestamp == self.current_time and isinstance(r, SetResourceStateBatsimRequest) and r.state == pstate_id:
                     return r
             return None
 
@@ -609,8 +581,7 @@ class SimulatorHandler:
         and tells the scheduler only when the host is sleeping or idle. Thus, 
         Batsim is the responsible to tell when the host finished its transition.
         """
-        if not self.__platform:
-            raise SystemError("For some reason, the platform was not loaded.")
+        assert self.__platform, "For some reason, the platform was not loaded."
 
         for h_id in event.resources:
             h = self.__platform.get_by_id(h_id)
@@ -623,10 +594,11 @@ class SimulatorHandler:
             elif (h.is_idle or h.is_computing) and h.pstate.id != event.state:
                 h._set_computation_pstate(event.state)
 
-            if h.pstate.id != event.state:
-                raise SystemError('For some reason, the internal platform differs '
-                                  'from the Batsim platform, got pstate {} while '
-                                  'batsim got pstate {}.'.format(h.pstate.id, event.state))
+            assert h.pstate.id == event.state, ('For some reason, the internal '
+                                                'platform differs from the '
+                                                'Batsim platform, got pstate '
+                                                '{} while batsim got pstate {}.'
+                                                ''.format(h.pstate.id, event.state))
 
         self.__start_runnable_jobs()
 
@@ -646,16 +618,16 @@ class SimulatorHandler:
         """ Handle batsim job submitted event.  """
 
         job = next((j for j in self.__jobs if j.id == event.job_id), None)
-        if not job:
-            raise SystemError("The job {} was not found.".format(event.job_id))
+        assert job, "The job {} was not found.".format(event.job_id)
 
         job._terminate(self.current_time, event.job_state)
         self.__jobs.remove(job)
         self.__start_runnable_jobs()
 
-    def __on_batsim_no_more_jobs_to_submit(self, _) -> None:
+    def __on_batsim_notify(self, event: NotifyBatsimEvent) -> None:
         """ Handle batsim submitter finished event.  """
-        self.__no_more_jobs_to_submit = True
+        if event.notify_type == BatsimNotifyType.NO_MORE_STATIC_JOB_TO_SUBMIT:
+            self.__no_more_jobs_to_submit = True
 
     def __on_sigterm(self, signum, frame) -> None:
         """ Close simulation on sigterm.  """
