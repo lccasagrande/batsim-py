@@ -2,9 +2,9 @@ import random
 
 import pytest
 
-import batsim_py.dispatcher as dispatcher
+from batsim_py import dispatcher
+from batsim_py import jobs
 from batsim_py.events import JobEvent
-import batsim_py.jobs as jobs
 
 
 class TestJobState:

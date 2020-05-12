@@ -1,6 +1,6 @@
-import batsim_py.dispatcher as dispatcher
-import batsim_py.events as events
-import batsim_py.jobs as jobs
+from batsim_py import dispatcher
+from batsim_py import events
+from batsim_py import jobs
 
 
 class TestDispatcher:

@@ -1,19 +1,23 @@
-from batsim_py.resources import PowerStateType
-from batsim_py.jobs import JobState
-from batsim_py.protocol import BatsimMessage, BatsimMessageDecoder, JobCompletedBatsimEvent, JobSubmittedBatsimEvent, NotifyBatsimEvent, RequestedCallBatsimEvent, ResourcePowerStateChangedBatsimEvent, SimulationBeginsBatsimEvent, SimulationEndsBatsimEvent
-from batsim_py.simulator import SimulatorHandler
-from batsim_py.simulator import Reservation
-from procset import ProcSet
-import pytest
-import json
 import numpy as np
+import pytest
 
 import batsim_py
 from batsim_py import protocol
 from batsim_py import SimulatorEvent
-import batsim_py.dispatcher as dispatcher
+from batsim_py import dispatcher
+from batsim_py.protocol import BatsimMessage
+from batsim_py.protocol import JobCompletedBatsimEvent
+from batsim_py.protocol import JobSubmittedBatsimEvent
+from batsim_py.protocol import NotifyBatsimEvent
+from batsim_py.protocol import RequestedCallBatsimEvent
+from batsim_py.protocol import ResourcePowerStateChangedBatsimEvent
+from batsim_py.protocol import SimulationBeginsBatsimEvent
+from batsim_py.protocol import SimulationEndsBatsimEvent
+from batsim_py.resources import PowerStateType
+from batsim_py.simulator import SimulatorHandler
+from batsim_py.simulator import Reservation
 
-from .utils import BatsimAPI, BatsimEventAPI
+from .utils import BatsimEventAPI
 from .utils import BatsimPlatformAPI
 
 
@@ -614,7 +618,7 @@ class TestSimulatorHandler:
         mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
         s.proceed_time()
 
-        assert not s.is_running 
+        assert not s.is_running
         assert protocol.NetworkHandler.send.call_count == 2
 
     def test_is_submitter_finished_must_not_allow_callback(self, mocker):

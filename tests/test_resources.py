@@ -1,6 +1,6 @@
 import pytest
 
-import batsim_py.dispatcher as dispatcher
+from batsim_py import dispatcher
 from batsim_py.events import HostEvent
 from batsim_py.jobs import DelayJobProfile
 from batsim_py.jobs import Job

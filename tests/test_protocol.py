@@ -758,4 +758,3 @@ class TestConverters:
 
         assert isinstance(platform, Platform)
         assert platform.size == api["nb_resources"]
-

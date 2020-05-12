@@ -16,6 +16,7 @@ def test_event_repr():
 def test_host_event():
     assert issubclass(HostEvent, Event)
 
+
 def test_job_event():
     assert issubclass(JobEvent, Event)
 
