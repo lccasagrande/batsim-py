@@ -20,6 +20,7 @@ from .utils import BatsimPlatformAPI
 class TestSimulatorHandler:
     @pytest.fixture(autouse=True)
     def setup(self, mocker):
+        mocker.patch("batsim_py.simulator.which", return_value=True)
         mocker.patch("batsim_py.simulator.subprocess.Popen")
         mocker.patch("batsim_py.protocol.zmq.Context")
         mocker.patch.object(protocol.NetworkHandler, 'bind')
