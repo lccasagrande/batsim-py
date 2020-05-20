@@ -1,42 +1,22 @@
 from enum import Enum
 
 
-class Event(Enum):
-    """ Event base class """
+class JobEvent(Enum):
+    """ Job Events """
+    SUBMITTED = 0
+    ALLOCATED = 1
+    REJECTED = 2
+    STARTED = 3
+    COMPLETED = 4
 
-    def __str__(self) -> str:
-        return "%s" % self.name
 
-    def __repr__(self) -> str:
-        return "%s.%s" % (self.__class__.__name__, self.name)
-
-
-class HostEvent(Event):
-    """ Host Event class
-
-        This class enumerates the distinct events a host can dispatch.
-    """
+class HostEvent(Enum):
+    """ Host Events """
     STATE_CHANGED = 0
     COMPUTATION_POWER_STATE_CHANGED = 1
-    ALLOCATED = 2
 
 
-class JobEvent(Event):
-    """ Job Event class
-
-        This class enumerates the distinct events a job can dispatch.
-    """
-    SUBMITTED = 0
-    COMPLETED = 1
-    STARTED = 2
-    REJECTED = 3
-    ALLOCATED = 4
-
-
-class SimulatorEvent(Event):
-    """ Job Event class
-
-        This class enumerates the distinct events a simulator can dispatch.
-    """
+class SimulatorEvent(Enum):
+    """ Simulator Events """
     SIMULATION_BEGINS = 0
     SIMULATION_ENDS = 1

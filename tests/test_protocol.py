@@ -74,7 +74,6 @@ class TestBatsimMessage:
         m = BatsimMessage(15, events)
         events[1], events[0] = events[0], events[1]  # sort
         assert m.now == 15
-        assert len(m.events) == 2
         assert m.events == events
 
     def test_invalid_event_timestamp_must_raise(self):
@@ -573,12 +572,12 @@ class TestNetworkHandler:
         mocker.patch.object(protocol.zmq.Socket, 'recv_json')
 
     def test_bind(self):
-        p = NetworkHandler("tcp://localhost:28000")
+        a = "tcp://localhost:28000"
+        p = NetworkHandler(a)
         p.bind()
         assert p.is_connected
-        assert p.address == "tcp://localhost:28000"
-        protocol.zmq.Socket.bind.assert_called_once_with(
-            "tcp://localhost:28000")
+        assert p.address == a
+        protocol.zmq.Socket.bind.assert_called_once_with(a)
 
     def test_bind_when_connected_must_raise(self):
         p = NetworkHandler("tcp://localhost:28000")

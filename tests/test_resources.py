@@ -1,10 +1,5 @@
 import pytest
 
-from batsim_py import dispatcher
-from batsim_py.events import HostEvent
-from batsim_py.jobs import DelayJobProfile
-from batsim_py.jobs import Job
-from batsim_py.jobs import JobState
 from batsim_py.resources import Host
 from batsim_py.resources import HostRole
 from batsim_py.resources import HostState
@@ -34,28 +29,36 @@ class TestPowerState:
         assert p.watt_idle == idle and p.watt_full == full
 
     def test_watt_idle_less_than_zero_must_raise(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as excinfo:
             PowerState(0, PowerStateType.COMPUTATION, -1, 10)
 
+        assert "watt_idle" in str(excinfo.value)
+
     def test_watt_full_less_than_zero_must_raise(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as excinfo:
             PowerState(0, PowerStateType.COMPUTATION, 1, -1)
+
+        assert "watt_full" in str(excinfo.value)
 
     def test_watts_can_be_zero(self):
         p = PowerState(0, PowerStateType.COMPUTATION, 0, 0)
         assert p.watt_full == 0 and p.watt_idle == 0
 
     def test_sleep_with_different_watts_must_raise(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as excinfo:
             PowerState(0, PowerStateType.SLEEP, 1, 2)
 
+        assert "`watt_idle` and `watt_full" in str(excinfo.value)
+
     def test_switching_off_with_different_watts_must_raise(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as excinfo:
             PowerState(0, PowerStateType.SWITCHING_OFF, 1, 2)
+        assert "`watt_idle` and `watt_full" in str(excinfo.value)
 
     def test_switching_on_with_different_watts_must_raise(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as excinfo:
             PowerState(0, PowerStateType.SWITCHING_ON, 1, 2)
+        assert "`watt_idle` and `watt_full" in str(excinfo.value)
 
 
 class TestHost:
@@ -80,21 +83,82 @@ class TestHost:
         assert h.state == HostState.IDLE and h.is_idle
 
     def test_pstates_must_have_computation(self):
-        p1 = PowerState(1, PowerStateType.SLEEP, 100, 100)
-        with pytest.raises(ValueError):
-            Host(0, "n", pstates=[p1])
+        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
+        p2 = PowerState(1, PowerStateType.SWITCHING_ON, 10, 10)
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        with pytest.raises(ValueError) as excinfo:
+            Host(0, "n", pstates=[p1, p2, p4])
+        assert "at least one COMPUTATION" in str(excinfo.value)
 
     def test_pstates_must_have_unique_id(self):
-        p1 = PowerState(1, PowerStateType.SLEEP, 100, 100)
+        p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 100, 100)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as excinfo:
             Host(0, "n", pstates=[p1, p2])
 
-    def test_initial_pstate_must_be_the_first_computation(self):
+        assert "unique ids" in str(excinfo.value)
+
+    def test_sleep_pstate_without_switching_on_must_raise(self):
+        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
+        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        with pytest.raises(ValueError) as excinfo:
+            Host(0, "n", pstates=[p1, p2, p4])
+        assert "switching on" in str(excinfo.value)
+
+    def test_sleep_pstate_without_switching_off_must_raise(self):
+        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
+        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
+        p4 = PowerState(3, PowerStateType.SWITCHING_ON, 50, 50)
+        with pytest.raises(ValueError) as excinfo:
+            Host(0, "n", pstates=[p1, p2, p4])
+        assert "switching off" in str(excinfo.value)
+
+    def test_transition_pstate_without_sleep_must_raise(self):
+        p1 = PowerState(0, PowerStateType.SWITCHING_OFF, 10, 10)
+        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
+        p4 = PowerState(3, PowerStateType.SWITCHING_ON, 50, 50)
+        with pytest.raises(ValueError) as excinfo:
+            Host(0, "n", pstates=[p1, p2, p4])
+        assert "sleeping" in str(excinfo.value)
+
+    def test_switching_off_pstate_must_be_unique(self):
+        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
+        p2 = PowerState(1, PowerStateType.SWITCHING_OFF, 10, 10)
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 10, 100)
+        p4 = PowerState(3, PowerStateType.SWITCHING_ON, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_OFF, 10, 10)
+        with pytest.raises(ValueError) as excinfo:
+            Host(0, "n", pstates=[p1, p2, p3, p4, p5])
+        assert "switching off" in str(excinfo.value)
+
+    def test_switching_on_pstate_must_be_unique(self):
+        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
+        p2 = PowerState(1, PowerStateType.SWITCHING_OFF, 10, 10)
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 10, 100)
+        p4 = PowerState(3, PowerStateType.SWITCHING_ON, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 10, 10)
+        with pytest.raises(ValueError) as excinfo:
+            Host(0, "n", pstates=[p1, p2, p3, p4, p5])
+        assert "switching on" in str(excinfo.value)
+
+    def test_sleep_pstate_must_be_unique(self):
+        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
+        p2 = PowerState(1, PowerStateType.SWITCHING_OFF, 10, 10)
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 10, 100)
+        p4 = PowerState(3, PowerStateType.SWITCHING_ON, 50, 50)
+        p5 = PowerState(4, PowerStateType.SLEEP, 10, 10)
+        with pytest.raises(ValueError) as excinfo:
+            Host(0, "n", pstates=[p1, p2, p3, p4, p5])
+        assert "sleeping" in str(excinfo.value)
+
+    def test_initial_pstate_must_be_the_first_computation_one(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
-        h = Host(0, "n", pstates=[p1, p3, p2])
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 25, 25)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
         assert h.pstate == p2
 
     def test__pstates_not_defined(self):
@@ -122,200 +186,181 @@ class TestHost:
     def test_power_computing_state(self):
         p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         h = Host(0, "n", pstates=[p1])
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        j._submit(0)
-        h._allocate(j)
-        j._allocate([h.id])
-        j._start(10)
+        h._allocate("job")
+        h._start_computing()
         assert h.power == 100 and h.is_computing
 
     def test_get_pstate_by_type_must_return_all_matches(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
-        h = Host(0, "n", pstates=[p1, p3, p2])
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 25, 25)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
         pstates = h.get_pstate_by_type(PowerStateType.COMPUTATION)
         assert pstates == [p2, p3]
 
     def test_get_pstate_by_type_not_found_must_raise(self):
-        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
-        h = Host(0, "n", pstates=[p1, p3, p2])
-
-        with pytest.raises(LookupError):
+        h = Host(0, "n", pstates=[p3, p2])
+        with pytest.raises(LookupError) as excinfo:
             h.get_pstate_by_type(PowerStateType.SWITCHING_OFF)
+
+        assert "not be found" in str(excinfo.value)
 
     def test_get_pstate_by_type_not_defined_must_raise(self):
         h = Host(0, "n", pstates=[])
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h.get_pstate_by_type(PowerStateType.SWITCHING_OFF)
 
+        assert "undefined" in str(excinfo.value)
+
     def test_get_pstate_by_id_valid(self):
-        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(2, PowerStateType.COMPUTATION, 10, 100)
-        h = Host(0, "n", pstates=[p1, p2])
-        assert h.get_pstate_by_id(2) == p2
-        assert h.get_pstate_by_id(0) == p1
+        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
+        h = Host(0, "n", pstates=[p3, p2])
+        assert h.get_pstate_by_id(1) == p2
+        assert h.get_pstate_by_id(2) == p3
 
     def test_get_pstate_by_id_not_found_must_raise(self):
-        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        h = Host(0, "n", pstates=[p1, p2])
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
+        h = Host(0, "n", pstates=[p3, p2])
 
-        with pytest.raises(LookupError):
-            h.get_pstate_by_id(2)
+        with pytest.raises(LookupError) as excinfo:
+            h.get_pstate_by_id(4)
+
+        assert "not be found" in str(excinfo.value)
 
     def test_get_pstate_by_id_not_defined_must_raise(self):
         h = Host(0, "n", pstates=[])
-        with pytest.raises(RuntimeError):
-            h.get_pstate_by_id(0)
+        with pytest.raises(RuntimeError) as excinfo:
+            h.get_pstate_by_id(4)
+        assert "undefined" in str(excinfo.value)
 
     def test_get_sleep_pstate_valid(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        h = Host(0, "n", pstates=[p1, p2])
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 25, 25)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
         assert h.get_sleep_pstate() == p1
 
     def test_get_sleep_pstate_not_found_must_raise(self):
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         h = Host(0, "n", pstates=[p2])
-        with pytest.raises(LookupError):
+        with pytest.raises(LookupError) as excinfo:
             h.get_sleep_pstate()
+        assert "not be found" in str(excinfo.value)
 
     def test_get_sleep_pstate_not_defined_must_raise(self):
         h = Host(0, "n", pstates=[])
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h.get_sleep_pstate()
+        assert "undefined" in str(excinfo.value)
 
     def test_get_default_pstate_valid(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
-        h = Host(0, "n", pstates=[p1, p3, p2])
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 25, 25)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
         assert h.get_default_pstate() == p2
 
     def test_get_default_pstate_not_defined_must_raise(self):
         h = Host(0, "n", pstates=[])
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h.get_default_pstate()
+        assert "undefined" in str(excinfo.value)
 
     def test_switch_off_valid(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 25, 25)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
 
         h._switch_off()
-        assert h.is_switching_off and h.power == p3.watt_idle
-        assert h.pstate == p3 and h.state == HostState.SWITCHING_OFF
-
-    def test_switch_off_not_dispatch_comp_pstate_changed_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, HostEvent.COMPUTATION_POWER_STATE_CHANGED)
-        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
-        h._switch_off()
-        assert not self.__called
-
-    def test_switch_off_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, HostEvent.STATE_CHANGED)
-        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
-        h._switch_off()
-        assert self.__called
-
-    def test_switch_off_without_sleep_defined_must_raise(self):
-        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        h = Host(0, "n", pstates=[p2])
-
-        with pytest.raises(LookupError):
-            h._switch_off()
-
-    def test_switch_off_without_switching_off_defined_must_raise(self):
-        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        h = Host(0, "n", pstates=[p1, p2])
-
-        with pytest.raises(LookupError):
-            h._switch_off()
+        assert h.is_switching_off and h.power == p4.watt_idle
+        assert h.pstate == p4 and h.state == HostState.SWITCHING_OFF
 
     def test_switch_off_without_pstates_defined_must_raise(self):
         h = Host(0, "n", pstates=[])
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._switch_off()
+        assert "undefined" in str(excinfo.value)
 
     def test_switch_off_already_switching_off_must_raises(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
-
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 25, 25)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
         h._switch_off()
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._switch_off()
+        assert "idle and free " in str(excinfo.value)
 
     def test_switch_off_when_off_must_raises(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 25, 25)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
 
         h._switch_off()
         h._set_off()
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._switch_off()
+        assert "idle and free " in str(excinfo.value)
 
     def test_switch_off_switching_on_must_raises(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        p4 = PowerState(3, PowerStateType.SWITCHING_ON, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2, p4])
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 25, 25)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
 
         h._switch_off()
         h._set_off()
         h._switch_on()
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._switch_off()
+        assert "idle and free " in str(excinfo.value)
 
     def test_switch_off_computing_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        j._submit(0)
-        h._allocate(j)
-        j._allocate([h.id])
-        j._start(10)
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 25, 25)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
+        h._allocate("n")
+        h._start_computing()
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._switch_off()
+        assert "idle and free " in str(excinfo.value)
 
     def test_switch_off_allocated_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        j._submit(0)
-        h._allocate(j)
-        j._allocate([h.id])
-        with pytest.raises(RuntimeError):
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 1000, 10000)
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 25, 25)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
+        h._allocate("job")
+        with pytest.raises(RuntimeError) as excinfo:
             h._switch_off()
+        assert "idle and free " in str(excinfo.value)
 
     def test_switch_on_valid(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -330,50 +375,6 @@ class TestHost:
         assert h.is_switching_on and h.power == p4.watt_idle
         assert h.pstate == p4 and h.state == HostState.SWITCHING_ON
 
-    def test_switch_on_not_dispatch_comp_pstate_changed_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, HostEvent.COMPUTATION_POWER_STATE_CHANGED)
-        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        p4 = PowerState(3, PowerStateType.SWITCHING_ON, 75, 75)
-        h = Host(0, "n", pstates=[p1, p3, p2, p4])
-
-        h._switch_off()
-        h._set_off()
-        h._switch_on()
-        assert not self.__called
-
-    def test_switch_on_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, HostEvent.STATE_CHANGED)
-        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        p4 = PowerState(3, PowerStateType.SWITCHING_ON, 75, 75)
-        h = Host(0, "n", pstates=[p1, p3, p2, p4])
-        h._switch_off()
-        h._set_off()
-        h._switch_on()
-        assert self.__called
-
-    def test_switch_on_without_pstate_defined_must_raise(self):
-        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
-
-        h._switch_off()
-        h._set_off()
-        with pytest.raises(LookupError):
-            h._switch_on()
-
     def test_switch_on_already_switching_on_must_raises(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
@@ -384,8 +385,9 @@ class TestHost:
         h._switch_off()
         h._set_off()
         h._switch_on()
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._switch_on()
+        assert "be sleeping" in str(excinfo.value)
 
     def test_switch_on_switching_off_must_raises(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -395,8 +397,9 @@ class TestHost:
         h = Host(0, "n", pstates=[p1, p3, p2, p4])
 
         h._switch_off()
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._switch_on()
+        assert "be sleeping" in str(excinfo.value)
 
     def test_switch_on_idle_must_raises(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -404,8 +407,9 @@ class TestHost:
         p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
         p4 = PowerState(3, PowerStateType.SWITCHING_ON, 75, 75)
         h = Host(0, "n", pstates=[p1, p3, p2, p4])
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._switch_on()
+        assert "be sleeping" in str(excinfo.value)
 
     def test_switch_on_computing_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -414,14 +418,12 @@ class TestHost:
         p4 = PowerState(3, PowerStateType.SWITCHING_ON, 75, 75)
         h = Host(0, "n", pstates=[p1, p3, p2, p4])
 
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        j._submit(0)
-        h._allocate(j)
-        j._allocate([h.id])
-        j._start(10)
+        h._allocate("job")
+        h._start_computing()
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._switch_on()
+        assert "be sleeping" in str(excinfo.value)
 
     def test_switch_on_allocated_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -430,12 +432,11 @@ class TestHost:
         p4 = PowerState(3, PowerStateType.SWITCHING_ON, 75, 75)
         h = Host(0, "n", pstates=[p1, p3, p2, p4])
 
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        j._submit(0)
-        h._allocate(j)
-        j._allocate([h.id])
-        with pytest.raises(RuntimeError):
+        h._allocate("job")
+
+        with pytest.raises(RuntimeError) as excinfo:
             h._switch_on()
+        assert "be sleeping" in str(excinfo.value)
 
     def test_set_computation_state_valid(self):
         p1 = PowerState(0, PowerStateType.COMPUTATION, 10, 100)
@@ -445,36 +446,30 @@ class TestHost:
 
         assert h.pstate == p2
 
-    def test_set_computation_state_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, HostEvent.COMPUTATION_POWER_STATE_CHANGED)
-        p1 = PowerState(0, PowerStateType.COMPUTATION, 10, 100)
-        p2 = PowerState(1, PowerStateType.COMPUTATION, 15, 150)
-        h = Host(0, "n", pstates=[p1, p2])
-        h._set_computation_pstate(1)
-        assert self.__called
-
     def test_set_computation_state_not_found_must_raise(self):
         p1 = PowerState(0, PowerStateType.COMPUTATION, 10, 100)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 15, 150)
         h = Host(0, "n", pstates=[p1, p2])
-        with pytest.raises(LookupError):
+        with pytest.raises(LookupError) as excinfo:
             h._set_computation_pstate(2)
+        assert "not be found" in str(excinfo.value)
 
     def test_set_computation_state_not_defined_must_raise(self):
         h = Host(0, "n", pstates=[])
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._set_computation_pstate(2)
+        assert "undefined" in str(excinfo.value)
 
     def test_set_computation_state_not_correct_type_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(1, PowerStateType.COMPUTATION, 15, 150)
-        h = Host(0, "n", pstates=[p1, p2])
-        with pytest.raises(RuntimeError):
+        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 15, 150)
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
+        with pytest.raises(RuntimeError) as excinfo:
             h._set_computation_pstate(0)
+        assert "computation" in str(excinfo.value)
 
     def test_set_computation_state_when_switching_off_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -484,8 +479,9 @@ class TestHost:
         p5 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
         h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
         h._switch_off()
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._set_computation_pstate(2)
+        assert "idle or computing" in str(excinfo.value)
 
     def test_set_computation_state_when_off_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -496,8 +492,9 @@ class TestHost:
         h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
         h._switch_off()
         h._set_off()
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._set_computation_pstate(2)
+        assert "idle or computing" in str(excinfo.value)
 
     def test_set_computation_state_when_switching_on_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -509,8 +506,9 @@ class TestHost:
         h._switch_off()
         h._set_off()
         h._switch_on()
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             h._set_computation_pstate(2)
+        assert "idle or computing" in str(excinfo.value)
 
     def test_set_computation_state_when_computing_valid(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -520,62 +518,44 @@ class TestHost:
         p5 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
         h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
 
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        j._submit(0)
-        h._allocate(j)
-        j._allocate([h.id])
-        j._start(10)
-
+        h._allocate("job")
+        h._start_computing()
         h._set_computation_pstate(2)
         assert h.pstate == p3 and h.power == p3.watt_full
 
     def test_set_off_valid(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(2, PowerStateType.COMPUTATION, 15, 150)
+        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         p3 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
+        p4 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4])
         h._switch_off()
         h._set_off()
 
         assert h.is_sleeping and h.power == p1.watt_full
         assert h.state == HostState.SLEEPING and h.pstate == p1
 
-    def test_set_off_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, HostEvent.STATE_CHANGED)
-        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(2, PowerStateType.COMPUTATION, 15, 150)
-        p3 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
-        h._switch_off()
-        h._set_off()
-        assert self.__called
-
     def test_set_off_when_idle_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(2, PowerStateType.COMPUTATION, 15, 150)
+        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         p3 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
-        with pytest.raises(SystemError):
+        p4 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4])
+        with pytest.raises(SystemError) as excinfo:
             h._set_off()
+        assert "switching off" in str(excinfo.value)
 
     def test_set_off_when_computing_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(2, PowerStateType.COMPUTATION, 15, 150)
+        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         p3 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
-
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        j._submit(0)
-        h._allocate(j)
-        j._allocate([h.id])
-        j._start(10)
-
-        with pytest.raises(SystemError):
+        p4 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4])
+        h._allocate("job")
+        h._start_computing()
+        with pytest.raises(SystemError) as excinfo:
             h._set_off()
+        assert "switching off" in str(excinfo.value)
 
     def test_set_off_when_switching_on_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -586,26 +566,28 @@ class TestHost:
         h._switch_off()
         h._set_off()
         h._switch_on()
-        with pytest.raises(SystemError):
+        with pytest.raises(SystemError) as excinfo:
             h._set_off()
+        assert "switching off" in str(excinfo.value)
 
     def test_set_off_when_off_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         p3 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
-        h = Host(0, "n", pstates=[p1, p3, p2])
+        p4 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4])
         h._switch_off()
         h._set_off()
-        with pytest.raises(SystemError):
+        with pytest.raises(SystemError) as excinfo:
             h._set_off()
+        assert "switching off" in str(excinfo.value)
 
     def test_set_on_valid(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(1, PowerStateType.COMPUTATION, 15, 150)
-        p3 = PowerState(2, PowerStateType.COMPUTATION, 10, 100)
-        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
-        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
-        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
+        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
+        p3 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p4 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
+        h = Host(0, "n", pstates=[p1, p3, p2, p4])
         h._switch_off()
         h._set_off()
         h._switch_on()
@@ -613,37 +595,17 @@ class TestHost:
 
         assert h.is_idle and h.pstate == p2 and h.state == HostState.IDLE
 
-    def test_set_on_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, HostEvent.STATE_CHANGED)
-        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
-        p2 = PowerState(1, PowerStateType.COMPUTATION, 15, 150)
-        p3 = PowerState(2, PowerStateType.COMPUTATION, 10, 100)
-        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
-        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
-        h = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
-        h._switch_off()
-        h._set_off()
-        h._switch_on()
-        h._set_on()
-        assert self.__called
-
     def test_set_on_when_computing_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
-        p4 = PowerState(3, PowerStateType.SWITCHING_ON, 75, 75)
+        p3 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p4 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
         h = Host(0, "n", pstates=[p1, p3, p2, p4])
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        j._submit(0)
-        h._allocate(j)
-        j._allocate([h.id])
-        j._start(10)
-        with pytest.raises(SystemError):
+        h._allocate("job")
+        h._start_computing()
+        with pytest.raises(SystemError) as excinfo:
             h._set_on()
+        assert "switching on" in str(excinfo.value)
 
     def test_set_on_when_idle_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -651,8 +613,9 @@ class TestHost:
         p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 50, 50)
         p4 = PowerState(3, PowerStateType.SWITCHING_ON, 75, 75)
         h = Host(0, "n", pstates=[p1, p3, p2, p4])
-        with pytest.raises(SystemError):
+        with pytest.raises(SystemError) as excinfo:
             h._set_on()
+        assert "switching on" in str(excinfo.value)
 
     def test_set_on_when_switching_off_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -661,8 +624,9 @@ class TestHost:
         p4 = PowerState(3, PowerStateType.SWITCHING_ON, 75, 75)
         h = Host(0, "n", pstates=[p1, p3, p2, p4])
         h._switch_off()
-        with pytest.raises(SystemError):
+        with pytest.raises(SystemError) as excinfo:
             h._set_on()
+        assert "switching on" in str(excinfo.value)
 
     def test_set_on_when_off_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -672,70 +636,36 @@ class TestHost:
         h = Host(0, "n", pstates=[p1, p3, p2, p4])
         h._switch_off()
         h._set_off()
-        with pytest.raises(SystemError):
+        with pytest.raises(SystemError) as excinfo:
             h._set_on()
+        assert "switching on" in str(excinfo.value)
 
     def test_allocate_valid(self):
         p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         h = Host(0, "n", pstates=[p1])
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j)
-        assert h.is_idle and h.jobs and h.jobs[0] == j
-
-    def test_allocate_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, HostEvent.ALLOCATED)
-        p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        h = Host(0, "n", pstates=[p1])
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j)
-        assert self.__called
+        h._allocate("job")
+        assert h.is_idle and h.jobs and h.jobs[0] == "job"
 
     def test_allocate_multiple_jobs_valid(self):
         p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         h = Host(0, "n", pstates=[p1])
-        j1 = Job("j1", "w", 1, DelayJobProfile("p", 100), 1)
-        j2 = Job("j2", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j1)
-        h._allocate(j2)
-        assert h.is_idle and h.jobs
-        assert h.jobs[0] == j1
-        assert h.jobs[1] == j2
+        h._allocate("j1")
+        h._allocate("j2")
+        assert h.is_idle and h.jobs and len(h.jobs) == 2
+        assert "j1" in h.jobs
+        assert "j2" in h.jobs
 
     def test_allocate_job_twice_must_not_raise(self):
         h = Host(0, "n")
-        j1 = Job("j1", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j1)
-        h._allocate(j1)
+        h._allocate("j1")
         assert h.jobs and len(h.jobs) == 1
 
     def test_start_computing_valid(self):
         p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         h = Host(0, "n", pstates=[p1])
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j)
-        j._submit(1)
-        j._allocate([h.id])
-        j._start(1)
+        h._allocate("job")
+        h._start_computing()
         assert h.is_computing and h.state == HostState.COMPUTING
-
-    def test_start_computing_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, HostEvent.STATE_CHANGED)
-        p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        h = Host(0, "n", pstates=[p1])
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j)
-        j._submit(1)
-        j._allocate([h.id])
-        j._start(1)
-        assert self.__called
 
     def test_start_computing_when_off_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -745,13 +675,10 @@ class TestHost:
         h = Host(0, "n", pstates=[p1, p3, p2, p4])
         h._switch_off()
         h._set_off()
-
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j)
-        j._submit(1)
-        j._allocate([h.id])
-        with pytest.raises(SystemError):
-            j._start(1)
+        h._allocate("job")
+        with pytest.raises(SystemError) as excinfo:
+            h._start_computing()
+        assert "idle or computing" in str(excinfo.value)
 
     def test_start_computing_when_switching_off_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -760,13 +687,11 @@ class TestHost:
         p4 = PowerState(3, PowerStateType.SWITCHING_ON, 75, 75)
         h = Host(0, "n", pstates=[p1, p3, p2, p4])
         h._switch_off()
+        h._allocate("job")
 
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j)
-        j._submit(1)
-        j._allocate([h.id])
-        with pytest.raises(SystemError):
-            j._start(1)
+        with pytest.raises(SystemError) as excinfo:
+            h._start_computing()
+        assert "idle or computing" in str(excinfo.value)
 
     def test_start_computing_when_switching_on_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -777,81 +702,32 @@ class TestHost:
         h._switch_off()
         h._set_off()
         h._switch_on()
+        h._allocate("job")
+        with pytest.raises(SystemError) as excinfo:
+            h._start_computing()
+        assert "idle or computing" in str(excinfo.value)
 
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j)
-        j._submit(1)
-        j._allocate([h.id])
-        with pytest.raises(SystemError):
-            j._start(1)
-
-    def test_start_computing_when_computing_valid(self):
+    def test_start_computing_without_job_must_raise(self):
         h = Host(0, "n")
-        j1 = Job("n1", "w", 1, DelayJobProfile("p", 100), 1)
-        j2 = Job("n2", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j1)
-        h._allocate(j2)
-        j1._submit(1)
-        j2._submit(1)
-        j1._allocate([h.id])
-        j2._allocate([h.id])
-        j1._start(1)
-        j2._start(1)
+        with pytest.raises(SystemError) as excinfo:
+            h._start_computing()
+        assert "allocated" in str(excinfo.value)
 
-        assert h.is_computing and h.jobs and len(h.jobs) == 2
-        assert h.jobs[0].is_running and h.jobs[1].is_running
-
-    def test_release_when_job_kill_valid(self):
+    def test_release_valid(self):
         h = Host(0, "n")
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j)
-        j._submit(1)
-        j._allocate([h.id])
-        j._start(1)
-        j._kill(10)
+        h._allocate("job")
+        h._start_computing()
+        h._release("job")
         assert h.is_idle and h.state == HostState.IDLE and not h.jobs
-
-    def test_release_when_job_terminate_valid(self):
-        h = Host(0, "n")
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j)
-        j._submit(1)
-        j._allocate([h.id])
-        j._start(1)
-        j._terminate(10, JobState.COMPLETED_SUCCESSFULLY)
-        assert h.is_idle and h.state == HostState.IDLE and not h.jobs
-
-    def test_release_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, HostEvent.STATE_CHANGED)
-        h = Host(0, "n")
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j)
-        j._submit(1)
-        j._allocate([h.id])
-        j._start(1)
-        j._terminate(10, JobState.COMPLETED_SUCCESSFULLY)
-        assert self.__called
 
     def test_release_when_multiple_jobs_must_remain_computing(self):
         h = Host(0, "n")
-        j = Job("n", "w", 1, DelayJobProfile("p", 100), 1)
-        j1 = Job("n1", "w", 1, DelayJobProfile("p", 100), 1)
-        j2 = Job("n2", "w", 1, DelayJobProfile("p", 100), 1)
-        h._allocate(j1)
-        h._allocate(j2)
-        j1._submit(1)
-        j2._submit(1)
-        j1._allocate([h.id])
-        j2._allocate([h.id])
-        j1._start(1)
-        j2._start(1)
-        j1._kill(10)
+        h._allocate("j1")
+        h._allocate("j2")
+        h._start_computing()
+        h._release("j1")
         assert h.is_computing and h.state == HostState.COMPUTING
-        assert h.jobs and len(h.jobs) == 1 and h.jobs[0] == j2
+        assert h.jobs and len(h.jobs) == 1 and h.jobs[0] == "j2"
 
 
 class TestPlatform:
@@ -861,13 +737,15 @@ class TestPlatform:
         assert all(h.id == i for i, h in enumerate(p))
 
     def test_empty_hosts_must_raise(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as excinfo:
             Platform([])
+        assert "one host" in str(excinfo.value)
 
     def test_invalid_host_id_must_raise(self):
         hosts = [Host(1, "n"), Host(2, "n")]
-        with pytest.raises(SystemError):
+        with pytest.raises(SystemError) as excinfo:
             Platform(hosts)
+        assert "hosts id" in str(excinfo.value)
 
     def test_size(self):
         hosts = [Host(0, "n"), Host(1, "n")]
@@ -887,10 +765,12 @@ class TestPlatform:
         assert p.power == 15 + 50
 
     def test_state(self):
-        p1 = PowerState(0, PowerStateType.COMPUTATION, 15, 100)
-        p2 = PowerState(1, PowerStateType.SLEEP, 15, 15)
-        p3 = PowerState(2, PowerStateType.SWITCHING_OFF, 15, 15)
-        h1 = Host(0, "n", pstates=[p1, p2, p3])
+        p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
+        p2 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
+        p3 = PowerState(2, PowerStateType.COMPUTATION, 15, 150)
+        p4 = PowerState(3, PowerStateType.SWITCHING_OFF, 50, 50)
+        p5 = PowerState(4, PowerStateType.SWITCHING_ON, 75, 75)
+        h1 = Host(0, "n", pstates=[p1, p3, p2, p4, p5])
         h2 = Host(1, "n")
         p = Platform([h1, h2])
         h1._switch_off()
@@ -900,9 +780,7 @@ class TestPlatform:
         h1 = Host(0, "n")
         h2 = Host(1, "n")
         p = Platform([h1, h2])
-
-        j1 = Job("n1", "w", 1, DelayJobProfile("p", 100), 1)
-        h1._allocate(j1)
+        h1._allocate("j1")
 
         assert p.get_available() == [h2]
 
@@ -924,5 +802,5 @@ class TestPlatform:
         h1 = Host(0, "n", role=HostRole.STORAGE)
         h2 = Host(1, "n")
         p = Platform([h1, h2])
-        with pytest.raises(LookupError):
+        with pytest.raises(LookupError) as excinfo:
             p.get_by_id(2)

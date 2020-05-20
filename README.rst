@@ -1,5 +1,6 @@
 Batsim-py |build| |coverage| |doc| |license|
 ==============================================
+
 `Batsim <https://batsim.readthedocs.io/en/latest/>`_ is a scientific simulator commonly used to 
 evaluate Resource and Job Management System (RJMS) policies. **Batsim-py allows using Batsim from Python 3**.
 
@@ -64,7 +65,6 @@ The API documentation provides information on classes and modules in the Batsim-
 - `Monitors`_
 - `Jobs`_
 - `Resources`_
-- `Dispatcher`_
 
 .. _`Scheduling`: https://lccasagrande.github.io/batsim-py/tutorials/scheduling.html
 .. _`Shutdown`: https://lccasagrande.github.io/batsim-py/tutorials/shutdown.html
@@ -75,7 +75,6 @@ The API documentation provides information on classes and modules in the Batsim-
 .. _`Monitors`: https://lccasagrande.github.io/batsim-py/api_doc/monitors.html
 .. _`Resources`: https://lccasagrande.github.io/batsim-py/api_doc/resources.html
 .. _`Jobs`: https://lccasagrande.github.io/batsim-py/api_doc/jobs.html
-.. _`Dispatcher`: https://lccasagrande.github.io/batsim-py/api_doc/dispatcher.html
 
 .. |build| image:: https://travis-ci.org/lccasagrande/batsim-py.svg?branch=master
     :alt: coverage

@@ -23,7 +23,7 @@ setup_requires = ['pytest-runner']
 
 setup(
     name='batsim-py',
-    version=__version__,
+    version=__version__, #type: ignore
     author='lccasagrande',
     author_email='lcamelocasagrande@gmail.com',
     url='https://github.com/lccasagrande/batsim-py',
@@ -33,7 +33,7 @@ setup(
     license='MIT',
     description="Batsim-py allows using Batsim from Python 3.",
     long_description=long_description,
-    python_requires='>=3.7',
+    python_requires='>=3.8',
     install_requires=install_requires,
     tests_require=tests_requires,
     setup_requires=setup_requires,

@@ -9,13 +9,13 @@
         </host>
 
         <!-- These hosts will be used to compute jobs. -->
-        <host id="0" pstate="1" speed="0.001f, 1000010.0f, 1.0001f, 0.3334f">
-            <prop id="watt_per_state" value="9:9,95.0:190.0,125.0:125.0,101.0:101.0"/>
+        <host id="0" pstate="1" speed="0.001f, 1000010.0f, 1.0001f, 0.3334f, 1Mf">
+            <prop id="watt_per_state" value="9:9,95.0:190.0,125.0:125.0,101.0:101.0, 200:300"/>
             <prop id="sleep_pstates" value="0:3:2"/>
             <prop id="watt_off" value="9"/>
         </host>
-        <host id="1" pstate="1" speed="0.001f, 1000010.0f, 1.0001f, 0.3334f">
-            <prop id="watt_per_state" value="9:9,95.0:190.0,125.0:125.0,101.0:101.0"/>
+        <host id="1" pstate="1" speed="0.001f, 1000010.0f, 1.0001f, 0.3334f, 1Mf">
+            <prop id="watt_per_state" value="9:9,95.0:190.0,125.0:125.0,101.0:101.0, 200:300"/>
             <prop id="sleep_pstates" value="0:3:2"/>
             <prop id="watt_off" value="9"/>
         </host>

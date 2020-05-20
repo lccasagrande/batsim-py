@@ -86,7 +86,7 @@ class BatsimRequest(ABC):
         request_type: the type of the request.
 
     Raises:
-        AssertionError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments type.
     """
 
     def __init__(self, timestamp: float, request_type: BatsimRequestType) -> None:
@@ -109,7 +109,7 @@ class BatsimRequest(ABC):
         """ Batsim data dict.
 
         Returns:
-            A dict with the properties following the Batsim format.
+            A dict with class properties following Batsim format.
         """
         raise NotImplementedError
 
@@ -197,7 +197,7 @@ class BatsimMessage:
 
     @property
     def events(self) -> Sequence[Union[BatsimRequest, BatsimEvent]]:
-        """ The list of events/requests/notifications. """
+        """ The list of events/requests. """
         return list(self.__events)
 
     def to_json(self) -> dict:
@@ -220,7 +220,7 @@ class NotifyBatsimEvent(BatsimEvent):
 
     Args:
         timestamp: the time which the notification occurred.
-        notify_type: the notification type.
+        data: the event data dict following the Batsim format.
 
     Raises:
         ValueError: In case of invalid notification type.
@@ -303,7 +303,7 @@ class ResourcePowerStateChangedBatsimEvent(BatsimEvent):
 class Converters:
     @staticmethod
     def profile_to_json(profile: JobProfile) -> dict:
-        """ Convert a job profile to a json following the batsim format.
+        """ Convert a job profile to a json following batsim format.
 
         Args:
             profile: the profile to be converted.
@@ -363,7 +363,7 @@ class Converters:
 
     @staticmethod
     def json_to_profile(name: str, data: dict) -> JobProfile:
-        """ Convert a json following the Batsim format to a job profile instance.
+        """ Convert a json following Batsim format to a job profile instance.
 
         Args:
             name: the profile name.
@@ -637,7 +637,10 @@ class NotifyBatsimRequest(BatsimRequest):
         notify_type: the type of the notification.
 
     Raises:
-        ValueError: In case of invalid notification type.
+        AssertionError: In case of invalid arguments type.
+
+    Attributes:
+        notify_type: The notification type.
     """
 
     def __init__(self, timestamp: float, notify_type: BatsimNotifyType) -> None:
@@ -661,7 +664,7 @@ class RejectJobBatsimRequest(BatsimRequest):
         job_id: the id of the job to be rejected.
 
     Raises:
-        AssertionError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments type.
 
     Attributes:
         job_id: The job id to be rejected.
@@ -696,6 +699,7 @@ class ExecuteJobBatsimRequest(BatsimRequest):
 
     Attributes:
         job_id: The id of the job to execute.
+        storage_mapping: the mapping of storages to hosts.
         alloc: the job allocated resources.
     """
 
@@ -808,7 +812,7 @@ class RegisterJobBatsimRequest(BatsimRequest):
         job: The job to be registered.
 
     Raises:
-        AssertionError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments type.
 
     Attributes:
         job: The registered job.
@@ -856,7 +860,7 @@ class RegisterProfileBatsimRequest(BatsimRequest):
         profile: The job profile.
 
     Raises:
-        AssertionError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments type.
 
     Attributes:
         workload_name: The profile workload name.
@@ -896,7 +900,7 @@ class SetResourceStateBatsimRequest(BatsimRequest):
 
     Raises:
         ValueError: In case of invalid sequence size.
-        AssertionError: In case of invalid arguments.
+        AssertionError: In case of invalid arguments type.
 
     Attributes:
         resources: A set of resources id.
@@ -986,10 +990,10 @@ class BatsimMessageDecoder:
         msg: The raw Batsim message.
 
     Returns:
-        A platform instance.
+        A Batsim Message with all requests and events.
 
     Raises:
-        NotImplementedError: In case of not supported simulation config or event type.
+        AssertionError: In case of not supported event type.
     """
 
     def __init__(self) -> None:
@@ -1050,7 +1054,7 @@ class NetworkHandler:
         Raises:
             SystemError: In case of a connection is already opened.
         """
-        if self.__socket:
+        if self.is_connected:
             raise SystemError("Connection already opened.")
 
         self.__socket = self.__context.socket(zmq.REP)
@@ -1074,7 +1078,7 @@ class NetworkHandler:
         """
         assert isinstance(msg, BatsimMessage)
 
-        if not self.__socket:
+        if not self.is_connected:
             raise SystemError("Connection not opened.")
 
         self.__socket.send_json(msg.to_json())
@@ -1087,7 +1091,7 @@ class NetworkHandler:
         Raises:
             SystemError: In case of there is no connection opened.
         """
-        if not self.__socket:
+        if not self.is_connected:
             raise SystemError("Connection not opened.")
 
         return self.__socket.recv_json(object_hook=BatsimMessageDecoder())

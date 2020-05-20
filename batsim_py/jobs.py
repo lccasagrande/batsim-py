@@ -3,10 +3,6 @@ from enum import Enum
 from typing import Optional
 from typing import Sequence
 
-from . import dispatcher
-from .events import JobEvent
-from .utils import Identifier
-
 
 class JobState(Enum):
     """ Batsim Job State
@@ -169,13 +165,13 @@ class ParallelHomogeneousJobProfile(JobProfile):
                  cpu: float,
                  com: float) -> None:
         if cpu == 0 and com == 0:
-            raise ValueError('Expected `cpu` or `com` arguments '
-                             ' to be greater than zero.')
+            raise ValueError('Expected `cpu` or `com` argument '
+                             ' to be defined.')
         if cpu < 0:
             raise ValueError('Expected `cpu` argument to be '
                              'not less than zero.')
         if com < 0:
-            raise ValueError('Expected `cpu` argument to be '
+            raise ValueError('Expected `com` argument to be '
                              'not less than zero.')
 
         super().__init__(name)
@@ -219,12 +215,12 @@ class ParallelHomogeneousTotalJobProfile(JobProfile):
                  com:  float) -> None:
         if cpu == 0 and com == 0:
             raise ValueError('Expected `cpu` or `com` arguments '
-                             ' to be greater than zero.')
+                             ' to be defined.')
         if cpu < 0:
             raise ValueError('Expected `cpu` argument to be '
                              'not less than zero.')
         if com < 0:
-            raise ValueError('Expected `cpu` argument to be '
+            raise ValueError('Expected `com` argument to be '
                              'not less than zero.')
 
         super().__init__(name)
@@ -315,7 +311,7 @@ class ParallelHomogeneousPFSJobProfile(JobProfile):
                  storage: str = 'pfs') -> None:
         if bytes_to_read == 0 and bytes_to_write == 0:
             raise ValueError('Expected `bytes_to_read` or `bytes_to_write` '
-                             'arguments to be greater than zero.')
+                             'arguments to be defined.')
         if bytes_to_read < 0:
             raise ValueError('Expected `bytes_to_read` argument to be '
                              'not less than zero, got {}'.format(bytes_to_read))
@@ -405,14 +401,14 @@ class DataStagingJobProfile(JobProfile):
         return self.__nb_bytes
 
 
-class Job(Identifier):
+class Job:
     """ Batsim Job class.
 
     This class describes a rigid job.
 
     Attributes:
-        WORKLOAD_SEPARATOR: A char that separates the workload name from 
-            the job name. By default Batsim submits the workload along with 
+        WORKLOAD_SEPARATOR: A character that separates the workload name from 
+            the job name. By default, Batsim submits the workload along with 
             the job name in the id field.
 
     Args:
@@ -461,9 +457,7 @@ class Job(Identifier):
                              'than zero, got {}'.format(walltime))
 
         assert isinstance(profile, JobProfile)
-        job_id = "%s%s%s" % (str(workload), self.WORKLOAD_SEPARATOR, str(name))
-        super().__init__(job_id)
-
+        self.__id = f"{workload}{self.WORKLOAD_SEPARATOR}{name}"
         self.__res = int(res)
         self.__profile = profile
         self.__subtime = float(subtime)
@@ -476,7 +470,12 @@ class Job(Identifier):
         self.__stop_time: Optional[float] = None  # will be set on terminate
 
     def __repr__(self) -> str:
-        return "Job_%s" % self.id
+        return f"Job_{self.id}"
+
+    @property
+    def id(self) -> str:
+        """ The Job ID """
+        return self.__id
 
     @property
     def name(self) -> str:
@@ -521,7 +520,10 @@ class Job(Identifier):
     @property
     def allocation(self) -> Optional[Sequence[int]]:
         """ The allocated resources id. """
-        return self.__allocation
+        if self.__allocation:
+            return list(self.__allocation)
+        else:
+            return None
 
     @property
     def is_running(self) -> bool:
@@ -540,7 +542,7 @@ class Job(Identifier):
 
     @property
     def is_finished(self) -> bool:
-        """ Whether this job finished. """
+        """ Whether this job has finished. """
         states = (JobState.COMPLETED_SUCCESSFULLY,
                   JobState.COMPLETED_FAILED,
                   JobState.COMPLETED_WALLTIME_REACHED,
@@ -620,25 +622,23 @@ class Job(Identifier):
         This is an internal method to be used by the simulator only.
 
         Args:
-            hosts: A sequence containing the allocated hosts ids.
+            hosts: A sequence of hosts id.
 
         Raises:
-            RuntimeError: In case of the job is already allocated or is not in
-                the queue or the number of resources does not match the request.
-
-        Dispatch:
-            Event: JobEvent.ALLOCATED
+            RuntimeError: In case of the job is not in the queue (e.g. job 
+                is runnable or running).
+            ValueError: In case of the number of allocated resources does not 
+                match the number requested.
         """
         if not self.is_submitted:
-            raise RuntimeError('This job was already allocated or is not in '
-                               'the queue, got {}'.format(self.state))
+            raise RuntimeError('The job is not in the queue anymore, '
+                               'got {}'.format(self.state))
         if len(hosts) != self.res:
-            raise RuntimeError('Expected `hosts` argument to be a list '
-                               'of length {}, got {}'.format(self.res, hosts))
+            raise ValueError('Expected `hosts` argument to be a list '
+                             'of length {}, got {}'.format(self.res, hosts))
 
         self.__allocation = list(hosts)
         self.__state = JobState.ALLOCATED
-        dispatcher.dispatch(JobEvent.ALLOCATED, self, unique=True)
 
     def _reject(self) -> None:
         """ Reject the job. 
@@ -646,17 +646,14 @@ class Job(Identifier):
         This is an internal method to be used by the simulator only.
 
         Raises:
-            RuntimeError: In case of the job is not in the queue.
-
-        Dispatch:
-            Event: JobEvent.REJECTED
+            RuntimeError: In case of the job is not in the queue (e.g. job 
+                is runnable or running).
         """
         if not self.is_submitted:
             raise RuntimeError('Cannot reject a job that is not in the '
                                'queue, got {}'.format(self.state))
 
         self.__state = JobState.REJECTED
-        dispatcher.dispatch(JobEvent.REJECTED, self, unique=True)
 
     def _submit(self, subtime: float) -> None:
         """ Submit the job. 
@@ -667,49 +664,18 @@ class Job(Identifier):
             subtime: The submission time.
 
         Raises:
-            RuntimeError: In case of the job was already submitted or 
-                the subtime is less than zero.
-
-        Dispatch:
-            Event: JobEvent.SUBMITTED
+            RuntimeError: In case of the job was already submitted.
+            ValueError: In case of the subtime is invalid.
         """
         if self.state != JobState.UNKNOWN:
             raise RuntimeError('This job was already submitted.'
                                'got, {}'.format(self.state))
         if subtime < 0:
-            raise RuntimeError('Expected `subtime` argument to be greather '
-                               'than zero, got {}'.format(subtime))
+            raise ValueError('Expected `subtime` argument to be greather '
+                             'than zero, got {}'.format(subtime))
 
         self.__state = JobState.SUBMITTED
         self.__subtime = float(subtime)
-        dispatcher.dispatch(JobEvent.SUBMITTED, self, unique=True)
-
-    def _kill(self, current_time: float) -> None:
-        """ Kill the job. 
-
-        This is an internal method to be used by the simulator only.
-
-        Args:
-            current_time: The current simulation time.
-
-        Raises:
-            RuntimeError: In case of the job is not running or 
-                the current time is less than the job start time.
-
-        Dispatch:
-            Event: JobEvent.COMPLETED
-        """
-        if not self.is_running or self.start_time is None:
-            raise RuntimeError('The job cannot be killed if it is not running'
-                               'got, {}'.format(self.state))
-
-        if current_time < self.start_time:
-            raise RuntimeError('Expected `current_time` argument to be greather '
-                               'than start_time, got {}'.format(current_time))
-
-        self.__stop_time = float(current_time)
-        self.__state = JobState.COMPLETED_KILLED
-        dispatcher.dispatch(JobEvent.COMPLETED, self, unique=True)
 
     def _start(self, current_time: float) -> None:
         """ Start the job. 
@@ -720,56 +686,52 @@ class Job(Identifier):
             current_time: The current simulation time.
 
         Raises:
-            RuntimeError: In case of the job is not runnable or the current 
-                time is less than the submission time.
-
-        Dispatch:
-            Event: JobEvent.STARTED
+            RuntimeError: In case of the job is not runnable
+            ValueError: In case of the current time is less than the 
+                submission time.
         """
         if not self.is_runnable:
             raise RuntimeError('The job cannot start if it is not '
                                'runnable, got {}'.format(self.state))
 
         if current_time < self.subtime:
-            raise RuntimeError('The `current_time` argument cannot be less '
-                               'than the job submission time, '
-                               'got {}'.format(current_time))
+            raise ValueError('The `current_time` argument cannot be less '
+                             'than the job submission time, '
+                             'got {}'.format(current_time))
 
         self.__start_time = float(current_time)
         self.__state = JobState.RUNNING
-        dispatcher.dispatch(JobEvent.STARTED, self, unique=True)
 
-    def _terminate(self, current_time: float, state: JobState) -> None:
+    def _terminate(self, current_time: float, final_state: JobState) -> None:
         """ Terminate the job. 
 
         This is an internal method to be used by the simulator only.
 
         Args:
             current_time: The current simulation time.
-            state: The last state of the job.
+            final_state: The last state of the job.
 
         Raises:
-            RuntimeError: In case of the job is not running or 
-                the current time is less than the job start time or 
-                the state is not one of the possible ones.
-
-        Dispatch:
-            Event: JobEvent.COMPLETED
-
+            RuntimeError: In case of the job is not running.
+            ValueError: In case of the current time is less than the job start 
+                time or the final state is not one of the possible ones.
         """
         if not self.is_running or self.start_time is None:
             raise RuntimeError('The job cannot be finished if it is not running'
                                'got, {}'.format(self.state))
 
-        if not state in (JobState.COMPLETED_SUCCESSFULLY, JobState.COMPLETED_FAILED, JobState.COMPLETED_WALLTIME_REACHED):
-            raise RuntimeError('Expected `state` argument to be one of '
-                               '[SUCCESSFULLY, FAILED, WALLTIME_REACHED], '
-                               'got {}'.format(state))
+        valid_states = (JobState.COMPLETED_SUCCESSFULLY,
+                        JobState.COMPLETED_FAILED,
+                        JobState.COMPLETED_KILLED,
+                        JobState.COMPLETED_WALLTIME_REACHED)
+
+        if not final_state in valid_states:
+            raise ValueError('Expected `final_state` argument to be valid, '
+                             'got {}'.format(final_state))
 
         if current_time < self.start_time:
-            raise RuntimeError('Expected `current_time` argument to be greather '
-                               'than start_time, got {}'.format(current_time))
+            raise ValueError('Expected `current_time` argument to be greather '
+                             'than start_time, got {}'.format(current_time))
 
         self.__stop_time = float(current_time)
-        self.__state = state
-        dispatcher.dispatch(JobEvent.COMPLETED, self, unique=True)
+        self.__state = final_state

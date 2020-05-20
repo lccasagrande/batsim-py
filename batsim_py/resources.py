@@ -1,14 +1,9 @@
+from collections import defaultdict
 from enum import Enum
-from typing import Iterator
+from typing import Iterator, Set
 from typing import Optional
 from typing import Sequence
 from typing import List
-
-from . import dispatcher
-from .events import HostEvent
-from .events import JobEvent
-from .jobs import Job
-from .utils import Identifier
 
 
 class HostRole(Enum):
@@ -51,13 +46,13 @@ class PowerStateType(Enum):
         return self.name
 
 
-class PowerState(Identifier):
+class PowerState:
     """ This class describes a host power state (model).
 
-    When the host is on, the energy consumption naturally depends on
-    both the current CPU load and the host energy profile. We implement a
-    special case from the model adopted in SimGrid which,
-    the host can be idle (0% cpu) or at full load (100% cpu)
+    When the host is on, the energy consumption naturally depends on both the 
+    current CPU load and the host energy profile. Following this principle, 
+    we adopt a special case from the model used in SimGrid which, the host can 
+    be idle (0% cpu) or at full load (100% cpu)
 
     Args:
         pstate_id: The power state id. Must be unique.
@@ -68,11 +63,12 @@ class PowerState(Identifier):
     Raises:
         AssertionError: In case of invalid arguments type.
         ValueError: In case of power profile values are not equal when the
-            power state type is not a computation one or watts are negative 
-            values.
+            power state type is not a computation one or watts values are
+            invalid.
 
     Examples:
-        >>> ps = PowerState(0, PowerStateType.COMPUTATION, 90, 160)
+        >>> ps1 = PowerState(0, PowerStateType.COMPUTATION, 90, 160)
+        >>> ps2 = PowerState(0, PowerStateType.SLEEP, 10, 10)
     """
 
     def __init__(self,
@@ -86,7 +82,7 @@ class PowerState(Identifier):
                              'than or equal to zero, got {}'.format(watt_idle))
 
         if watt_full < 0:
-            raise ValueError('Expected `subtime` argument to be greater '
+            raise ValueError('Expected `watt_full` argument to be greater '
                              'than or equal to zero, got {}'.format(watt_full))
 
         if pstate_type != PowerStateType.COMPUTATION and watt_idle != watt_full:
@@ -96,7 +92,7 @@ class PowerState(Identifier):
                              'got {} and {}.'.format(watt_idle, watt_full))
 
         assert isinstance(pstate_type, PowerStateType)
-        super().__init__(str(pstate_id))
+        self.__id = pstate_id
         self.__type = pstate_type
         self.__watt_idle = float(watt_idle)
         self.__watt_full = float(watt_full)
@@ -108,8 +104,9 @@ class PowerState(Identifier):
         return str(self)
 
     @property
-    def id(self):
-        return int(super().id)
+    def id(self) -> int:
+        """ The Power State ID """
+        return self.__id
 
     @property
     def watt_idle(self) -> float:
@@ -127,8 +124,8 @@ class PowerState(Identifier):
         return self.__type
 
 
-class Host(Identifier):
-    """ This class describes a Batsim computing resource (host).
+class Host:
+    """ This class describes a Batsim resource (host).
 
     A host is the resource on which a job can run.
 
@@ -137,21 +134,20 @@ class Host(Identifier):
         name: The host name.
         role: The host role. Defaults to Compute.
         pstates: The host power states. Defaults to None.
-            A host can have several computing power states
-            and only one sleep and transition (On/Off)
-            power states. Computing power states serves as a way to
-            implement different DVFS levels while the transition power states are
-            only used to simulate the cost of switching On/Off. A host cannot
-            compute jobs when it's being switched On/Off or sleeping. If you only
-            want to control the DVFS, there is no need to provide a sleep and
-            a transition power state.
+            A host can have several computing power states and only one sleep 
+            and transition (On/Off) power states. Computing power states serves 
+            as a way to implement different DVFS levels while the transition 
+            power states are used only to simulate the costs of switching On/Off. 
+            A host cannot be used when it's being switched On/Off or sleeping. 
+            If you only want to implement DVFS, there is no need to provide a sleep 
+            and a transition power state. Moreover, if you provide a sleeping power 
+            state you must provide both transition power states (switching On/Off).
         metadata: Extra host properties that can be used by some functions
             beyond the scope of Batsim or Batsim-py. Defaults to None.
 
     Raises:
         AssertionError: In case of invalid arguments type.
-        ValueError: In case of pstates are provided without at least one 
-            COMPUTATION power state or the pstates ids are not unique.
+        ValueError: In case of missing pstates or the pstates ids are not unique.
 
     Examples:
         >>> ps1 = PowerState(0, PowerStateType.COMPUTATION, 10, 100)
@@ -165,26 +161,48 @@ class Host(Identifier):
                  role: HostRole = HostRole.COMPUTE,
                  pstates: Optional[Sequence[PowerState]] = None,
                  metadata: Optional[dict] = None) -> None:
-        super().__init__(str(id))
+        assert isinstance(role, HostRole)
+        self.__id = int(id)
         self.__name = str(name)
         self.__role = role
-        self.__state: HostState = HostState.IDLE
-        self.__jobs: List[Job] = []
+        self.__state = HostState.IDLE
+        self.__jobs: Set[str] = set()
         self.__pstates = None
         self.__current_pstate = None
         self.__metadata = metadata
 
-        assert isinstance(role, HostRole)
         if pstates:
-            assert all(isinstance(p, PowerState) for p in pstates)
-
-            if not any(p.type == PowerStateType.COMPUTATION for p in pstates):
-                raise ValueError('The host must have at least one COMPUTATION '
-                                 'power state, got {}.'.format(pstates))
-
             if len(set(p.id for p in pstates)) != len(pstates):
-                raise ValueError('Expected `pstates` argument to be unique '
+                raise ValueError('Expected `pstates` argument to have unique '
                                  'ids, got {}.'.format(pstates))
+
+            v: dict = defaultdict(int)
+            for p in pstates:
+                v[p.type] += 1
+
+            if v[PowerStateType.COMPUTATION] == 0:
+                raise ValueError('The host must have at least one COMPUTATION '
+                                 'power state, got {}.'
+                                 ''.format(v[PowerStateType.COMPUTATION]))
+
+            nb = v[PowerStateType.SLEEP]
+            nb += v[PowerStateType.SWITCHING_OFF]
+            nb += v[PowerStateType.SWITCHING_ON]
+
+            if nb > 0:
+                if v[PowerStateType.SLEEP] != 1:
+                    raise ValueError('The host sleeping power state was not '
+                                     'defined or is not unique, got {}'
+                                     ''.format(v[PowerStateType.SLEEP]))
+                if v[PowerStateType.SWITCHING_OFF] != 1:
+                    raise ValueError('The host switching off power state was '
+                                     'not defined or is not unique, got {}'
+                                     ''.format(v[PowerStateType.SWITCHING_OFF]))
+                if v[PowerStateType.SWITCHING_ON] != 1:
+                    raise ValueError('The host switching on power state was '
+                                     'not defined or is not unique, got {}'
+                                     ''.format(v[PowerStateType.SWITCHING_ON]))
+
             self.__pstates = tuple(sorted(pstates, key=lambda p: int(p.id)))
             self.__current_pstate = self.get_default_pstate()
 
@@ -195,8 +213,9 @@ class Host(Identifier):
         return "Host_%i: %s" % (self.id, str(self.state))
 
     @property
-    def id(self):
-        return int(super().id)
+    def id(self) -> int:
+        """ The Host ID """
+        return self.__id
 
     @property
     def name(self) -> str:
@@ -214,8 +233,8 @@ class Host(Identifier):
         return self.__state
 
     @property
-    def jobs(self) -> List[Job]:
-        """ All jobs that were allocated. """
+    def jobs(self) -> List[str]:
+        """ All jobs id that are allocated in this host. """
         return list(self.__jobs)
 
     @property
@@ -368,14 +387,15 @@ class Host(Identifier):
                 host cannot be switched off which, occurs when the host is
                 not idle or it's allocated for a job.
         """
-        ps = self.get_pstate_by_type(PowerStateType.SWITCHING_OFF)
-        self.get_pstate_by_type(PowerStateType.SLEEP)  # Just assert
+        s_off_ps = self.get_pstate_by_type(PowerStateType.SWITCHING_OFF)
+        s_ps = self.get_pstate_by_type(PowerStateType.SLEEP)
+        assert s_off_ps and s_ps
 
         if self.is_allocated or not self.is_idle:
             raise RuntimeError('A host must be idle and free to be able to '
                                'switch off, got {}'.format(self.state))
 
-        self.__set_pstate(ps[0])
+        self.__set_pstate(s_off_ps[0])
         self.__set_state(HostState.SWITCHING_OFF)
 
     def _switch_on(self) -> None:
@@ -408,10 +428,10 @@ class Host(Identifier):
             pstate_id: The power state id.
 
         Raises:
-            RuntimeError: In case of power states were not defined.
-            LookupError: In case of power state could not be found or
-                it is not a computation one or the current host state is not
-                idle nor computing.
+            RuntimeError: In case of power states were not defined or it is 
+                not a computation one or the current host state is not idle 
+                nor computing.
+            LookupError: In case of power state could not be found.
         """
 
         next_ps = self.get_pstate_by_id(pstate_id)
@@ -461,84 +481,70 @@ class Host(Identifier):
         self.__set_pstate(ps)
         self.__set_state(HostState.IDLE)
 
-    def _allocate(self, job: Job) -> None:
+    def _allocate(self, job_id: str) -> None:
         """ Allocate the host for a job.
 
         This is an internal method to be used by the simulator only.
 
         Args:
-            job: The job that will use this host.
+            job_id: The job that will use this host.
         """
-        if any(j.id == job.id for j in self.__jobs):
-            return
+        self.__jobs.add(job_id)
 
-        self.__jobs.append(job)
-
-        dispatcher.subscribe(self.__start_computing, JobEvent.STARTED, job)
-        dispatcher.dispatch(HostEvent.ALLOCATED, self)
-
-    def __start_computing(self, sender: Job) -> None:
+    def _start_computing(self) -> None:
         """ Start computing.
 
-        This is an internal method to be used by the job instance only.
-        When a job allocated for this host starts it'll dispatch an event,
-        we catch this event to know if the host must start computing.
+        This is an internal method to be used by the simulator only.
 
         Raises:
             SystemError: In case of the current host power state is not a 
-                computation one.
+                computation one or there are no jobs allocated.
         """
 
         if not self.is_idle and not self.is_computing:
-            raise SystemError('A host must be in idle or computing to be able to '
+            raise SystemError('A host must be idle or computing to be able to '
                               'start a new job, got {}'.format(self.state))
 
-        assert any(j.id == sender.id for j in self.__jobs)
+        if not self.jobs:
+            raise SystemError('The host must be allocated for a job '
+                              'before start computing.')
 
-        dispatcher.subscribe(self.__release, JobEvent.COMPLETED, sender)
         self.__set_state(HostState.COMPUTING)
 
-    def __release(self, sender: Job) -> None:
+    def _release(self, job_id: str) -> None:
         """ Release the resource.
 
-        This is an internal method to be used by the job instance only.
-        When a job finish it'll dispatch an event, we catch this event to
-        know if the host must deallocate it.
+        This is an internal method to be used by the simulator only.
+
+        Args:
+            job_id: The job that will release this host.
         """
-        self.__jobs.remove(sender)
+        self.__jobs.remove(job_id)
         if not self.__jobs:
             self.__set_state(HostState.IDLE)
 
     def __set_pstate(self, new_pstate: PowerState) -> None:
-        """ Set the power state and dispatch an event.
+        """ Set the power state.
 
-        This is an internal method to be used by the job instance only.
+        This is an internal method to be used by the host instance only.
 
         Raises:
             AssertionError: In case of invalid argument type.
         """
         assert self.__current_pstate
         assert isinstance(new_pstate, PowerState)
-
-        if self.__current_pstate.type == PowerStateType.COMPUTATION and new_pstate.type == PowerStateType.COMPUTATION:
-            self.__current_pstate = new_pstate
-            dispatcher.dispatch(
-                HostEvent.COMPUTATION_POWER_STATE_CHANGED, self)
-        else:
-            self.__current_pstate = new_pstate
+        self.__current_pstate = new_pstate
 
     def __set_state(self, new_state: HostState) -> None:
-        """ Set the state and dispatch an event.
+        """ Set the state.
 
-        This is an internal method to be used by the job instance only.
+        This is an internal method to be used by the host instance only.
 
         Raises:
             AssertionError: In case of invalid argument type.
         """
         assert isinstance(new_state, HostState)
-        if self.__state != new_state:
-            self.__state = new_state
-            dispatcher.dispatch(HostEvent.STATE_CHANGED, self)
+        self.__state = new_state
 
 
 class Platform:
@@ -551,6 +557,7 @@ class Platform:
 
     Raises:
         ValueError: In case of invalid platform size.
+        SystemError: In case of invalid hosts id.
     """
 
     def __init__(self, hosts: Sequence[Host]) -> None:
@@ -583,24 +590,21 @@ class Platform:
     def get_available(self) -> Sequence[Host]:
         """ Get available hosts.
 
-        An available host is a host that was not allocated for any job.
+        An available host is the one that is not allocated for a job.
 
         Returns:
-            A iterable object with available hosts.
+            A list with available hosts.
         """
         return list(filter(lambda h: not h.is_allocated, self.__hosts))
 
     def get_by_role(self, host_role: HostRole) -> Sequence[Host]:
-        """ Get host by id.
+        """ Get host by role.
 
         Args:
             host_role: The host role.
 
         Returns:
-            The host with the corresponding role.
-
-        Raises:
-            AssertionError: In case of invalid argument type.
+            The hosts with the corresponding role.
         """
         assert isinstance(host_role, HostRole)
         return list(filter(lambda h: h.role == host_role, self.__hosts))
@@ -615,10 +619,10 @@ class Platform:
             The host with the corresponding id.
 
         Raises:
-            LookupError: In case of host could not be found.
+            LookupError: In case of host not found.
         """
         if host_id >= self.size:
-            raise LookupError('Host with id {} was not found in '
+            raise LookupError('Host id {} was not found in '
                               'the platform.'.format(host_id))
 
         return self.__hosts[host_id]

@@ -5,23 +5,24 @@ import signal
 import subprocess
 import sys
 import tempfile
-from typing import Callable
+from typing import Callable, Union
 from typing import Sequence
-from typing import Dict
 from typing import List
-from typing import Any
 from typing import DefaultDict
 from typing import Optional
 from typing import Iterator
 from typing import NamedTuple
+from typing import overload
+from typing import Literal
 
 import numpy as np
 
-from . import dispatcher
 from .events import SimulatorEvent
-from .jobs import Job
-from .protocol import BatsimNotifyType
-from .protocol import NotifyBatsimEvent
+from .events import JobEvent
+from .events import HostEvent
+from .jobs import Job, JobState
+from .protocol import BatsimNotifyType, NotifyBatsimEvent
+from .protocol import BatsimEvent
 from .protocol import SimulationBeginsBatsimEvent
 from .protocol import NetworkHandler
 from .protocol import BatsimMessage
@@ -36,11 +37,30 @@ from .protocol import ExecuteJobBatsimRequest
 from .protocol import RejectJobBatsimRequest
 from .protocol import SetResourceStateBatsimRequest
 from .resources import Platform
+from .resources import Host
 from .utils import get_free_tcp_address
 
 
+# Type alias
+EventSenders = Union[Host, Job, 'SimulatorHandler']
+JobListener = Callable[[Job], None]
+HostListener = Callable[[Host], None]
+SimulatorListener = Callable[['SimulatorHandler'], None]
+Listener = Union[JobListener, HostListener, SimulatorListener]
+Event = Union[JobEvent, HostEvent, SimulatorEvent]
+Listeners = DefaultDict[Event, List[Listener]]
+Callback = Callable[[float], None]
+Callbacks = DefaultDict[float, List[Callback]]
+BatsimVerbosity = Literal["quiet", "network-only", "information", "debug"]
+
+
 class Reservation(NamedTuple):
-    """ Describes a host reservation. """
+    """ Describes a host reservation. 
+
+    Attributes:
+        host_id: The host id.
+        release_time: The expected time in which the host will be released. 
+    """
     host_id: int
     release_time: float
 
@@ -51,11 +71,11 @@ class SimulatorHandler:
     This class will handle the Batsim simulation process.
 
     Args:
-        tcp_address: An address string consisting of three parts  as follows: 
+        tcp_address: An address string consisting of three parts as follows: 
             protocol://interface:port.
 
     Raises:
-        ImportError: In case of Batsim is not installed or cannot be found.
+        ImportError: In case of Batsim cannot be found.
 
     Examples:
         >>> handler = SimulatorHandler("tcp://localhost:28000")
@@ -72,15 +92,15 @@ class SimulatorHandler:
         self.__current_time: float = 0.
         self.__simulator: Optional[subprocess.Popen] = None
         self.__simulation_time: Optional[float] = None
-        self.__platform: Optional[Platform] = None
+        self.__platform: Platform = None  # type: ignore
         self.__no_more_jobs_to_submit = False
         self.__batsim_requests: List[BatsimRequest] = []
         self.__jobs: List[Job] = []
-        self.__callbacks: DefaultDict[float, List[Callable[[
-            float], None]]] = defaultdict(list)
+        self.__callbacks: Callbacks = defaultdict(list)
+        self.__subscriptions: Listeners = defaultdict(list)
 
         # Batsim events handlers
-        self.__batsim_event_handlers: Dict[Any, Any] = {
+        self.__batsim_event_handlers: dict = {
             BatsimEventType.SIMULATION_ENDS: self.__on_batsim_simulation_ends,
             BatsimEventType.SIMULATION_BEGINS: self.__on_batsim_simulation_begins,
             BatsimEventType.JOB_COMPLETED: self.__on_batsim_job_completed,
@@ -97,13 +117,13 @@ class SimulatorHandler:
     def jobs(self) -> Sequence[Job]:
         """ A sequence with all jobs in the system. 
 
-        This includes only jobs that are waiting in the queue or running.
+        This includes only jobs that are not finished.
         """
         return list(self.__jobs)
 
     @property
     def queue(self) -> Sequence[Job]:
-        """ A sequence of all jobs waiting in the queue.  """
+        """ A sequence of all jobs that were not allocated.  """
         return [j for j in self.__jobs if j.is_submitted]
 
     @property
@@ -112,7 +132,8 @@ class SimulatorHandler:
         if self.__platform:
             for host in self.__platform:
                 release_t = 0.
-                for job in host.jobs:
+                for job_id in host.jobs:
+                    job = next(j for j in self.__jobs if j.id == job_id)
                     if job.walltime:
                         runtime = self.current_time - job.subtime
                         job_release_t = job.walltime - runtime
@@ -123,7 +144,7 @@ class SimulatorHandler:
                 yield Reservation(host.id, release_t)
 
     @property
-    def platform(self) -> Optional[Platform]:
+    def platform(self) -> Platform:
         """ The simulation platform."""
         return self.__platform
 
@@ -148,7 +169,7 @@ class SimulatorHandler:
     def start(self,
               platform: str,
               workload: str,
-              verbosity: str = "quiet",
+              verbosity: BatsimVerbosity = "quiet",
               simulation_time: Optional[float] = None) -> None:
         """ Starts the simulation process.
 
@@ -170,11 +191,8 @@ class SimulatorHandler:
 
         Raises:
             RuntimeError: In case of simulation already running.
-            ValueError: In case of `simulation_time` is less than or equal to 
-                the current simulation time.
-
-        Dispatch:
-            SIMULATION_BEGINS
+            ValueError: In case of `simulation_time` is less than or equals to 
+                zero or the verbosity is invalid.
 
         Examples:
             >>> handler = SimulatorHandler("tcp://localhost:28000")
@@ -186,60 +204,55 @@ class SimulatorHandler:
         if self.is_running:
             raise RuntimeError("The simulation is already running.")
 
+        if verbosity not in ("quiet", "network-only", "information", "debug"):
+            raise ValueError('This `verbosity` argument value is not accepted '
+                             'by Batsim, got {}'.format(verbosity))
+
+        if simulation_time is not None and simulation_time <= 0:
+            raise ValueError('Expected `simulation_time` to be greater '
+                             'than zero, got {}.'.format(simulation_time))
+
         self.__jobs = []
         self.__current_time = 0.
         self.__simulation_time = simulation_time
         self.__no_more_jobs_to_submit = False
 
-        cmd = ('batsim -E --forward-profiles-on-submission'
-               ' --disable-schedule-tracing '
-               ' --disable-machine-state-tracing')
-
-        cmd += " -s {} -p {} -w {} -v {}".format(
-            self.__network.address, platform, workload, verbosity)
-
         # There isn't an option to avoid exporting batsim results
-        cmd += " -e {}".format(tempfile.gettempdir() + "/batsim")
-
-        self.__simulator = subprocess.Popen(cmd.split(),
-                                            stdout=subprocess.PIPE)
+        tmp_dir = tempfile.gettempdir() + "/batsim"
+        cmd = (
+            f'batsim -E --forward-profiles-on-submission '
+            f'--disable-schedule-tracing --disable-machine-state-tracing '
+            f'-s {self.__network.address} -p {platform} -w {workload} '
+            f'-v {verbosity}  -e {tmp_dir}'
+        )
+        self.__simulator = subprocess.Popen(
+            cmd.split(), stdout=subprocess.PIPE)
 
         self.__network.bind()
-        self.__handle_batsim_events()
 
-        if self.__simulation_time is not None:
-            if self.__simulation_time <= self.current_time:
-                raise ValueError('Expected `simulation_time` to be greater '
-                                 'than current time ({}) , got {}.'
-                                 ''.format(self.current_time, simulation_time))
+        self.__handle_batsim_events()
+        if self.__simulation_time:
             self.__set_batsim_call_me_later(self.__simulation_time)
 
-        dispatcher.dispatch(SimulatorEvent.SIMULATION_BEGINS, self)
+        self.__dispatch_event(SimulatorEvent.SIMULATION_BEGINS, self)
 
     def close(self) -> None:
-        """ Close the simulation process.
-
-        Dispatch:
-            SIMULATION_ENDS
-        """
-        if not self.is_running:
-            return
-        self.__close_simulator()
-        self.__network.close()
-        self.__simulation_time = None
-        self.__batsim_requests.clear()
-        self.__callbacks.clear()
-        dispatcher.dispatch(SimulatorEvent.SIMULATION_ENDS, self)
-        dispatcher.close_connections()
+        """ Close the simulation process. """
+        if self.is_running:
+            self.__close_simulator()
+            self.__network.close()
+            self.__simulation_time = None
+            self.__batsim_requests.clear()
+            self.__callbacks.clear()
+            self.__dispatch_event(SimulatorEvent.SIMULATION_ENDS, self)
 
     def proceed_time(self, time: float = 0) -> None:
         """ Proceed the simulation process to the next event or time.
 
         Args:
-            time: The time to proceed. Defaults to 0.
-                It's possible to proceed directly to the next event or to
-                a specific time. If the time is unset (equals 0), the simulation
-                will proceed to the next event. 
+            time: The time to proceed. Defaults to 0. It's possible to proceed 
+                directly to the next event or to a specific time. If the time is 
+                unset (equals 0), the simulation will proceed to the next event.
 
         Raises:
             ValueError: In case of invalid arguments value.
@@ -257,9 +270,9 @@ class SimulatorHandler:
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
 
-        if time and time < 0:
-            raise ValueError('Expected `time` argument to be a number '
-                             'greater than zero, got {}.'.format(time))
+        if time < 0:
+            raise ValueError(f'Expected `time` argument to be a number '
+                             'greater than zero, got {time}.')
 
         if not time:
             # Go to the next event.
@@ -277,6 +290,29 @@ class SimulatorHandler:
         while self.is_running and self.__wait_callback:
             self.__goto_next_batsim_event()
             self.__start_runnable_jobs()
+
+    @overload
+    def subscribe(self, event: JobEvent, call: JobListener) -> None: ...
+
+    @overload
+    def subscribe(self, event: HostEvent, call: HostListener) -> None: ...
+
+    @overload
+    def subscribe(self, event: SimulatorEvent,
+                  call: SimulatorListener) -> None: ...
+
+    def subscribe(self, event: Event, call: Listener) -> None:
+        """ Subscribe to an event.
+
+        Args:
+            event: The event to subscribe.
+            call: The function to be called when the event is dispatched.
+
+        Raises:
+            RuntimeError: In case of the simulation is not running.
+        """
+        assert callable(call)
+        self.__subscriptions[event].append(call)
 
     def set_callback(self, at: float, call: Callable[[float], None]) -> None:
         """ Setup a callback.
@@ -333,10 +369,10 @@ class SimulatorHandler:
 
         # Allocate
         for h_id in hosts_id:
-            host = self.__platform.get_by_id(h_id)
-            host._allocate(job)
+            self.__platform.get_by_id(h_id)._allocate(job.id)
 
         job._allocate(hosts_id)
+        self.__dispatch_event(JobEvent.ALLOCATED, job)
 
         # Start
         self.__start_runnable_jobs()
@@ -362,11 +398,8 @@ class SimulatorHandler:
         if not job:
             raise LookupError("The job {} was not found.".format(job_id))
 
-        job._kill(self.current_time)
-        self.__jobs.remove(job)
-
         # Sync Batsim
-        request = KillJobBatsimRequest(self.current_time, job_id)
+        request = KillJobBatsimRequest(self.current_time, job.id)
         self.__batsim_requests.append(request)
 
     def reject_job(self, job_id: str) -> None:
@@ -397,6 +430,7 @@ class SimulatorHandler:
         # Sync Batsim
         request = RejectJobBatsimRequest(self.current_time, job_id)
         self.__batsim_requests.append(request)
+        self.__dispatch_event(JobEvent.REJECTED, job)
 
     def switch_on(self, hosts_id: Sequence[int]) -> None:
         """ Switch on hosts.
@@ -421,6 +455,7 @@ class SimulatorHandler:
 
             # Sync Batsim
             self.__set_batsim_host_pstate(host.id, ending_pstate.id)
+            self.__dispatch_event(HostEvent.STATE_CHANGED, host)
 
     def switch_off(self, hosts_id: Sequence[int]) -> None:
         """ Switch off hosts.
@@ -445,6 +480,7 @@ class SimulatorHandler:
 
             # Sync Batsim
             self.__set_batsim_host_pstate(host.id, ending_pstate.id)
+            self.__dispatch_event(HostEvent.STATE_CHANGED, host)
 
     def switch_power_state(self, host_id: int, pstate_id: int) -> None:
         """ Switch the computation power of host.
@@ -470,7 +506,22 @@ class SimulatorHandler:
 
         # Sync Batsim
         assert host.pstate
-        self.__set_batsim_host_pstate(host.id, host.pstate.id)
+        self.__set_batsim_host_pstate(host_id, pstate_id)
+        self.__dispatch_event(HostEvent.COMPUTATION_POWER_STATE_CHANGED,
+                              host)
+
+    def __dispatch_event(self, event: Event, sender: EventSenders) -> None:
+        """ Dispatch an simulator event """
+        if isinstance(event, JobEvent):
+            assert isinstance(sender, Job), "JobEvent sender must be a Job"
+        elif isinstance(event, HostEvent):
+            assert isinstance(sender, Host), "HostEvent sender must be a Host"
+        else:
+            msg = 'SimulatorEvent sender must be a SimulatorHandler'
+            assert isinstance(sender, SimulatorHandler), msg
+
+        for call in self.__subscriptions[event]:
+            call(sender)  # type: ignore
 
     def __start_runnable_jobs(self) -> None:
         """ Start runnable jobs.
@@ -489,22 +540,27 @@ class SimulatorHandler:
             assert job.allocation, "For some reason, the job was not allocated."
 
             is_ready = True
+            hosts = [self.__platform.get_by_id(h) for h in job.allocation]
+
             # Check if all hosts are active and switch on sleeping hosts
-            for h_id in job.allocation:
-                host = self.__platform.get_by_id(h_id)
-
-                if not host.is_idle:
+            for host in hosts:
+                if not host.is_idle and not host.is_computing:
                     is_ready = False
-
                 if host.is_sleeping:
                     self.switch_on([host.id])
 
             if is_ready:
                 job._start(self.current_time)
+                for host in hosts:
+                    if not host.is_computing:
+                        host._start_computing()
+                        self.__dispatch_event(HostEvent.STATE_CHANGED, host)
 
+                self.__dispatch_event(JobEvent.STARTED, job)
                 # Sync Batsim
-                request = ExecuteJobBatsimRequest(
-                    self.current_time, job.id, job.allocation)
+                request = ExecuteJobBatsimRequest(self.current_time,
+                                                  job.id,
+                                                  job.allocation)
                 self.__batsim_requests.append(request)
 
     def __goto_next_batsim_event(self) -> None:
@@ -552,8 +608,8 @@ class SimulatorHandler:
         for event in msg.events:
             self.__current_time = event.timestamp
             if event.type in self.__batsim_event_handlers:
-                handler = self.__batsim_event_handlers[event.type]
-                handler(event)
+                assert isinstance(event.type, BatsimEventType)
+                self.__batsim_event_handlers[event.type](event)
 
         self.__current_time = msg.now
 
@@ -589,10 +645,14 @@ class SimulatorHandler:
 
             if h.is_switching_off:
                 h._set_off()
+                self.__dispatch_event(HostEvent.STATE_CHANGED, h)
             elif h.is_switching_on:
                 h._set_on()
+                self.__dispatch_event(HostEvent.STATE_CHANGED, h)
             elif (h.is_idle or h.is_computing) and h.pstate.id != event.state:
                 h._set_computation_pstate(event.state)
+                self.__dispatch_event(
+                    HostEvent.COMPUTATION_POWER_STATE_CHANGED, h)
 
             assert h.pstate.id == event.state, ('For some reason, the internal '
                                                 'platform differs from the '
@@ -613,15 +673,24 @@ class SimulatorHandler:
         """ Handle batsim job submitted event.  """
         self.__jobs.append(event.job)
         event.job._submit(self.current_time)
+        self.__dispatch_event(JobEvent.SUBMITTED, event.job)
 
     def __on_batsim_job_completed(self, event: JobCompletedBatsimEvent) -> None:
         """ Handle batsim job submitted event.  """
 
         job = next((j for j in self.__jobs if j.id == event.job_id), None)
         assert job, "The job {} was not found.".format(event.job_id)
+        assert job.allocation and self.__platform
 
         job._terminate(self.current_time, event.job_state)
+
+        for h_id in job.allocation:
+            host = self.__platform.get_by_id(h_id)
+            host._release(job.id)
+            self.__dispatch_event(HostEvent.STATE_CHANGED, host)
+
         self.__jobs.remove(job)
+        self.__dispatch_event(JobEvent.COMPLETED, job)
         self.__start_runnable_jobs()
 
     def __on_batsim_notify(self, event: NotifyBatsimEvent) -> None:

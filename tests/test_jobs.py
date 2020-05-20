@@ -2,9 +2,7 @@ import random
 
 import pytest
 
-from batsim_py import dispatcher
 from batsim_py import jobs
-from batsim_py.events import JobEvent
 
 
 class TestJobState:
@@ -279,20 +277,8 @@ class TestJob:
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._allocate(alloc)
-        assert j.is_runnable
-        assert j.state == jobs.JobState.ALLOCATED
+        assert j.is_runnable and j.state == jobs.JobState.ALLOCATED
         assert j.allocation == alloc
-
-    def test_allocation_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, JobEvent.ALLOCATED)
-        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        j._submit(0)
-        j._allocate([1])
-        assert self.__called
 
     def test_allocation_cannot_be_changed(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
@@ -303,58 +289,47 @@ class TestJob:
 
     def test_allocation_not_submitted_job_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             j._allocate([3])
+
+        assert "queue" in str(excinfo.value)
 
     def test_allocation_size_bigger_than_requested_must_raise(self):
         j = jobs.Job("1", "w", 3, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ValueError) as excinfo:
             j._allocate([3, 2, 5, 10])
+
+        assert "hosts" in str(excinfo.value)
 
     def test_allocation_size_less_than_requested_must_raise(self):
         j = jobs.Job("1", "w", 3, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ValueError) as excinfo:
             j._allocate([3, 2])
+
+        assert "hosts" in str(excinfo.value)
 
     def test_reject_job_not_submitted_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             j._reject()
+        assert 'queue' in str(excinfo.value)
 
     def test_reject_job_submitted_valid(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._reject()
-        assert j.state == jobs.JobState.REJECTED
-        assert j.is_rejected
-
-    def test_reject_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        dispatcher.subscribe(foo, JobEvent.REJECTED)
-        self.__called = False
-        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        j._submit(0)
-        j._reject()
-        assert self.__called
+        assert j.state == jobs.JobState.REJECTED and j.is_rejected
 
     def test_reject_allocated_job_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._allocate([1])
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             j._reject()
 
-    def test_reject_running_job_must_raise(self):
-        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        j._submit(0)
-        j._allocate([1])
-        j._start(0)
-        with pytest.raises(RuntimeError):
-            j._reject()
+        assert 'queue' in str(excinfo.value)
 
     def test_reject_finished_job_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
@@ -362,91 +337,28 @@ class TestJob:
         j._allocate([1])
         j._start(0)
         j._terminate(10, jobs.JobState.COMPLETED_SUCCESSFULLY)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             j._reject()
+        assert 'queue' in str(excinfo.value)
 
     def test_submit_valid(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         assert j.subtime == 0
-        assert j.state == jobs.JobState.SUBMITTED
-        assert j.is_submitted
-
-    def test_submit_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, JobEvent.SUBMITTED)
-        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        j._submit(0)
-        assert self.__called
+        assert j.state == jobs.JobState.SUBMITTED and j.is_submitted
 
     def test_submit_submitted_job_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             j._submit(0)
+        assert 'submitted' in str(excinfo.value)
 
     def test_submit_invalid_time_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ValueError) as excinfo:
             j._submit(-1)
-
-    def test_kill_valid(self):
-        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        j._submit(0)
-        j._allocate([1])
-        j._start(0)
-        j._kill(10)
-
-        assert j.is_finished
-        assert j.state == jobs.JobState.COMPLETED_KILLED
-        assert j.runtime == 10
-        assert j.is_finished
-
-    def test_kill_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, JobEvent.COMPLETED)
-        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        j._submit(0)
-        j._allocate([1])
-        j._start(0)
-        j._kill(10)
-        assert self.__called
-
-    def test_kill_not_running_job_must_raise(self):
-        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        j._submit(0)
-        with pytest.raises(RuntimeError):
-            j._kill(0)
-
-        j._allocate([1])
-        with pytest.raises(RuntimeError):
-            j._kill(0)
-
-    def test_kill_invalid_time_must_raise(self):
-        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        j._submit(0)
-        j._allocate([1])
-        j._start(10)
-        with pytest.raises(RuntimeError):
-            j._kill(9)
-
-    def test_start_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, JobEvent.STARTED)
-        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        j._submit(0)
-        j._allocate([1])
-        j._start(0)
-        assert self.__called
+        assert 'subtime' in str(excinfo.value)
 
     def test_start_valid(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
@@ -460,64 +372,58 @@ class TestJob:
     def test_start_not_allocated_job_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             j._start(0)
+        assert 'runnable' in str(excinfo.value)
 
     def test_start_finished_job_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._allocate([1])
         j._start(1)
-        j._kill(2)
-        with pytest.raises(RuntimeError):
+        j._terminate(2, jobs.JobState.COMPLETED_FAILED)
+        with pytest.raises(RuntimeError) as excinfo:
             j._start(2)
+        assert 'runnable' in str(excinfo.value)
 
     def test_start_running_job_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._allocate([1])
         j._start(1)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             j._start(2)
+        assert 'runnable' in str(excinfo.value)
 
     def test_start_rejected_job_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._reject()
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             j._start(2)
+        assert 'runnable' in str(excinfo.value)
 
     def test_start_invalid_time_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(2)
         j._allocate([1])
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ValueError) as excinfo:
             j._start(1)
+        assert 'current_time' in str(excinfo.value)
 
-    def test_terminate_dispatch_event(self):
-        def foo(sender):
-            self.__called = True
-
-        self.__called = False
-        dispatcher.subscribe(foo, JobEvent.COMPLETED)
-        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
-        j._submit(0)
-        j._allocate([1])
-        j._start(0)
-        j._terminate(10, jobs.JobState.COMPLETED_SUCCESSFULLY)
-        assert self.__called
-
-    def test_terminate_invalid_state_must_raise(self):
+    def test_terminate_with_invalid_final_state_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._allocate([1])
         j._start(0)
 
-        with pytest.raises(RuntimeError):
-            j._terminate(10, jobs.JobState.COMPLETED_KILLED)
+        with pytest.raises(ValueError) as excinfo:
+            j._terminate(10, jobs.JobState.ALLOCATED)
+        assert 'final_state' in str(excinfo.value)
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ValueError) as excinfo:
             j._terminate(10, jobs.JobState.REJECTED)
+        assert 'final_state' in str(excinfo.value)
 
     def test_terminate_successfully_valid(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
@@ -539,6 +445,16 @@ class TestJob:
         assert j.state == jobs.JobState.COMPLETED_FAILED
         assert j.stop_time == 10
 
+    def test_terminate_killed_valid(self):
+        j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
+        j._submit(0)
+        j._allocate([1])
+        j._start(0)
+        j._terminate(10, jobs.JobState.COMPLETED_KILLED)
+        assert j.is_finished
+        assert j.state == jobs.JobState.COMPLETED_KILLED
+        assert j.stop_time == 10
+
     def test_terminate_walltime_reached_valid(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
@@ -555,23 +471,26 @@ class TestJob:
         j._allocate([1])
         j._start(0)
         j._terminate(10, jobs.JobState.COMPLETED_SUCCESSFULLY)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             j._terminate(10, jobs.JobState.COMPLETED_SUCCESSFULLY)
+        assert 'running' in str(excinfo.value)
 
     def test_terminate_not_running_job_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._allocate([1])
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError) as excinfo:
             j._terminate(10, jobs.JobState.COMPLETED_SUCCESSFULLY)
+        assert 'running' in str(excinfo.value)
 
     def test_terminate_invalid_time_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._allocate([1])
         j._start(2)
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ValueError) as excinfo:
             j._terminate(1, jobs.JobState.COMPLETED_SUCCESSFULLY)
+        assert 'current_time' in str(excinfo.value)
 
     def test_waiting_time(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
