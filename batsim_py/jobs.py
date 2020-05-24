@@ -2,6 +2,7 @@ from abc import ABC
 from enum import Enum
 from typing import Optional
 from typing import Sequence
+from typing import Dict
 
 
 class JobState(Enum):
@@ -463,6 +464,7 @@ class Job:
         self.__subtime = float(subtime)
         self.__walltime = walltime
         self.__user = user
+        self.__storage_mapping: Optional[Dict[str, int]] = None
 
         self.__state: JobState = JobState.UNKNOWN
         self.__allocation: Optional[Sequence[int]] = None
@@ -491,6 +493,11 @@ class Job:
     def subtime(self) -> float:
         """ The job submission time. """
         return self.__subtime
+
+    @property
+    def storage_mapping(self) -> Optional[Dict[str, int]]:
+        """ The job storage mapping. """
+        return self.__storage_mapping
 
     @property
     def res(self) -> int:
@@ -579,7 +586,7 @@ class Job:
         if self.stop_time is None or self.start_time is None:
             return None
         else:
-            return self.stop_time - self.start_time
+            return max(1, self.stop_time - self.start_time)
 
     @property
     def stretch(self) -> Optional[float]:
@@ -616,19 +623,23 @@ class Job:
         else:
             return max(1., self.turnaround_time / self.runtime)
 
-    def _allocate(self, hosts: Sequence[int]) -> None:
+    def _allocate(self, hosts: Sequence[int], storage_mapping: Dict[str, int] = None) -> None:
         """ Allocate hosts for the job. 
 
         This is an internal method to be used by the simulator only.
 
         Args:
             hosts: A sequence of hosts id.
+            storage_mapping: The resource ids of the storages to use. 
+                Defaults to None. Required only if the job needs a storage 
+                resource.
 
         Raises:
             RuntimeError: In case of the job is not in the queue (e.g. job 
                 is runnable or running).
             ValueError: In case of the number of allocated resources does not 
-                match the number requested.
+                match the number requested or the job needs a storage and 
+                the mapping is not defined nor valid.
         """
         if not self.is_submitted:
             raise RuntimeError('The job is not in the queue anymore, '
@@ -637,7 +648,31 @@ class Job:
             raise ValueError('Expected `hosts` argument to be a list '
                              'of length {}, got {}'.format(self.res, hosts))
 
+        if isinstance(self.profile, DataStagingJobProfile):
+            if not storage_mapping:
+                raise ValueError(f'Expected storage mapping to be defined, '
+                                 f'got {storage_mapping}')
+
+            if self.profile.src not in storage_mapping:
+                raise ValueError(f'Expected storage mapping to '
+                                 f'include {self.profile.src}')
+
+            if self.profile.dest not in storage_mapping:
+                raise ValueError(f'Expected storage mapping to '
+                                 f'include {self.profile.dest}')
+        elif isinstance(self.profile, ParallelHomogeneousPFSJobProfile):
+            if not storage_mapping:
+                raise ValueError(f'Expected storage mapping to be defined, '
+                                 f'got {storage_mapping}')
+            if self.profile.storage not in storage_mapping:
+                raise ValueError(f'Expected storage mapping to '
+                                 f'include {self.profile.storage}')
+        elif storage_mapping:
+            raise ValueError(f'Expected storage mapping to be empty, '
+                             f'got {storage_mapping}')
+
         self.__allocation = list(hosts)
+        self.__storage_mapping = storage_mapping
         self.__state = JobState.ALLOCATED
 
     def _reject(self) -> None:

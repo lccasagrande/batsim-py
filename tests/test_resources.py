@@ -1,7 +1,7 @@
 import pytest
 
 from batsim_py.resources import Host
-from batsim_py.resources import HostRole
+from batsim_py.resources import Storage
 from batsim_py.resources import HostState
 from batsim_py.resources import Platform
 from batsim_py.resources import PowerState
@@ -64,11 +64,11 @@ class TestPowerState:
 class TestHost:
     def test_valid_instance(self):
         p = PowerState(0, PowerStateType.COMPUTATION, 10, 10)
-        i, n, r, p, m = 0, "n", HostRole.COMPUTE, [p], {'u': 1}
-        h = Host(i, n, r, p, m)
+        i, n, r, m = 0, "n", [p], {'u': 1}
+        h = Host(i, n, r, m)
 
-        assert h.id == i and h.name == n and h.role == r
-        assert h.pstates == p and h.metadata == m and not h.jobs
+        assert h.id == i and h.name == n
+        assert h.pstate == p and h.metadata == m and not h.jobs
 
     def test_repr(self):
         assert repr(Host(0, "n")) == "Host_{}".format(0)
@@ -658,6 +658,7 @@ class TestHost:
     def test_allocate_job_twice_must_not_raise(self):
         h = Host(0, "n")
         h._allocate("j1")
+        h._allocate("j1")
         assert h.jobs and len(h.jobs) == 1
 
     def test_start_computing_valid(self):
@@ -730,38 +731,87 @@ class TestHost:
         assert h.jobs and len(h.jobs) == 1 and h.jobs[0] == "j2"
 
 
+class TestStorage:
+    def test_valid(self):
+        m = {"n": 0}
+        s = Storage(0, "0", m)
+        assert s.id == 0
+        assert s.name == "0"
+        assert s.metadata == m
+
+    def test_allocate_valid(self):
+        s = Storage(0, "n")
+        s._allocate("job")
+        assert s.jobs and s.jobs[0] == "job"
+
+    def test_allocate_multiple_jobs_valid(self):
+        s = Storage(0, "n")
+        s._allocate("j1")
+        s._allocate("j2")
+        assert "j1" in s.jobs
+        assert "j2" in s.jobs
+
+    def test_allocate_job_twice_must_not_raise(self):
+        s = Storage(0, "n")
+        s._allocate("j1")
+        s._allocate("j1")
+        assert s.jobs and len(s.jobs) == 1
+
+    def test_release_valid(self):
+        s = Storage(0, "n")
+        s._allocate("job")
+        s._release("job")
+        assert not s.jobs
+
+    def test_release_when_multiple_jobs_are_allocated(self):
+        s = Storage(0, "n")
+        s._allocate("j1")
+        s._allocate("j2")
+        s._release("j1")
+        assert s.jobs and len(s.jobs) == 1 and s.jobs[0] == "j2"
+
+
 class TestPlatform:
     def test_valid_instance(self):
-        hosts = [Host(0, "n"), Host(1, "n")]
-        p = Platform(hosts)
-        assert all(h.id == i for i, h in enumerate(p))
+        res = [Host(0, "n"), Host(1, "n"), Storage(2, "n")]
+        p = Platform(res)
+        assert all(h.id == i for i, h in enumerate(p.resources))
 
-    def test_empty_hosts_must_raise(self):
+    def test_empty_res_must_raise(self):
         with pytest.raises(ValueError) as excinfo:
             Platform([])
-        assert "one host" in str(excinfo.value)
+        assert "one resource" in str(excinfo.value)
 
-    def test_invalid_host_id_must_raise(self):
-        hosts = [Host(1, "n"), Host(2, "n")]
+    def test_invalid_res_id_must_raise(self):
         with pytest.raises(SystemError) as excinfo:
-            Platform(hosts)
-        assert "hosts id" in str(excinfo.value)
+            Platform([Host(1, "n"), Host(2, "n")])
+        assert "resources id" in str(excinfo.value)
 
     def test_size(self):
-        hosts = [Host(0, "n"), Host(1, "n")]
-        p = Platform(hosts)
-        assert p.size == len(hosts)
+        res = [Host(0, "n"), Host(1, "n"), Storage(2, "n")]
+        p = Platform(res)
+        assert p.size == len(res)
+
+    def test_hosts(self):
+        res = [Host(0, "n"), Host(1, "n"), Storage(2, "n")]
+        p = Platform(res)
+        assert len(list(p.hosts)) == 2
+
+    def test_storages(self):
+        res = [Host(0, "n"), Host(1, "n"), Storage(2, "n")]
+        p = Platform(res)
+        assert len(list(p.storages)) == 1
 
     def test_power_when_pstates_not_defined(self):
-        hosts = [Host(0, "n"), Host(1, "n")]
-        p = Platform(hosts)
+        res = [Host(0, "n"), Host(1, "n")]
+        p = Platform(res)
         assert p.power == 0
 
     def test_power_when_pstates_defined(self):
         p1 = PowerState(1, PowerStateType.COMPUTATION, 15, 100)
         p2 = PowerState(1, PowerStateType.COMPUTATION, 50, 100)
-        hosts = [Host(0, "n", pstates=[p1]), Host(1, "n", pstates=[p2])]
-        p = Platform(hosts)
+        res = [Host(0, "n", pstates=[p1]), Host(1, "n", pstates=[p2])]
+        p = Platform(res)
         assert p.power == 15 + 50
 
     def test_state(self):
@@ -784,23 +834,56 @@ class TestPlatform:
 
         assert p.get_available() == [h2]
 
-    def test_get_by_role(self):
-        h1 = Host(0, "n", role=HostRole.STORAGE)
-        h2 = Host(1, "n")
-        p = Platform([h1, h2])
+    def test_get_host_by_id(self):
+        h1 = Host(0, "n")
+        s1 = Storage(1, "n")
+        p = Platform([h1, s1])
 
-        assert p.get_by_role(HostRole.COMPUTE) == [h2]
+        assert p.get_host(0) == h1
 
-    def test_get_by_id(self):
-        h1 = Host(0, "n", role=HostRole.STORAGE)
-        h2 = Host(1, "n")
-        p = Platform([h1, h2])
+    def test_get_storage_by_id(self):
+        h1 = Host(0, "n")
+        s1 = Storage(1, "n")
+        p = Platform([h1, s1])
 
-        assert p.get_by_id(1) == h2
+        assert p.get_storage(1) == s1
 
-    def test_get_by_id_not_found_must_raise(self):
-        h1 = Host(0, "n", role=HostRole.STORAGE)
-        h2 = Host(1, "n")
-        p = Platform([h1, h2])
+    def test_get_storage_with_host_id_must_raise(self):
+        h1 = Host(0, "n")
+        s1 = Storage(1, "n")
+        p = Platform([h1, s1])
+
         with pytest.raises(LookupError) as excinfo:
-            p.get_by_id(2)
+            p.get_storage(0)
+
+        assert "storage" in str(excinfo.value)
+
+    def test_get_storage_not_found_must_raise(self):
+        h1 = Host(0, "n")
+        s1 = Storage(1, "n")
+        p = Platform([h1, s1])
+
+        with pytest.raises(LookupError) as excinfo:
+            p.get_storage(2)
+
+        assert "resources" in str(excinfo.value)
+
+    def test_get_host_with_storage_id_must_raise(self):
+        h1 = Host(0, "n")
+        s1 = Storage(1, "n")
+        p = Platform([h1, s1])
+
+        with pytest.raises(LookupError) as excinfo:
+            p.get_host(1)
+
+        assert "host" in str(excinfo.value)
+
+    def test_get_host_not_found_must_raise(self):
+        h1 = Host(0, "n")
+        s1 = Storage(1, "n")
+        p = Platform([h1, s1])
+
+        with pytest.raises(LookupError) as excinfo:
+            p.get_host(2)
+
+        assert "resources" in str(excinfo.value)

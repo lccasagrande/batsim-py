@@ -19,10 +19,10 @@ from .jobs import ParallelHomogeneousTotalJobProfile
 from .jobs import ComposedJobProfile
 from .jobs import ParallelHomogeneousPFSJobProfile
 from .jobs import DataStagingJobProfile
+from .resources import Storage
 from .resources import PowerState
 from .resources import PowerStateType
 from .resources import Host
-from .resources import HostRole
 from .resources import Platform
 
 
@@ -468,22 +468,26 @@ class Converters:
         Returns:
             A platform with all hosts.
         """
-        def get_host(r, role):
+        def get_host(r):
             pstates = None
             props = r.get("properties", None)
             if props and "watt_per_state" in props:
                 pstates = Converters.json_to_power_states(props)
 
-            return Host(r['id'], r['name'], role, pstates, props)
+            return Host(r['id'], r['name'], pstates, props)
 
-        hosts = []
+        def get_storage(r):
+            props = r.get("properties", None)
+            return Storage(r['id'], r['name'], props)
+
+        resources = []
         for r in data["compute_resources"]:
-            hosts.append(get_host(r, HostRole.COMPUTE))
+            resources.append(get_host(r))
 
         for r in data["storage_resources"]:
-            hosts.append(get_host(r, HostRole.STORAGE))
+            resources.append(get_storage(r))
 
-        return Platform(hosts)
+        return Platform(resources)
 
 
 class JobSubmittedBatsimEvent(BatsimEvent):

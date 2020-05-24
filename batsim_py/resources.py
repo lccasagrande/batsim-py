@@ -1,19 +1,10 @@
 from collections import defaultdict
 from enum import Enum
+from typing import Union
 from typing import Iterator, Set
 from typing import Optional
 from typing import Sequence
 from typing import List
-
-
-class HostRole(Enum):
-    """ Batsim Host Role
-
-    This class enumerates the distinct roles a host can be designed for.
-    """
-    UNKNOWN = 0
-    COMPUTE = 1
-    STORAGE = 2
 
 
 class HostState(Enum):
@@ -124,15 +115,88 @@ class PowerState:
         return self.__type
 
 
+class Storage:
+    """ This class describes a Batsim storage resource.
+
+    Args:
+        id: The storage id. Must be unique within a platform.
+        name: The storage name.
+        metadata: Extra storage properties that can be used by some functions
+            beyond the scope of Batsim or Batsim-py. Defaults to None.
+    """
+
+    def __init__(self,
+                 id: int,
+                 name: str,
+                 metadata: Optional[dict] = None) -> None:
+        self.__id = int(id)
+        self.__name = str(name)
+        self.__metadata = metadata
+        self.__jobs: Set[str] = set()
+
+    def __repr__(self) -> str:
+        return f"Storage_{self.id}"
+
+    def __str__(self) -> str:
+        return f"Storage_{self.id}"
+
+    @property
+    def id(self) -> int:
+        """ Storage ID """
+        return self.__id
+
+    @property
+    def name(self) -> str:
+        """ Storage name. """
+        return self.__name
+
+    @property
+    def metadata(self) -> Optional[dict]:
+        """ Storage extra properties. """
+        if self.__metadata:
+            return dict(self.__metadata)
+        else:
+            return None
+
+    @property
+    def jobs(self) -> List[str]:
+        """ All jobs that are using this storage. """
+        return list(self.__jobs)
+
+    @property
+    def is_allocated(self) -> bool:
+        """ Whether the storage is being used by a job. """
+        return bool(self.__jobs)
+
+    def _allocate(self, job_id: str) -> None:
+        """ Allocate storage for a job.
+
+        This is an internal method to be used by the simulator only.
+
+        Args:
+            job_id: The job that will use this storage.
+        """
+        self.__jobs.add(job_id)
+
+    def _release(self, job_id: str) -> None:
+        """ Release storage.
+
+        This is an internal method to be used by the simulator only.
+
+        Args:
+            job_id: The job that will release this storage.
+        """
+        self.__jobs.remove(job_id)
+
+
 class Host:
-    """ This class describes a Batsim resource (host).
+    """ This class describes a Batsim computing resource (host).
 
     A host is the resource on which a job can run.
 
     Args:
         id: The host id. Must be unique within a platform.
         name: The host name.
-        role: The host role. Defaults to Compute.
         pstates: The host power states. Defaults to None.
             A host can have several computing power states and only one sleep 
             and transition (On/Off) power states. Computing power states serves 
@@ -152,19 +216,16 @@ class Host:
     Examples:
         >>> ps1 = PowerState(0, PowerStateType.COMPUTATION, 10, 100)
         >>> ps2 = PowerState(1, PowerStateType.COMPUTATION, 15, 150)
-        >>> h = Host(0, "Host_0", HostRole.COMPUTE, [ps1, ps2])
+        >>> h = Host(0, "Host_0", [ps1, ps2])
     """
 
     def __init__(self,
                  id: int,
                  name: str,
-                 role: HostRole = HostRole.COMPUTE,
                  pstates: Optional[Sequence[PowerState]] = None,
                  metadata: Optional[dict] = None) -> None:
-        assert isinstance(role, HostRole)
         self.__id = int(id)
         self.__name = str(name)
-        self.__role = role
         self.__state = HostState.IDLE
         self.__jobs: Set[str] = set()
         self.__pstates = None
@@ -221,11 +282,6 @@ class Host:
     def name(self) -> str:
         """ Host name. """
         return self.__name
-
-    @property
-    def role(self) -> HostRole:
-        """ Host role. """
-        return self.__role
 
     @property
     def state(self) -> HostState:
@@ -553,39 +609,55 @@ class Platform:
     A platform is composed by a set of resources (computing, storage and network).
 
     Args:
-        hosts: the computing resources.
+        resources: the platform resources (hosts and storages).
 
     Raises:
         ValueError: In case of invalid platform size.
-        SystemError: In case of invalid hosts id.
+        SystemError: In case of invalid resources id.
     """
 
-    def __init__(self, hosts: Sequence[Host]) -> None:
-        if not hosts:
-            raise ValueError("A platform must contain at least one host.")
+    def __init__(self, resources: Sequence[Union[Host, Storage]]) -> None:
+        if not resources:
+            raise ValueError("A platform must contain at least one resource.")
 
-        if not all(h.id == i for i, h in enumerate(hosts)):
-            raise SystemError('The simulator expected hosts id to '
+        if not all(h.id == i for i, h in enumerate(resources)):
+            raise SystemError('The simulator expected resources id to '
                               'be a sequence starting from 0')
-        self.__hosts = tuple(sorted(hosts, key=lambda h: h.id))
+        self.__resources = tuple(sorted(resources, key=lambda h: h.id))
 
     @property
     def size(self) -> int:
         """ The number of resources in the platform. """
-        return len(self.__hosts)
+        return len(self.__resources)
 
     @property
     def power(self) -> float:
         """ The current consumption (in Watts). """
-        return sum(h.power for h in self.__hosts if h.power)
+        return sum(h.power for h in self.hosts if h.power)
 
     @property
     def state(self) -> Sequence[HostState]:
         """ The current platform state. """
-        return [h.state for h in self.__hosts]
+        return [h.state for h in self.hosts]
 
-    def __iter__(self) -> Iterator[Host]:
-        return iter(self.__hosts)
+    @property
+    def resources(self) -> Iterator[Union[Host, Storage]]:
+        """ Platform resources. """
+        return iter(self.__resources)
+
+    @property
+    def storages(self) -> Iterator[Storage]:
+        """ Platform storage resources. """
+        for r in self.__resources:
+            if isinstance(r, Storage):
+                yield r
+
+    @property
+    def hosts(self) -> Iterator[Host]:
+        """ Platform computing resources. """
+        for r in self.__resources:
+            if isinstance(r, Host):
+                yield r
 
     def get_available(self) -> Sequence[Host]:
         """ Get available hosts.
@@ -595,21 +667,9 @@ class Platform:
         Returns:
             A list with available hosts.
         """
-        return list(filter(lambda h: not h.is_allocated, self.__hosts))
+        return list(filter(lambda h: not h.is_allocated, self.hosts))
 
-    def get_by_role(self, host_role: HostRole) -> Sequence[Host]:
-        """ Get host by role.
-
-        Args:
-            host_role: The host role.
-
-        Returns:
-            The hosts with the corresponding role.
-        """
-        assert isinstance(host_role, HostRole)
-        return list(filter(lambda h: h.role == host_role, self.__hosts))
-
-    def get_by_id(self, host_id: int) -> Host:
+    def get_host(self, host_id: int) -> Host:
         """ Get host by id.
 
         Args:
@@ -619,10 +679,38 @@ class Platform:
             The host with the corresponding id.
 
         Raises:
-            LookupError: In case of host not found.
+            LookupError: In case of resource not found or it's not 
+                a computing resource.
         """
         if host_id >= self.size:
-            raise LookupError('Host id {} was not found in '
-                              'the platform.'.format(host_id))
+            raise LookupError(f"There're no resources with id {host_id}.")
 
-        return self.__hosts[host_id]
+        resource = self.__resources[host_id]
+        if not isinstance(resource, Host):
+            raise LookupError(f"A host with id {host_id} could not be "
+                              f"found, got {resource}.")
+
+        return resource
+
+    def get_storage(self, storage_id: int) -> Storage:
+        """ Get storage by id.
+
+        Args:
+            storage_id: The storage id.
+
+        Returns:
+            The storage with the corresponding id.
+
+        Raises:
+            LookupError: In case of resource not found or it's not 
+                a storage resource.
+        """
+        if storage_id >= self.size:
+            raise LookupError(f"There're no resources with id {storage_id}.")
+
+        resource = self.__resources[storage_id]
+        if not isinstance(resource, Storage):
+            raise LookupError(f"A storage with id {storage_id} could not "
+                              "be found, got {resource}.")
+
+        return resource

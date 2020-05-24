@@ -8,7 +8,7 @@ from batsim_py.events import JobEvent
 from batsim_py.events import SimulatorEvent
 from batsim_py.events import HostEvent
 from batsim_py.jobs import Job
-from batsim_py.protocol import BatsimMessage
+from batsim_py.protocol import BatsimEvent, BatsimMessage
 from batsim_py.protocol import JobCompletedBatsimEvent
 from batsim_py.protocol import JobSubmittedBatsimEvent
 from batsim_py.protocol import NotifyBatsimEvent
@@ -20,7 +20,7 @@ from batsim_py.resources import Host, PowerStateType
 from batsim_py.simulator import SimulatorHandler
 from batsim_py.simulator import Reservation
 
-from .utils import BatsimEventAPI
+from .utils import BatsimEventAPI, BatsimJobProfileAPI
 from .utils import BatsimPlatformAPI
 
 
@@ -34,12 +34,15 @@ class TestSimulatorHandler:
 
         watts = [(90, 100), (120, 130)]
         props = BatsimPlatformAPI.get_resource_properties(watt_on=watts)
-        resources = [
+        r = [
             BatsimPlatformAPI.get_resource(0, properties=props),
             BatsimPlatformAPI.get_resource(1, properties=props),
         ]
+        s = [
+            BatsimPlatformAPI.get_resource(2, properties={"role": "storage"})
+        ]
 
-        e = BatsimEventAPI.get_simulation_begins(resources=resources)
+        e = BatsimEventAPI.get_simulation_begins(resources=r, storages=s)
         events = [SimulationBeginsBatsimEvent(0, e['data'])]
         msg = BatsimMessage(0, events)
 
@@ -404,9 +407,9 @@ class TestSimulatorHandler:
         s.proceed_time()
 
         with pytest.raises(LookupError) as excinfo:
-            s.allocate(e['data']['job_id'], [2])
+            s.allocate(e['data']['job_id'], [3])
 
-        assert "Host" in str(excinfo.value)
+        assert "resources" in str(excinfo.value)
 
     def test_allocate_must_start_job_and_host(self, mocker):
         mocker.patch("batsim_py.simulator.ExecuteJobBatsimRequest")
@@ -424,9 +427,55 @@ class TestSimulatorHandler:
         s.allocate(job.id, [0])
 
         assert job.is_running
-        assert s.platform.get_by_id(0).is_computing
+        assert s.platform.get_host(0).is_computing
         simulator.ExecuteJobBatsimRequest.assert_called_once_with(  # type: ignore
-            150, job.id, job.allocation)
+            150, job.id, job.allocation, job.storage_mapping)
+
+    def test_allocate_with_staging_job_must_allocate_storages(self, mocker):
+        mocker.patch("batsim_py.simulator.ExecuteJobBatsimRequest")
+        s = SimulatorHandler()
+        s.start("p", "w")
+
+        profile = BatsimJobProfileAPI.get_data_staging("a", "b", 10)
+        e = BatsimEventAPI.get_job_submitted(res=1, profile=profile)
+        msg = BatsimMessage(150, [JobSubmittedBatsimEvent(150, e['data'])])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        s.proceed_time()
+
+        assert s.queue
+
+        job = s.jobs[0]
+        storage = list(s.platform.storages)[0]
+        s.allocate(job.id, [0], {"a": storage.id, "b": storage.id})
+
+        assert job.is_running
+        assert s.platform.get_host(0).is_computing
+        assert storage.jobs and storage.jobs[0] == job.id
+        simulator.ExecuteJobBatsimRequest.assert_called_once_with(  # type: ignore
+            150, job.id, job.allocation, job.storage_mapping)
+
+    def test_allocate_with_pfs_job_must_allocate_storages(self, mocker):
+        mocker.patch("batsim_py.simulator.ExecuteJobBatsimRequest")
+        s = SimulatorHandler()
+        s.start("p", "w")
+
+        profile = BatsimJobProfileAPI.get_parallel_homogeneous_pfs("a", 1, 2)
+        e = BatsimEventAPI.get_job_submitted(res=1, profile=profile)
+        msg = BatsimMessage(150, [JobSubmittedBatsimEvent(150, e['data'])])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        s.proceed_time()
+
+        assert s.queue
+
+        job = s.jobs[0]
+        storage = list(s.platform.storages)[0]
+        s.allocate(job.id, [0], {"a": storage.id})
+
+        assert job.is_running
+        assert s.platform.get_host(0).is_computing
+        assert storage.jobs and storage.jobs[0] == job.id
+        simulator.ExecuteJobBatsimRequest.assert_called_once_with(  # type: ignore
+            150, job.id, job.allocation, job.storage_mapping)
 
     def test_allocate_start_must_dispatch_events(self, mocker):
         def foo_j(j: Job):
@@ -461,7 +510,7 @@ class TestSimulatorHandler:
         s.start("p", "w")
 
         # setup
-        host = s.platform.get_by_id(0)
+        host = s.platform.get_host(0)
         host._switch_off()
         host._set_off()
 
@@ -502,7 +551,7 @@ class TestSimulatorHandler:
         s.start("p", "w")
 
         # setup
-        host = s.platform.get_by_id(0)
+        host = s.platform.get_host(0)
         host._switch_off()
         e = BatsimEventAPI.get_job_submitted(res=1)
         msg = BatsimMessage(150, [JobSubmittedBatsimEvent(150, e['data'])])
@@ -520,7 +569,7 @@ class TestSimulatorHandler:
         s.start("p", "w")
 
         # setup
-        host = s.platform.get_by_id(0)
+        host = s.platform.get_host(0)
         host._switch_off()
         host._set_off()
         host._switch_on()
@@ -637,7 +686,7 @@ class TestSimulatorHandler:
         s.start("p", "w")
         with pytest.raises(LookupError) as excinfo:
             s.switch_on([30])
-        assert 'Host' in str(excinfo.value)
+        assert 'resources' in str(excinfo.value)
 
     def test_switch_on(self, mocker):
         mocker.patch("batsim_py.simulator.SetResourceStateBatsimRequest")
@@ -645,7 +694,7 @@ class TestSimulatorHandler:
         s = SimulatorHandler()
         s.start("p", "w")
         s.switch_on([1])
-        ps = s.platform.get_by_id(1).get_default_pstate()
+        ps = s.platform.get_host(1).get_default_pstate()
         batsim_py.resources.Host._switch_on.assert_called_once()
         simulator.SetResourceStateBatsimRequest.assert_called_once_with(  # type: ignore
             0, [1], ps.id)
@@ -673,7 +722,7 @@ class TestSimulatorHandler:
         s.start("p", "w")
         with pytest.raises(LookupError) as excinfo:
             s.switch_off([10])
-        assert 'Host' in str(excinfo.value)
+        assert 'resources' in str(excinfo.value)
 
     def test_switch_off(self, mocker):
         mocker.patch("batsim_py.simulator.SetResourceStateBatsimRequest")
@@ -681,7 +730,7 @@ class TestSimulatorHandler:
         s = SimulatorHandler()
         s.start("p", "w")
         s.switch_off([0])
-        ps = s.platform.get_by_id(0).get_sleep_pstate()
+        ps = s.platform.get_host(0).get_sleep_pstate()
         batsim_py.resources.Host._switch_off.assert_called_once()
         simulator.SetResourceStateBatsimRequest.assert_called_once_with(  # type: ignore
             0, [0], ps.id)
@@ -709,7 +758,7 @@ class TestSimulatorHandler:
         s.start("p", "w")
         with pytest.raises(LookupError) as excinfo:
             s.switch_power_state(10, 0)
-        assert 'Host' in str(excinfo.value)
+        assert 'resources' in str(excinfo.value)
 
     def test_switch_ps(self, mocker):
         mocker.patch("batsim_py.simulator.SetResourceStateBatsimRequest")
@@ -717,7 +766,7 @@ class TestSimulatorHandler:
                             '_set_computation_pstate')
         s = SimulatorHandler()
         s.start("p", "w")
-        h = s.platform.get_by_id(0)
+        h = s.platform.get_host(0)
         ps = h.get_pstate_by_type(PowerStateType.COMPUTATION)
         assert len(ps) == 2
         s.switch_power_state(0, ps[-1].id)
@@ -734,7 +783,7 @@ class TestSimulatorHandler:
         s = SimulatorHandler()
         s.start("p", "w")
         s.subscribe(HostEvent.COMPUTATION_POWER_STATE_CHANGED, foo)
-        h = s.platform.get_by_id(0)
+        h = s.platform.get_host(0)
         ps = h.get_pstate_by_type(PowerStateType.COMPUTATION)
         s.switch_power_state(0, ps[-1].id)
         assert self.__called and self.__h_id == 0
@@ -770,28 +819,34 @@ class TestSimulatorHandler:
 
         assert self.__called and self.__j_id == job_id
 
-    def test_on_batsim_job_completed_must_terminate_job_and_release_host(self, mocker):
+    def test_on_batsim_job_completed_must_terminate_job_and_release_resources(self, mocker):
         s = SimulatorHandler()
         s.start("p", "w")
 
         # Setup Allocate
-        e = BatsimEventAPI.get_job_submitted(res=1)
+        profile = BatsimJobProfileAPI.get_data_staging("a", "b", 10)
+        e = BatsimEventAPI.get_job_submitted(res=1, profile=profile)
         job_id, job_alloc = e['data']['job_id'], [0]
         msg = BatsimMessage(150, [JobSubmittedBatsimEvent(150, e['data'])])
         mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+
+        storage = list(s.platform.storages)[0]
         s.proceed_time()
-        s.allocate(job_id, job_alloc)
+        s.allocate(job_id, job_alloc, {"a": storage.id, "b": storage.id})
 
         # Setup Completed
         mocker.patch.object(batsim_py.jobs.Job, '_terminate')
         mocker.patch.object(batsim_py.resources.Host, '_release')
+        mocker.patch.object(batsim_py.resources.Storage, '_release')
+
         e = BatsimEventAPI.get_job_completted(100, job_id, alloc=job_alloc)
         msg = BatsimMessage(150, [JobCompletedBatsimEvent(150, e['data'])])
         mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
         s.proceed_time()
 
         batsim_py.jobs.Job._terminate.assert_called_once()
-        batsim_py.resources.Host._release.assert_called_once()
+        batsim_py.resources.Host._release.assert_called_once_with(job_id)
+        batsim_py.resources.Storage._release.assert_called_once_with(job_id)
         assert not s.jobs
 
     def test_on_batsim_job_completed_must_dispatch_event(self, mocker):
@@ -835,10 +890,10 @@ class TestSimulatorHandler:
         s.start("p", "w")
 
         s.switch_off([0])
-        assert s.platform.get_by_id(0).is_switching_off
+        assert s.platform.get_host(0).is_switching_off
 
         # Setup
-        p_id = s.platform.get_by_id(0).get_sleep_pstate().id
+        p_id = s.platform.get_host(0).get_sleep_pstate().id
         e = BatsimEventAPI.get_resource_state_changed(150, [0], p_id)
         e = ResourcePowerStateChangedBatsimEvent(150, e['data'])
         msg = BatsimMessage(150, [e])
@@ -846,7 +901,7 @@ class TestSimulatorHandler:
         s.subscribe(HostEvent.STATE_CHANGED, foo_h)
         s.proceed_time()
 
-        assert s.platform.get_by_id(0).is_sleeping
+        assert s.platform.get_host(0).is_sleeping
         assert self.__h_called and self.__h_id == 0
 
     def test_on_batsim_host_ps_changed_must_set_on_and_dispatch_event(self, mocker):
@@ -856,13 +911,13 @@ class TestSimulatorHandler:
         s = SimulatorHandler()
         s.start("p", "w")
 
-        s.platform.get_by_id(0)._switch_off()
-        s.platform.get_by_id(0)._set_off()
+        s.platform.get_host(0)._switch_off()
+        s.platform.get_host(0)._set_off()
         s.switch_on([0])
-        assert s.platform.get_by_id(0).is_switching_on
+        assert s.platform.get_host(0).is_switching_on
 
         # Setup
-        p_id = s.platform.get_by_id(0).get_default_pstate().id
+        p_id = s.platform.get_host(0).get_default_pstate().id
         e = BatsimEventAPI.get_resource_state_changed(150, [0], p_id)
         e = ResourcePowerStateChangedBatsimEvent(150, e['data'])
         msg = BatsimMessage(150, [e])
@@ -870,7 +925,7 @@ class TestSimulatorHandler:
         s.subscribe(HostEvent.STATE_CHANGED, foo_h)
         s.proceed_time()
 
-        assert s.platform.get_by_id(0).is_idle
+        assert s.platform.get_host(0).is_idle
         assert self.__h_called and self.__h_id == 0
 
     def test_on_batsim_host_ps_changed_must_set_comp_ps_and_dispatch_event(self, mocker):
@@ -881,7 +936,7 @@ class TestSimulatorHandler:
         s.start("p", "w")
 
         # Setup
-        host = s.platform.get_by_id(0)
+        host = s.platform.get_host(0)
         new_ps = host.get_pstate_by_type(PowerStateType.COMPUTATION)[-1]
         assert host.pstate != new_ps
 

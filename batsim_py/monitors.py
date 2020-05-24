@@ -300,7 +300,7 @@ class HostMonitor(Monitor):
         t_now = self.simulator.current_time
 
         self.__last_state = {}
-        for h in self.simulator.platform:
+        for h in self.simulator.platform.hosts:
             self.__last_state[h.id] = (t_now, h.power, h.state, h.pstate)
 
         self.__info = {k: 0 for k in self.__info.keys()}
@@ -308,7 +308,7 @@ class HostMonitor(Monitor):
 
     def on_simulation_ends(self, sender: SimulatorHandler) -> None:
         assert self.simulator and self.simulator.platform
-        for h in self.simulator.platform:
+        for h in self.simulator.platform.hosts:
             self.update_info(h)
 
     def on_host_state_changed(self, sender: Host) -> None:
@@ -455,7 +455,7 @@ class HostStateSwitchMonitor(Monitor):
 
         # Update initial state
         self.__info['time'][-1] = self.simulator.current_time
-        for h in self.simulator.platform:
+        for h in self.simulator.platform.hosts:
             key = self.__get_key_from_state(h.state)
             self.__last_host_state[h.id] = key
             self.__info[key][-1] += 1
@@ -542,7 +542,7 @@ class HostPowerStateSwitchMonitor(Monitor):
 
         self.__info = {k: [] for k in self.__info.keys()}
 
-        hosts = [h for h in self.simulator.platform if h.pstate]
+        hosts = [h for h in self.simulator.platform.hosts if h.pstate]
 
         self.__last_pstate_id = {
             h.id: h.pstate.id for h in hosts}  # type:ignore
@@ -555,7 +555,7 @@ class HostPowerStateSwitchMonitor(Monitor):
             self.__info['new_pstate'].append(p)
 
     def on_host_power_state_changed(self, sender: Host) -> None:
-        if sender.id in self.__last_pstate_id and self.__last_pstate_id[sender.id] != sender.pstate.id:
+        if sender.id in self.__last_pstate_id and sender.pstate and self.__last_pstate_id[sender.id] != sender.pstate.id:
             assert sender.pstate
             assert self.simulator
 
@@ -632,7 +632,7 @@ class ConsumedEnergyMonitor(Monitor):
         """ Get monitor info about the simulation.
 
         Returns:
-            A dict with all the infor260mation collected.
+            A dict with all the information collected.
         """
         return self.__info
 
@@ -651,7 +651,7 @@ class ConsumedEnergyMonitor(Monitor):
         self.__info = {k: [] for k in self.__info.keys()}
 
         self.__last_state = {
-            h.id: (t_now, h.power, h.pstate) for h in self.simulator.platform
+            h.id: (t_now, h.power, h.pstate) for h in self.simulator.platform.hosts
         }
 
     def on_job_started(self, sender: Job) -> None:
@@ -666,7 +666,7 @@ class ConsumedEnergyMonitor(Monitor):
     def update_info(self, event_type: str) -> None:
         assert self.simulator and self.simulator.platform
         consumed_energy = wattmin = epower = 0.
-        for h in self.simulator.platform:
+        for h in self.simulator.platform.hosts:
             t_start, power, pstate = self.__last_state[h.id]
             t_now = self.simulator.current_time
             wattage = power or 0

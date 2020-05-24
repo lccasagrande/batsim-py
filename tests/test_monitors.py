@@ -4,6 +4,9 @@ from procset import ProcSet
 import pytest
 
 import batsim_py
+from batsim_py.events import SimulatorEvent
+from batsim_py.events import JobEvent
+from batsim_py.events import HostEvent
 from batsim_py.jobs import DelayJobProfile
 from batsim_py.jobs import Job
 from batsim_py.jobs import JobState
@@ -13,23 +16,10 @@ from batsim_py.monitors import HostStateSwitchMonitor
 from batsim_py.monitors import JobMonitor
 from batsim_py.monitors import SchedulerMonitor
 from batsim_py.monitors import SimulationMonitor
-from batsim_py.protocol import BatsimMessage
 from batsim_py.protocol import Converters
-from batsim_py.protocol import JobCompletedBatsimEvent
-from batsim_py.protocol import JobSubmittedBatsimEvent
-from batsim_py.protocol import NotifyBatsimEvent
-from batsim_py.protocol import RequestedCallBatsimEvent
-from batsim_py.protocol import ResourcePowerStateChangedBatsimEvent
-from batsim_py.protocol import SimulationBeginsBatsimEvent
-from batsim_py.protocol import SimulationEndsBatsimEvent
 from batsim_py.resources import Host
 from batsim_py.resources import Platform
 from batsim_py.resources import PowerStateType
-from batsim_py.simulator import SimulatorHandler
-from batsim_py.simulator import Reservation
-from batsim_py.events import SimulatorEvent
-from batsim_py.events import JobEvent
-from batsim_py.events import HostEvent
 
 from .utils import BatsimPlatformAPI
 
@@ -292,6 +282,7 @@ class TestHostMonitor:
             HostMonitor(mock_simulator)
 
         assert "running" in str(excinfo.value)
+
     def test_subscribe(self, monitor, mock_simulator, mocker):
         calls = [
             mocker.call(SimulatorEvent.SIMULATION_BEGINS,
@@ -319,8 +310,8 @@ class TestHostMonitor:
         assert 'nb_computing_machines' in keys
 
     def test_values(self, monitor, mock_simulator):
-        host_1 = mock_simulator.platform.get_by_id(0)
-        host_2 = mock_simulator.platform.get_by_id(1)
+        host_1 = mock_simulator.platform.get_host(0)
+        host_2 = mock_simulator.platform.get_host(1)
 
         # Switch Off
         mock_simulator.current_time = 100
@@ -413,6 +404,7 @@ class TestSimulationMonitor:
             SimulationMonitor(mock_simulator)
 
         assert "running" in str(excinfo.value)
+
     def test_subscribe(self, mock_simulator, mocker):
         mocker.patch("batsim_py.monitors.SchedulerMonitor")
         mocker.patch("batsim_py.monitors.HostMonitor")
@@ -462,6 +454,7 @@ class TestHostStateSwitchMonitor:
             HostStateSwitchMonitor(mock_simulator)
 
         assert "running" in str(excinfo.value)
+
     def test_subscribe(self, monitor, mock_simulator, mocker):
         calls = [
             mocker.call(SimulatorEvent.SIMULATION_BEGINS,
@@ -482,7 +475,7 @@ class TestHostStateSwitchMonitor:
         assert 'nb_computing' in keys
 
     def test_values(self, monitor, mock_simulator):
-        host_1 = mock_simulator.platform.get_by_id(0)
+        host_1 = mock_simulator.platform.get_host(0)
         assert monitor.info['time'][-1] == 0
         assert monitor.info['nb_idle'][-1] == 2
 
@@ -552,6 +545,7 @@ class TestHostPowerStateSwitchMonitor:
             HostPowerStateSwitchMonitor(mock_simulator)
 
         assert "running" in str(excinfo.value)
+
     def test_subscribe(self, monitor, mock_simulator, mocker):
         calls = [
             mocker.call(SimulatorEvent.SIMULATION_BEGINS,
@@ -571,13 +565,13 @@ class TestHostPowerStateSwitchMonitor:
         assert 'new_pstate' in keys
 
     def test_init_values(self, monitor, mock_simulator):
-        host_1 = mock_simulator.platform.get_by_id(0)
+        host_1 = mock_simulator.platform.get_host(0)
         assert monitor.info['time'][-1] == 0
         assert monitor.info['machine_id'][-1] == "0-1"
         assert monitor.info['new_pstate'][-1] == host_1.get_default_pstate().id
 
     def test_host_switch_off(self, monitor, mock_simulator):
-        host_1 = mock_simulator.platform.get_by_id(0)
+        host_1 = mock_simulator.platform.get_host(0)
         mock_simulator.current_time = 100
         host_1._switch_off()
         monitor.on_host_power_state_changed(host_1)
@@ -586,7 +580,7 @@ class TestHostPowerStateSwitchMonitor:
         assert monitor.info['new_pstate'][-1] == -2
 
     def test_host_switch_on(self, monitor, mock_simulator):
-        host_1 = mock_simulator.platform.get_by_id(0)
+        host_1 = mock_simulator.platform.get_host(0)
         mock_simulator.current_time = 100
         host_1._switch_off()
         monitor.on_host_power_state_changed(host_1)
@@ -599,7 +593,7 @@ class TestHostPowerStateSwitchMonitor:
         assert monitor.info['new_pstate'][-1] == -1
 
     def test_host_switch_comp_ps(self, monitor, mock_simulator):
-        host_1: Host = mock_simulator.platform.get_by_id(0)
+        host_1: Host = mock_simulator.platform.get_host(0)
         ps = host_1.get_pstate_by_type(PowerStateType.COMPUTATION)[-1]
         mock_simulator.current_time = 100
         host_1._set_computation_pstate(ps.id)
@@ -631,6 +625,7 @@ class TestConsumedEnergyMonitor:
             ConsumedEnergyMonitor(mock_simulator)
 
         assert "running" in str(excinfo.value)
+
     def test_subscribe(self, monitor, mock_simulator, mocker):
         calls = [
             mocker.call(SimulatorEvent.SIMULATION_BEGINS,
@@ -648,8 +643,8 @@ class TestConsumedEnergyMonitor:
         mock_simulator.subscribe.assert_has_calls(calls, True)
 
     def test_values(self, monitor: ConsumedEnergyMonitor, mock_simulator):
-        host_1 = mock_simulator.platform.get_by_id(0)
-        host_2 = mock_simulator.platform.get_by_id(1)
+        host_1 = mock_simulator.platform.get_host(0)
+        host_2 = mock_simulator.platform.get_host(1)
         job = start_job_success("0", [host_1.id], 0, 10, 100, 100)
 
         # Job Started

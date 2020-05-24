@@ -36,7 +36,6 @@ from batsim_py.protocol import ResourcePowerStateChangedBatsimEvent
 from batsim_py.protocol import SimulationEndsBatsimEvent
 from batsim_py.protocol import SimulationBeginsBatsimEvent
 from batsim_py.protocol import Converters
-from batsim_py.resources import HostRole
 from batsim_py.resources import Platform
 from batsim_py.resources import PowerStateType
 
@@ -358,8 +357,8 @@ class TestSimulationBeginsBatsimEvent:
             0, None, resources, storages, workloads, profiles)
 
         e = SimulationBeginsBatsimEvent(0, event["data"])
-        assert len(e.platform.get_by_role(HostRole.STORAGE)) == 1
-        assert len(e.platform.get_by_role(HostRole.COMPUTE)) == 2
+        assert len(list(e.platform.storages)) == 1
+        assert len(list(e.platform.hosts)) == 2
 
 
 class TestNotifyBatsimRequest:

@@ -272,7 +272,61 @@ class TestJob:
         with pytest.raises(ValueError):
             jobs.Job("1", "w", -1, jobs.DelayJobProfile("p", 100), 1)
 
-    def test_allocation_valid(self):
+    def test_allocate_staging_job_without_mapping_must_raise(self):
+        prof = jobs.DataStagingJobProfile("p", 1, "a", "b")
+        alloc = [1]
+        j = jobs.Job("1", "w", 1, prof, 0)
+        j._submit(0)
+        with pytest.raises(ValueError) as excinfo:
+            j._allocate(alloc)
+        assert "mapping" in str(excinfo.value)
+
+    def test_allocate_staging_job_with_missing_dest_mapping_must_raise(self):
+        prof = jobs.DataStagingJobProfile("p", 1, "a", "b")
+        alloc = [1]
+        j = jobs.Job("1", "w", 1, prof, 0)
+        j._submit(0)
+        with pytest.raises(ValueError) as excinfo:
+            j._allocate(alloc, {"a": 1})
+        assert "b" in str(excinfo.value)
+
+    def test_allocate_staging_job_with_missing_src_mapping_must_raise(self):
+        prof = jobs.DataStagingJobProfile("p", 1, "a", "b")
+        alloc = [1]
+        j = jobs.Job("1", "w", 1, prof, 0)
+        j._submit(0)
+        with pytest.raises(ValueError) as excinfo:
+            j._allocate(alloc, {"b": 1})
+        assert "a" in str(excinfo.value)
+
+    def test_allocate_pfs_job_with_missing_storage_must_raise(self):
+        prof = jobs.ParallelHomogeneousPFSJobProfile("p", 10, 20, "a")
+        alloc = [1]
+        j = jobs.Job("1", "w", 1, prof, 0)
+        j._submit(0)
+        with pytest.raises(ValueError) as excinfo:
+            j._allocate(alloc, {"b": 1})
+        assert "a" in str(excinfo.value)
+
+    def test_allocate_pfs_job_without_mapping_must_raise(self):
+        prof = jobs.ParallelHomogeneousPFSJobProfile("p", 10, 20, "a")
+        alloc = [1]
+        j = jobs.Job("1", "w", 1, prof, 0)
+        j._submit(0)
+        with pytest.raises(ValueError) as excinfo:
+            j._allocate(alloc)
+        assert "mapping" in str(excinfo.value)
+
+    def test_allocate_not_storage_job_with_mapping_must_raise(self):
+        prof = jobs.DelayJobProfile("p", 100)
+        alloc = [1]
+        j = jobs.Job("1", "w", 1, prof, 0)
+        j._submit(0)
+        with pytest.raises(ValueError) as excinfo:
+            j._allocate(alloc, {"b": 1})
+        assert "mapping" in str(excinfo.value)
+
+    def test_allocate_valid(self):
         alloc = [1]
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
@@ -280,21 +334,21 @@ class TestJob:
         assert j.is_runnable and j.state == jobs.JobState.ALLOCATED
         assert j.allocation == alloc
 
-    def test_allocation_cannot_be_changed(self):
+    def test_allocate_cannot_be_changed(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         j._allocate([1])
         with pytest.raises(RuntimeError):
             j._allocate([3])
 
-    def test_allocation_not_submitted_job_must_raise(self):
+    def test_allocate_not_submitted_job_must_raise(self):
         j = jobs.Job("1", "w", 1, jobs.DelayJobProfile("p", 100), 0)
         with pytest.raises(RuntimeError) as excinfo:
             j._allocate([3])
 
         assert "queue" in str(excinfo.value)
 
-    def test_allocation_size_bigger_than_requested_must_raise(self):
+    def test_allocate_size_bigger_than_requested_must_raise(self):
         j = jobs.Job("1", "w", 3, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         with pytest.raises(ValueError) as excinfo:
@@ -302,7 +356,7 @@ class TestJob:
 
         assert "hosts" in str(excinfo.value)
 
-    def test_allocation_size_less_than_requested_must_raise(self):
+    def test_allocate_size_less_than_requested_must_raise(self):
         j = jobs.Job("1", "w", 3, jobs.DelayJobProfile("p", 100), 0)
         j._submit(0)
         with pytest.raises(ValueError) as excinfo:
