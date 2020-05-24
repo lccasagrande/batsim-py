@@ -114,7 +114,6 @@ class JobMonitor(Monitor):
         self.__info = {k: [] for k in self.__info.keys()}
 
     def update_info(self, sender: Job) -> None:
-        """ Record job statistics. """
         alloc = ProcSet(*sender.allocation) if sender.allocation else None
         success = int(sender.state == JobState.COMPLETED_SUCCESSFULLY)
         self.__info['job_id'].append(sender.name)
@@ -197,7 +196,6 @@ class SchedulerMonitor(Monitor):
         self.simulator = sender
 
     def on_simulation_ends(self, sender: SimulatorHandler) -> None:
-        """ Compute the average. """
         self.__info['makespan'] = sender.current_time
         nb_finished = max(1, self.__info['nb_jobs_finished'])
         self.__info['mean_waiting_time'] /= nb_finished
@@ -213,7 +211,6 @@ class SchedulerMonitor(Monitor):
         self.__info['nb_jobs_rejected'] += 1
 
     def on_job_completed(self, sender: Job) -> None:
-        """ Get job statistics. """
         assert self.simulator
 
         self.__info['makespan'] = self.simulator.current_time
@@ -477,7 +474,6 @@ class HostStateSwitchMonitor(Monitor):
         self.__last_host_state[sender.id] = new_key
 
     def __get_key_from_state(self, state: HostState) -> str:
-        """ Convert a host state to a dict key. """
         if state == HostState.IDLE:
             return "nb_idle"
         elif state == HostState.COMPUTING:
