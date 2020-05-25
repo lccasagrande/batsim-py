@@ -1,0 +1,67 @@
+<?xml version='1.0'?>
+<!DOCTYPE platform SYSTEM "http://simgrid.gforge.inria.fr/simgrid/simgrid.dtd">
+<platform version="4.1">
+    <zone id="AS0" routing="Full">
+        <!-- This host will be used by Batsim and won't be accounted. -->
+        <host id="master_host" pstate="0" speed="1000010.0Mf">
+            <prop id="watt_per_state" value="95.0:190.1" />
+            <prop id="watt_off" value="9"/>
+        </host>
+        <!-- -->
+
+        <!-- These hosts will be used to compute jobs. -->
+        <host id="0" pstate="1" speed="0.001f, 1000010.0f, 1.0001f, 0.3334f, 1Mf">
+            <prop id="watt_per_state" value="9:9,95.0:190.0,125.0:125.0,101.0:101.0, 200:300"/>
+            <prop id="sleep_pstates" value="0:3:2"/>
+            <prop id="watt_off" value="9"/>
+        </host>
+        <host id="1" pstate="1" speed="0.001f, 1000010.0f, 1.0001f, 0.3334f, 1Mf">
+            <prop id="watt_per_state" value="9:9,95.0:190.0,125.0:125.0,101.0:101.0, 200:300"/>
+            <prop id="sleep_pstates" value="0:3:2"/>
+            <prop id="watt_off" value="9"/>
+        </host>
+        <host id="storage" pstate="0" speed="0.">
+            <prop id="role" value="storage"/>
+        </host>
+        <!-- Hosts -->
+
+
+        <!-- Links. -->
+        <link id="0" bandwidth="41.279125MBps" latency="59.904us"/>
+        <link id="loopback" bandwidth="1MBps" latency="15us" sharing_policy="FATPIPE"/>
+        <link id="storage_read" bandwidth="1MBps" latency="0.11ms"/>
+        <link id="storage_write" bandwidth="4MBps" latency="0.11ms"/>
+        <!-- Links. -->
+
+
+        <!-- Routes. -->
+        <route src="0" dst="0">
+            <link_ctn id="loopback"/>
+        </route>
+        <route src="1" dst="1">
+            <link_ctn id="loopback"/>
+        </route>
+        <route src="storage" dst="storage">
+            <link_ctn id="loopback"/>
+        </route>
+
+        <route src="0" dst="1">
+            <link_ctn id="0"/>
+        </route>
+
+        <route src="0" dst="storage" symmetrical="no">
+            <link_ctn id="storage_write"/>
+        </route>
+        <route src="1" dst="storage" symmetrical="no">
+            <link_ctn id="storage_write"/>
+        </route>
+        <route src="storage" dst="1" symmetrical="no">
+            <link_ctn id="storage_read"/>
+        </route>
+        <route src="storage" dst="0" symmetrical="no">
+            <link_ctn id="storage_read"/>
+        </route>
+        <!-- Routes. -->
+
+    </zone>
+</platform>

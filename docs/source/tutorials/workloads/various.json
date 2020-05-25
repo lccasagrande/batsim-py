@@ -1,0 +1,135 @@
+{
+    "nb_res": 2,
+    "jobs": [
+        {
+            "id": "delay",
+            "subtime": 0,
+            "walltime": 30,
+            "res": 1,
+            "profile": "delay"
+        },
+        {
+            "id": "simple",
+            "subtime": 0,
+            "walltime": 100,
+            "res": 2,
+            "profile": "simple"
+        },
+        {
+            "id": "reach_walltime",
+            "subtime": 0,
+            "walltime": 1,
+            "res": 2,
+            "profile": "simple"
+        },
+        {
+            "id": "homo",
+            "subtime": 0,
+            "walltime": 100,
+            "res": 2,
+            "profile": "homogeneous"
+        },
+        {
+            "id": "homo_no_cpu",
+            "subtime": 0,
+            "walltime": 100,
+            "res": 2,
+            "profile": "homogeneous_no_cpu"
+        },
+        {
+            "id": "homo_no_com",
+            "subtime": 0,
+            "walltime": 100,
+            "res": 2,
+            "profile": "homogeneous_no_com"
+        },
+        {
+            "id": "seq",
+            "subtime": 0,
+            "walltime": 100,
+            "res": 2,
+            "profile": "sequence"
+        },
+        {
+            "id": "total",
+            "subtime": 0,
+            "walltime": 30,
+            "res": 2,
+            "profile": "homogeneous_total"
+        },
+        {
+            "id": "pfs",
+            "subtime": 0,
+            "walltime": 30,
+            "res": 2,
+            "profile": "pfs"
+        },
+        {
+            "id": "staging",
+            "subtime": 0,
+            "walltime": 300,
+            "res": 2,
+            "profile": "staging"
+        }
+    ],
+    "profiles": {
+        "simple": {
+            "type": "parallel",
+            "cpu": [
+                5e6,
+                0
+            ],
+            "com": [
+                5e6,
+                0,
+                5e6,
+                5e6
+            ]
+        },
+        "homogeneous": {
+            "type": "parallel_homogeneous",
+            "cpu": 10e6,
+            "com": 1e6
+        },
+        "homogeneous_no_cpu": {
+            "type": "parallel_homogeneous",
+            "cpu": 0,
+            "com": 1e6
+        },
+        "homogeneous_no_com": {
+            "type": "parallel_homogeneous",
+            "cpu": 2e5,
+            "com": 0
+        },
+        "sequence": {
+            "type": "composed",
+            "repeat": 4,
+            "seq": [
+                "simple",
+                "homogeneous",
+                "simple"
+            ]
+        },
+        "delay": {
+            "type": "delay",
+            "delay": 20.20
+        },
+        "homogeneous_total": {
+            "type": "parallel_homogeneous_total",
+            "cpu": 10e6,
+            "com": 1e6
+        },
+        "pfs": {
+            "type": "parallel_homogeneous_pfs",
+            "bytes_to_read": 10e6,
+            "bytes_to_write": 40e6,
+            "storage": "nfs"
+        },
+        "staging": {
+            "type": "data_staging",
+            "nb_bytes": 50e6,
+            "from": "pfs",
+            "to": "nfs"
+        }
+    }
+}

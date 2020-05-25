@@ -1,0 +1,3 @@
+{"type": "machine_unavailable","resources": "0-2","timestamp": 0}
+{"type": "machine_available","resources": "0-2","timestamp": 100}
+{"type": "machine_unavailable","resources": "0-2","timestamp": 100000}
