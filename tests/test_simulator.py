@@ -1,3 +1,5 @@
+import subprocess
+
 import numpy as np
 import pytest
 
@@ -8,7 +10,7 @@ from batsim_py.events import JobEvent
 from batsim_py.events import SimulatorEvent
 from batsim_py.events import HostEvent
 from batsim_py.jobs import Job
-from batsim_py.protocol import BatsimEvent, BatsimMessage
+from batsim_py.protocol import BatsimMessage
 from batsim_py.protocol import JobCompletedBatsimEvent
 from batsim_py.protocol import JobSubmittedBatsimEvent
 from batsim_py.protocol import NotifyBatsimEvent
@@ -53,6 +55,60 @@ class TestSimulatorHandler:
         with pytest.raises(ImportError) as excinfo:
             SimulatorHandler()
         assert 'Batsim' in str(excinfo.value)
+
+    def test_start_cmd(self):
+        platform = "p.xml"
+        workload = "w.json"
+        verbosity = "quiet"
+        address = "tcp://localhost:21050"
+
+        s = SimulatorHandler(address)
+        cmd = (
+            f'batsim -E --forward-profiles-on-submission '
+            f'--disable-schedule-tracing --disable-machine-state-tracing '
+            f'-s {address} -p {platform} -w {workload} '
+            f'-v {verbosity}  -e /tmp/batsim'
+        )
+
+        s.start(platform, workload, verbosity)
+        simulator.subprocess.Popen.assert_called_once_with(  # type: ignore
+            cmd.split(), stdout=subprocess.PIPE)
+
+    def test_start_cmd_with_compute_sharing_enable(self):
+        platform = "p.xml"
+        workload = "w.json"
+        verbosity = "quiet"
+        address = "tcp://localhost:21050"
+
+        s = SimulatorHandler(address)
+        cmd = (
+            f'batsim -E --forward-profiles-on-submission '
+            f'--disable-schedule-tracing --disable-machine-state-tracing '
+            f'-s {address} -p {platform} -w {workload} '
+            f'-v {verbosity}  -e /tmp/batsim --enable-compute-sharing'
+        )
+
+        s.start(platform, workload, verbosity, allow_compute_sharing=True)
+        simulator.subprocess.Popen.assert_called_once_with(  # type: ignore
+            cmd.split(), stdout=subprocess.PIPE)
+
+    def test_start_cmd_with_storage_sharing_disable(self):
+        platform = "p.xml"
+        workload = "w.json"
+        verbosity = "quiet"
+        address = "tcp://localhost:21050"
+
+        s = SimulatorHandler(address)
+        cmd = (
+            f'batsim -E --forward-profiles-on-submission '
+            f'--disable-schedule-tracing --disable-machine-state-tracing '
+            f'-s {address} -p {platform} -w {workload} '
+            f'-v {verbosity}  -e /tmp/batsim --disable-storage-sharing'
+        )
+
+        s.start(platform, workload, verbosity, allow_storage_sharing=False)
+        simulator.subprocess.Popen.assert_called_once_with(  # type: ignore
+            cmd.split(), stdout=subprocess.PIPE)
 
     def test_start_already_running_must_raise(self):
         s = SimulatorHandler()
@@ -99,9 +155,10 @@ class TestSimulatorHandler:
         assert self.__called
 
     def test_start_valid(self):
-        s = SimulatorHandler()
+        s = SimulatorHandler("tcp://localhost:21050")
         assert not s.is_running
         s.start("p", "w")
+        assert s.address == "tcp://localhost:21050"
         assert s.is_running
         assert s.platform
         assert s.current_time == 0
@@ -584,7 +641,7 @@ class TestSimulatorHandler:
         assert host.is_switching_on
         protocol.ExecuteJobBatsimRequest.assert_not_called()  # type: ignore
 
-    def test_kill_job_not_running_must_raise(self):
+    def test_kill_job_sim_not_running_must_raise(self):
         s = SimulatorHandler()
 
         with pytest.raises(RuntimeError) as excinfo:
@@ -601,7 +658,22 @@ class TestSimulatorHandler:
 
         assert "job" in str(excinfo.value)
 
-    def test_kill_job_must_sync_with_batsim_only(self, mocker):
+    def test_kill_job_not_running_must_raise(self, mocker):
+        mocker.patch("batsim_py.simulator.KillJobBatsimRequest")
+        s = SimulatorHandler()
+        s.start("p", "w")
+
+        e = BatsimEventAPI.get_job_submitted(res=1)
+        msg = BatsimMessage(150, [JobSubmittedBatsimEvent(150, e['data'])])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        s.proceed_time()
+
+        with pytest.raises(RuntimeError) as excinfo:
+            s.kill_job(s.jobs[0].id)
+
+        assert "not running" in str(excinfo.value)
+
+    def test_kill_job_must_sync_with_batsim(self, mocker):
         mocker.patch("batsim_py.simulator.KillJobBatsimRequest")
         s = SimulatorHandler()
         s.start("p", "w")
@@ -612,6 +684,15 @@ class TestSimulatorHandler:
         mocker.patch.object(batsim_py.jobs.Job, '_terminate')
         mocker.patch.object(batsim_py.resources.Host, '_release')
         s.proceed_time()
+
+        mocker.patch("batsim_py.simulator.BatsimMessage")
+        mocker.patch.object(batsim_py.jobs.Job,
+                            'is_running', return_value=True)
+        mocker.patch.object(
+            protocol.NetworkHandler,
+            'recv',
+            return_value=BatsimMessage(s.current_time, []))
+
         job_id = s.jobs[0].id
         s.kill_job(job_id)
 
@@ -620,6 +701,7 @@ class TestSimulatorHandler:
         batsim_py.resources.Host._release.assert_not_called()
         simulator.KillJobBatsimRequest.assert_called_once_with(  # type: ignore
             150, job_id)
+        assert simulator.NetworkHandler.send.call_count == 2
 
     def test_reject_job_not_running_must_raise(self, mocker):
         s = SimulatorHandler()

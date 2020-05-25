@@ -602,6 +602,19 @@ class TestHostPowerStateSwitchMonitor:
         assert monitor.info['machine_id'][-1] == "0"
         assert monitor.info['new_pstate'][-1] == ps.id
 
+    def test_multiple_hosts_switch_comp_ps(self, monitor, mock_simulator):
+        host_1: Host = mock_simulator.platform.get_host(0)
+        host_2: Host = mock_simulator.platform.get_host(1)
+        ps = host_1.get_pstate_by_type(PowerStateType.COMPUTATION)[-1]
+        mock_simulator.current_time = 100
+        host_1._set_computation_pstate(ps.id)
+        host_2._set_computation_pstate(ps.id)
+        monitor.on_host_power_state_changed(host_1)
+        monitor.on_host_power_state_changed(host_2)
+        assert monitor.info['time'][-1] == 100
+        assert monitor.info['machine_id'][-1] == "0-1"
+        assert monitor.info['new_pstate'][-1] == ps.id
+
 
 class TestConsumedEnergyMonitor:
     @pytest.fixture()

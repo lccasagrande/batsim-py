@@ -88,7 +88,6 @@ class SimulatorHandler:
                               'Check the setup instructions here: '
                               'https://batsim.readthedocs.io/en/latest/.). '
                               'Run "batsim --version" to make sure it is working.')
-
         self.__network = NetworkHandler(tcp_address or get_free_tcp_address())
         self.__current_time: float = 0.
         self.__simulator: Optional[subprocess.Popen] = None
@@ -113,6 +112,11 @@ class SimulatorHandler:
 
         atexit.register(self.__close_simulator)
         signal.signal(signal.SIGTERM, self.__on_sigterm)
+
+    @property
+    def address(self) -> str:
+        """ The address string. """
+        return self.__network.address
 
     @property
     def jobs(self) -> Sequence[Job]:
@@ -171,7 +175,9 @@ class SimulatorHandler:
               platform: str,
               workload: str,
               verbosity: BatsimVerbosity = "quiet",
-              simulation_time: Optional[float] = None) -> None:
+              simulation_time: Optional[float] = None,
+              allow_compute_sharing=False,
+              allow_storage_sharing=True) -> None:
         """ Starts the simulation process.
 
         Args:
@@ -189,6 +195,10 @@ class SimulatorHandler:
                 time is reached, no matter if there are jobs to be submitted or
                 running. Otherwise, the simulation will only stop when all jobs
                 in the workload were completed or rejected.
+            allow_compute_sharing: Whether a host can be used by multiple jobs.
+                Defaults to False.
+            allow_storage_sharing: Whether a storage can be used by multiple jobs.
+                Defaults to True.
 
         Raises:
             RuntimeError: In case of simulation already running.
@@ -226,6 +236,12 @@ class SimulatorHandler:
             f'-s {self.__network.address} -p {platform} -w {workload} '
             f'-v {verbosity}  -e {tmp_dir}'
         )
+
+        if allow_compute_sharing:
+            cmd += ' --enable-compute-sharing'
+        if not allow_storage_sharing:
+            cmd += ' --disable-storage-sharing'
+
         self.__simulator = subprocess.Popen(
             cmd.split(), stdout=subprocess.PIPE)
 
@@ -409,9 +425,14 @@ class SimulatorHandler:
         if not job:
             raise LookupError("The job {} was not found.".format(job_id))
 
-        # Sync Batsim
+        if not job.is_running:
+            raise RuntimeError(f"Invalid kill. Job {job.id} is not running")
+
+        # Sync now with Batsim
         request = KillJobBatsimRequest(self.current_time, job.id)
-        self.__batsim_requests.append(request)
+        msg = BatsimMessage(self.current_time, [request])
+        self.__network.send(msg)
+        self.__handle_batsim_events()
 
     def reject_job(self, job_id: str) -> None:
         """ Reject a job.

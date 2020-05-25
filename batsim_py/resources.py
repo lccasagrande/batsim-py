@@ -121,6 +121,8 @@ class Storage:
     Args:
         id: The storage id. Must be unique within a platform.
         name: The storage name.
+        allow_sharing: Whether multiple jobs can share the storage. 
+            Defaults to True.
         metadata: Extra storage properties that can be used by some functions
             beyond the scope of Batsim or Batsim-py. Defaults to None.
     """
@@ -128,10 +130,12 @@ class Storage:
     def __init__(self,
                  id: int,
                  name: str,
+                 allow_sharing: bool = True,
                  metadata: Optional[dict] = None) -> None:
         self.__id = int(id)
         self.__name = str(name)
         self.__metadata = metadata
+        self.__allow_sharing = allow_sharing
         self.__jobs: Set[str] = set()
 
     def __repr__(self) -> str:
@@ -168,6 +172,11 @@ class Storage:
         """ Whether the storage is being used by a job. """
         return bool(self.__jobs)
 
+    @property
+    def is_shareable(self) -> bool:
+        """ Whether multiple jobs can share this storage. """
+        return self.__allow_sharing
+
     def _allocate(self, job_id: str) -> None:
         """ Allocate storage for a job.
 
@@ -175,7 +184,14 @@ class Storage:
 
         Args:
             job_id: The job that will use this storage.
+
+        Raises:
+            RuntimeError: In case of storage is not shareable and is already 
+                being used by another job.
         """
+        if not self.is_shareable and self.is_allocated:
+            raise RuntimeError('This storage cannot be used by multiple jobs.')
+
         self.__jobs.add(job_id)
 
     def _release(self, job_id: str) -> None:
@@ -206,6 +222,8 @@ class Host:
             If you only want to implement DVFS, there is no need to provide a sleep 
             and a transition power state. Moreover, if you provide a sleeping power 
             state you must provide both transition power states (switching On/Off).
+        allow_sharing: Whether multiple jobs can share the host. 
+            Defaults to False.
         metadata: Extra host properties that can be used by some functions
             beyond the scope of Batsim or Batsim-py. Defaults to None.
 
@@ -223,10 +241,12 @@ class Host:
                  id: int,
                  name: str,
                  pstates: Optional[Sequence[PowerState]] = None,
+                 allow_sharing: bool = False,
                  metadata: Optional[dict] = None) -> None:
         self.__id = int(id)
         self.__name = str(name)
         self.__state = HostState.IDLE
+        self.__allow_sharing = allow_sharing
         self.__jobs: Set[str] = set()
         self.__pstates = None
         self.__current_pstate = None
@@ -343,6 +363,11 @@ class Host:
     def is_sleeping(self) -> bool:
         """ Whether this host is sleeping. """
         return self.__state == HostState.SLEEPING
+
+    @property
+    def is_shareable(self) -> bool:
+        """ Whether multiple jobs can share this host. """
+        return self.__allow_sharing
 
     @property
     def power(self) -> Optional[float]:
@@ -544,7 +569,15 @@ class Host:
 
         Args:
             job_id: The job that will use this host.
+
+        Raises:
+            RuntimeError: In case of host is not shareable and is already 
+                being used by another job.
         """
+
+        if not self.is_shareable and self.is_allocated:
+            raise RuntimeError('This host cannot be used by multiple jobs.')
+
         self.__jobs.add(job_id)
 
     def _start_computing(self) -> None:

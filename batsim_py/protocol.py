@@ -468,24 +468,26 @@ class Converters:
         Returns:
             A platform with all hosts.
         """
-        def get_host(r):
+        def get_host(r, allow_sharing):
             pstates = None
             props = r.get("properties", None)
             if props and "watt_per_state" in props:
                 pstates = Converters.json_to_power_states(props)
 
-            return Host(r['id'], r['name'], pstates, props)
+            return Host(r['id'], r['name'], pstates, allow_sharing, props)
 
-        def get_storage(r):
+        def get_storage(r, allow_sharing):
             props = r.get("properties", None)
-            return Storage(r['id'], r['name'], props)
+            return Storage(r['id'], r['name'], allow_sharing, props)
 
         resources = []
+        allow_sharing = data['allow_compute_sharing']
         for r in data["compute_resources"]:
-            resources.append(get_host(r))
+            resources.append(get_host(r, allow_sharing))
 
+        allow_sharing = data['allow_storage_sharing']
         for r in data["storage_resources"]:
-            resources.append(get_storage(r))
+            resources.append(get_storage(r, allow_sharing))
 
         return Platform(resources)
 
@@ -1044,7 +1046,7 @@ class NetworkHandler:
 
     @property
     def address(self) -> str:
-        """ The address. """
+        """ The address string. """
         return self.__address
 
     @property

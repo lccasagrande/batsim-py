@@ -2,7 +2,6 @@
 from abc import ABC, abstractmethod
 from itertools import groupby
 import time as tm
-from typing import Optional
 
 import pandas as pd
 from procset import ProcSet
@@ -554,9 +553,6 @@ class HostPowerStateSwitchMonitor(Monitor):
         if sender.id in self.__last_pstate_id and sender.pstate and self.__last_pstate_id[sender.id] != sender.pstate.id:
             assert sender.pstate
             assert self.simulator
-
-            if self.__last_pstate_id[sender.id] == sender.pstate.id:
-                return
 
             self.__last_pstate_id[sender.id] = sender.pstate.id
             if sender.pstate.type == PowerStateType.SWITCHING_OFF:

@@ -65,7 +65,7 @@ class TestHost:
     def test_valid_instance(self):
         p = PowerState(0, PowerStateType.COMPUTATION, 10, 10)
         i, n, r, m = 0, "n", [p], {'u': 1}
-        h = Host(i, n, r, m)
+        h = Host(i, n, r, True, m)
 
         assert h.id == i and h.name == n
         assert h.pstate == p and h.metadata == m and not h.jobs
@@ -81,6 +81,11 @@ class TestHost:
         p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         h = Host(0, "n", pstates=[p1])
         assert h.state == HostState.IDLE and h.is_idle
+
+    def test_pstates(self):
+        p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
+        h = Host(0, "n", pstates=[p1])
+        assert h.pstates == [p1]
 
     def test_pstates_must_have_computation(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -648,15 +653,23 @@ class TestHost:
 
     def test_allocate_multiple_jobs_valid(self):
         p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
-        h = Host(0, "n", pstates=[p1])
+        h = Host(0, "n", pstates=[p1], allow_sharing=True)
         h._allocate("j1")
         h._allocate("j2")
         assert h.is_idle and h.jobs and len(h.jobs) == 2
         assert "j1" in h.jobs
         assert "j2" in h.jobs
 
+    def test_allocate_multiple_jobs_when_not_shareable_must_raise(self):
+        p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
+        h = Host(0, "n", pstates=[p1], allow_sharing=False)
+        h._allocate("j1")
+        with pytest.raises(RuntimeError) as excinfo:
+            h._allocate("j2")
+        assert "multiple jobs" in str(excinfo.value)
+
     def test_allocate_job_twice_must_not_raise(self):
-        h = Host(0, "n")
+        h = Host(0, "n", allow_sharing=True)
         h._allocate("j1")
         h._allocate("j1")
         assert h.jobs and len(h.jobs) == 1
@@ -722,7 +735,7 @@ class TestHost:
         assert h.is_idle and h.state == HostState.IDLE and not h.jobs
 
     def test_release_when_multiple_jobs_must_remain_computing(self):
-        h = Host(0, "n")
+        h = Host(0, "n", allow_sharing=True)
         h._allocate("j1")
         h._allocate("j2")
         h._start_computing()
@@ -732,12 +745,25 @@ class TestHost:
 
 
 class TestStorage:
+
+    def test_repr(self):
+        assert repr(Storage(0, "0", True)) == f"Storage_{0}"
+
+    def test_str(self):
+        s = str(Storage(0, "0", True))
+        assert s == f"Storage_{0}"
+
     def test_valid(self):
         m = {"n": 0}
-        s = Storage(0, "0", m)
+        s = Storage(0, "0", True, m)
         assert s.id == 0
         assert s.name == "0"
         assert s.metadata == m
+
+    def test_metadata_optional(self):
+        m = {"n": 0}
+        s = Storage(0, "0", True)
+        assert s.metadata == None
 
     def test_allocate_valid(self):
         s = Storage(0, "n")
@@ -750,6 +776,13 @@ class TestStorage:
         s._allocate("j2")
         assert "j1" in s.jobs
         assert "j2" in s.jobs
+
+    def test_allocate_multiple_jobs_when_not_shareable_must_raise(self):
+        s = Storage(0, "n", False)
+        s._allocate("j1")
+        with pytest.raises(RuntimeError) as excinfo:
+            s._allocate("j2")
+        assert "multiple jobs" in str(excinfo.value)
 
     def test_allocate_job_twice_must_not_raise(self):
         s = Storage(0, "n")
