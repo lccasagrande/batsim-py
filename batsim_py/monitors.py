@@ -418,7 +418,8 @@ class HostStateSwitchMonitor(Monitor):
             'nb_switching_on': [],
             'nb_switching_off': [],
             'nb_idle': [],
-            'nb_computing': []
+            'nb_computing': [],
+            'nb_unavailable': []
         }
         self.simulator.subscribe(
             SimulatorEvent.SIMULATION_BEGINS, self.on_simulation_begins)
@@ -483,9 +484,10 @@ class HostStateSwitchMonitor(Monitor):
             return "nb_switching_off"
         elif state == HostState.SWITCHING_ON:
             return "nb_switching_on"
+        elif state == HostState.UNAVAILABLE:
+            return "nb_unavailable"
         else:
             raise NotImplementedError
-
 
 class HostPowerStateSwitchMonitor(Monitor):
     """ Simulation Host Power State Monitor class.

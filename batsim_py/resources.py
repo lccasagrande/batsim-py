@@ -18,9 +18,16 @@ class HostState(Enum):
     SLEEPING = 2
     SWITCHING_OFF = 3
     COMPUTING = 4
+    UNAVAILABLE = 5
 
     def __str__(self) -> str:
         return self.name
+
+
+class StorageState(Enum):
+    """ Batsim Storage State """
+    AVAILABLE = 0
+    UNAVAILABLE = 1
 
 
 class PowerStateType(Enum):
@@ -137,6 +144,7 @@ class Storage:
         self.__metadata = metadata
         self.__allow_sharing = allow_sharing
         self.__jobs: Set[str] = set()
+        self.__state = StorageState.AVAILABLE
 
     def __repr__(self) -> str:
         return f"Storage_{self.id}"
@@ -155,6 +163,11 @@ class Storage:
         return self.__name
 
     @property
+    def state(self) -> StorageState:
+        """ The storage current state. """
+        return self.__state
+
+    @property
     def metadata(self) -> Optional[dict]:
         """ Storage extra properties. """
         if self.__metadata:
@@ -168,6 +181,11 @@ class Storage:
         return list(self.__jobs)
 
     @property
+    def is_unavailable(self) -> bool:
+        """ Whether the storage is unavailable. """
+        return self.state == StorageState.UNAVAILABLE
+
+    @property
     def is_allocated(self) -> bool:
         """ Whether the storage is being used by a job. """
         return bool(self.__jobs)
@@ -176,6 +194,27 @@ class Storage:
     def is_shareable(self) -> bool:
         """ Whether multiple jobs can share this storage. """
         return self.__allow_sharing
+
+    def _set_unavailable(self) -> None:
+        """ The storage become unavailable. 
+
+        This is an internal method to be used by the simulator only as 
+        a response from an external event file. Unavailable storages 
+        cannot allocate jobs.
+        """
+        self.__state = StorageState.UNAVAILABLE
+
+    def _set_available(self) -> None:
+        """ The storage become available. 
+
+        Raises:
+            SystemError: In case of storage is not unavailable.
+        """
+        if self.state != StorageState.UNAVAILABLE:
+            raise SystemError("A storage must be unavailable to become "
+                              f"available, got {self.state}")
+
+        self.__state = StorageState.AVAILABLE
 
     def _allocate(self, job_id: str) -> None:
         """ Allocate storage for a job.
@@ -187,8 +226,12 @@ class Storage:
 
         Raises:
             RuntimeError: In case of storage is not shareable and is already 
-                being used by another job.
+                being used by another job or the storage is unavailable.
         """
+
+        if self.is_unavailable:
+            raise RuntimeError("This storage is unavailable.")
+
         if not self.is_shareable and self.is_allocated:
             raise RuntimeError('This storage cannot be used by multiple jobs.')
 
@@ -251,6 +294,7 @@ class Host:
         self.__pstates = None
         self.__current_pstate = None
         self.__metadata = metadata
+        self.__state_before_unavailable: Optional[HostState] = None
 
         if pstates:
             if len(set(p.id for p in pstates)) != len(pstates):
@@ -368,6 +412,11 @@ class Host:
     def is_shareable(self) -> bool:
         """ Whether multiple jobs can share this host. """
         return self.__allow_sharing
+
+    @property
+    def is_unavailable(self) -> bool:
+        """ Whether it's possible to execute jobs. """
+        return self.__state == HostState.UNAVAILABLE
 
     @property
     def power(self) -> Optional[float]:
@@ -562,6 +611,32 @@ class Host:
         self.__set_pstate(ps)
         self.__set_state(HostState.IDLE)
 
+    def _set_unavailable(self) -> None:
+        """ The host become unavailable. 
+
+        This is an internal method to be used by the simulator only as 
+        a response from an external event file.
+        """
+        self.__state_before_unavailable = self.state
+        self.__set_state(HostState.UNAVAILABLE)
+
+    def _set_available(self) -> None:
+        """ The host become available. 
+
+        This is an internal method to be used by the simulator only as 
+        a response from an external event file.
+
+        Raises:
+            SystemError: In case of host is not unavailable.
+        """
+        if not self.is_unavailable:
+            raise SystemError("A host must be unavailable to become "
+                              f"available, got {self.state}")
+
+        assert self.__state_before_unavailable
+        self.__set_state(self.__state_before_unavailable)
+        self.__state_before_unavailable = None
+
     def _allocate(self, job_id: str) -> None:
         """ Allocate the host for a job.
 
@@ -572,8 +647,10 @@ class Host:
 
         Raises:
             RuntimeError: In case of host is not shareable and is already 
-                being used by another job.
+                being used by another job or the host is unavailable.
         """
+        if self.is_unavailable:
+            raise RuntimeError("This host is currently unavailable.")
 
         if not self.is_shareable and self.is_allocated:
             raise RuntimeError('This host cannot be used by multiple jobs.')
@@ -587,13 +664,16 @@ class Host:
 
         Raises:
             SystemError: In case of the current host power state is not a 
-                computation one or there are no jobs allocated.
+                computation one or there are no jobs allocated or the host is
+                unavailable.
         """
+
+        if self.is_unavailable:
+            raise SystemError('Unavailable hosts cannot execute jobs.')
 
         if not self.is_idle and not self.is_computing:
             raise SystemError('A host must be idle or computing to be able to '
                               'start a new job, got {}'.format(self.state))
-
         if not self.jobs:
             raise SystemError('The host must be allocated for a job '
                               'before start computing.')
@@ -692,7 +772,7 @@ class Platform:
             if isinstance(r, Host):
                 yield r
 
-    def get_available(self) -> Sequence[Host]:
+    def get_not_allocated_hosts(self) -> Sequence[Host]:
         """ Get available hosts.
 
         An available host is the one that is not allocated for a job.
@@ -701,6 +781,23 @@ class Platform:
             A list with available hosts.
         """
         return list(filter(lambda h: not h.is_allocated, self.hosts))
+
+    def get(self, resource_id: int) -> Union[Host, Storage]:
+        """ Get resource by id.
+
+        Args:
+            resource_id: The resource id.
+
+        Returns:
+            The resource with the corresponding id.
+
+        Raises:
+            LookupError: In case of resource not found.
+        """
+        if resource_id >= self.size:
+            raise LookupError(f"There're no resources with id {resource_id}.")
+
+        return self.__resources[resource_id]
 
     def get_host(self, host_id: int) -> Host:
         """ Get host by id.

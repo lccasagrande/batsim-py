@@ -22,7 +22,8 @@ from batsim_py.resources import Host, PowerStateType
 from batsim_py.simulator import SimulatorHandler
 from batsim_py.simulator import Reservation
 
-from .utils import BatsimEventAPI, BatsimJobProfileAPI
+from .utils import BatsimEventAPI
+from .utils import BatsimJobProfileAPI
 from .utils import BatsimPlatformAPI
 
 
@@ -107,6 +108,25 @@ class TestSimulatorHandler:
         )
 
         s.start(platform, workload, verbosity, allow_storage_sharing=False)
+        simulator.subprocess.Popen.assert_called_once_with(  # type: ignore
+            cmd.split(), stdout=subprocess.PIPE)
+
+    def test_start_cmd_with_external_events(self):
+        platform = "p.xml"
+        workload = "w.json"
+        verbosity = "quiet"
+        address = "tcp://localhost:21050"
+        events = "events.txt"
+
+        s = SimulatorHandler(address)
+        cmd = (
+            f'batsim -E --forward-profiles-on-submission '
+            f'--disable-schedule-tracing --disable-machine-state-tracing '
+            f'-s {address} -p {platform} -w {workload} '
+            f'-v {verbosity}  -e /tmp/batsim --events {events}'
+        )
+
+        s.start(platform, workload, verbosity, external_events=events)
         simulator.subprocess.Popen.assert_called_once_with(  # type: ignore
             cmd.split(), stdout=subprocess.PIPE)
 
@@ -250,7 +270,7 @@ class TestSimulatorHandler:
         s.proceed_time(50)
         simulator.SimulatorHandler.set_callback.assert_called_once()
 
-    def test_proceed_time_withis_submitter_finished_must_not_allow_callback(self, mocker):
+    def test_proceed_time_with_submitter_finished_without_external_events_must_not_allow_callback(self, mocker):
         s = SimulatorHandler()
         s.start("p", "w")
 
@@ -267,6 +287,46 @@ class TestSimulatorHandler:
         assert not s.is_running
         assert s.current_time == 50
         SimulatorHandler.set_callback.assert_not_called()
+
+    def test_proceed_time_with_submitter_and_external_events_finished_must_not_allow_callback(self, mocker):
+        s = SimulatorHandler()
+        s.start("p", "w", external_events=".txt")
+
+        e = BatsimEventAPI.get_notify_no_more_static_job_to_submit(10)
+        e2 = BatsimEventAPI.get_notify_no_more_external_event_to_occur(10)
+        msg = BatsimMessage(10, [
+            NotifyBatsimEvent(10, e['data']),
+            NotifyBatsimEvent(10, e2['data'])
+        ])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        s.proceed_time()
+        assert s.is_submitter_finished
+
+        msg = BatsimMessage(50, [SimulationEndsBatsimEvent(50)])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        mocker.patch.object(SimulatorHandler, 'set_callback')
+        s.proceed_time(100)
+        assert not s.is_running
+        assert s.current_time == 50
+        SimulatorHandler.set_callback.assert_not_called()
+
+    def test_proceed_time_with_is_submitter_finished_and_external_events_to_happen_must_allow_callback(self, mocker):
+        s = SimulatorHandler()
+        s.start("p", "w", external_events=".txt")
+
+        e = BatsimEventAPI.get_notify_no_more_static_job_to_submit(10)
+        msg = BatsimMessage(10, [NotifyBatsimEvent(10, e['data'])])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        s.proceed_time()
+        assert s.is_submitter_finished
+
+        msg = BatsimMessage(50, [SimulationEndsBatsimEvent(50)])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        mocker.patch.object(SimulatorHandler, 'set_callback')
+        s.proceed_time(100)
+        assert not s.is_running
+        assert s.current_time == 50
+        SimulatorHandler.set_callback.assert_called()
 
     def test_proceed_time_with_is_submitter_finished_and_queue_must_allow_callback(self, mocker):
         s = SimulatorHandler()
@@ -1041,3 +1101,73 @@ class TestSimulatorHandler:
 
         assert not s.is_running
         assert protocol.NetworkHandler.send.call_count == 2
+
+    def test_on_batsim_notify_machine_unavailable(self, mocker):
+        s = SimulatorHandler()
+        s.start("p", "w")
+
+        # Setup
+        e = BatsimEventAPI.get_notify_machine_unavailable(10, [0, 1, 2])
+        msg = BatsimMessage(150, [NotifyBatsimEvent(150, e['data'])])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        s.proceed_time()
+
+        assert s.platform.get(0).is_unavailable
+        assert s.platform.get(1).is_unavailable
+        assert s.platform.get(2).is_unavailable
+
+    def test_on_batsim_notify_machine_available(self, mocker):
+        s = SimulatorHandler()
+        s.start("p", "w")
+
+        # Setup
+        s.platform.get(0)._set_unavailable()
+        s.platform.get(1)._set_unavailable()
+        s.platform.get(2)._set_unavailable()
+        e = BatsimEventAPI.get_notify_machine_available(10, [0, 1, 2])
+        msg = BatsimMessage(10, [NotifyBatsimEvent(10, e['data'])])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        s.proceed_time()
+
+        assert not s.platform.get(0).is_unavailable
+        assert not s.platform.get(1).is_unavailable
+        assert not s.platform.get(2).is_unavailable
+
+    def test_on_batsim_notify_machine_unavailable_must_dispatch_host_event(self, mocker):
+        def foo(h: Host):
+            self.nb_called += 1
+            assert h.is_unavailable
+        self.nb_called = 0
+
+        s = SimulatorHandler()
+        s.start("p", "w")
+        s.subscribe(HostEvent.STATE_CHANGED, foo)
+
+        # Setup
+        e = BatsimEventAPI.get_notify_machine_unavailable(10, [0, 1, 2])
+        msg = BatsimMessage(10, [NotifyBatsimEvent(10, e['data'])])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        s.proceed_time()
+
+        assert self.nb_called == 2
+
+    def test_on_batsim_notify_machine_available_must_dispatch_host_event(self, mocker):
+        def foo(h: Host):
+            self.nb_called += 1
+            assert not h.is_unavailable
+        self.nb_called = 0
+
+        s = SimulatorHandler()
+        s.start("p", "w")
+        s.subscribe(HostEvent.STATE_CHANGED, foo)
+
+        # Setup
+        s.platform.get(0)._set_unavailable()
+        s.platform.get(1)._set_unavailable()
+        s.platform.get(2)._set_unavailable()
+        e = BatsimEventAPI.get_notify_machine_available(10, [0, 1, 2])
+        msg = BatsimMessage(10, [NotifyBatsimEvent(10, e['data'])])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        s.proceed_time()
+
+        assert self.nb_called == 2

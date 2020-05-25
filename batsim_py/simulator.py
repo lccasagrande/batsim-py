@@ -73,7 +73,8 @@ class SimulatorHandler:
 
     Args:
         tcp_address: An address string consisting of three parts as follows:
-            protocol://interface:port.
+            protocol://interface:port. Defaults to None. If no tcp_address
+            is provided, a random one will be used.
 
     Raises:
         ImportError: In case of Batsim cannot be found.
@@ -94,6 +95,7 @@ class SimulatorHandler:
         self.__simulation_time: Optional[float] = None
         self.__platform: Platform = None  # type: ignore
         self.__no_more_jobs_to_submit = False
+        self.__no_more_external_event_to_occur = False
         self.__batsim_requests: List[BatsimRequest] = []
         self.__jobs: List[Job] = []
         self.__callbacks: Callbacks = defaultdict(list)
@@ -177,7 +179,8 @@ class SimulatorHandler:
               verbosity: BatsimVerbosity = "quiet",
               simulation_time: Optional[float] = None,
               allow_compute_sharing=False,
-              allow_storage_sharing=True) -> None:
+              allow_storage_sharing=True,
+              external_events: Optional[str] = None) -> None:
         """ Starts the simulation process.
 
         Args:
@@ -199,6 +202,7 @@ class SimulatorHandler:
                 Defaults to False.
             allow_storage_sharing: Whether a storage can be used by multiple jobs.
                 Defaults to True.
+            external_events: The file containing external events to simulate.
 
         Raises:
             RuntimeError: In case of simulation already running.
@@ -241,6 +245,12 @@ class SimulatorHandler:
             cmd += ' --enable-compute-sharing'
         if not allow_storage_sharing:
             cmd += ' --disable-storage-sharing'
+
+        if external_events:
+            self.__no_more_external_event_to_occur = False
+            cmd += f' --events {external_events}'
+        else:
+            self.__no_more_external_event_to_occur = True
 
         self.__simulator = subprocess.Popen(
             cmd.split(), stdout=subprocess.PIPE)
@@ -294,7 +304,7 @@ class SimulatorHandler:
         if not time:
             # Go to the next event.
             self.__wait_callback = False
-        elif not self.__simulation_time and self.is_submitter_finished and not self.__jobs:
+        elif not self.__simulation_time and self.is_submitter_finished and not self.__jobs and self.__no_more_external_event_to_occur:
             # There are no more actions to do. Go to the next event.
             self.__wait_callback = False
         else:
@@ -734,6 +744,22 @@ class SimulatorHandler:
         """ Handle batsim submitter finished event.  """
         if event.notify_type == BatsimNotifyType.NO_MORE_STATIC_JOB_TO_SUBMIT:
             self.__no_more_jobs_to_submit = True
+        elif event.notify_type == BatsimNotifyType.NO_MORE_EXTERNAL_EVENT_TO_OCCUR:
+            self.__no_more_external_event_to_occur = True
+        elif event.notify_type == BatsimNotifyType.EVENT_MACHINE_UNAVAILABLE:
+            assert event.resources
+            for res_id in event.resources:
+                res = self.__platform.get(res_id)
+                res._set_unavailable()
+                if isinstance(res, Host):
+                    self.__dispatch_event(HostEvent.STATE_CHANGED, res)
+        elif event.notify_type == BatsimNotifyType.EVENT_MACHINE_AVAILABLE:
+            assert event.resources
+            for res_id in event.resources:
+                res = self.__platform.get(res_id)
+                res._set_available()
+                if isinstance(res, Host):
+                    self.__dispatch_event(HostEvent.STATE_CHANGED, res)
 
     def __on_sigterm(self, signum, frame) -> None:
         """ Close simulation on sigterm.  """

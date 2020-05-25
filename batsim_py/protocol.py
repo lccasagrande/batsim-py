@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from enum import Enum
+from typing import Optional
 from typing import Dict
 from typing import Sequence
 from typing import Union
@@ -73,6 +74,8 @@ class BatsimNotifyType(Enum):
     NO_MORE_EXTERNAL_EVENT_TO_OCCUR = 1
     REGISTRATION_FINISHED = 2
     CONTINUE_REGISTRATION = 3
+    EVENT_MACHINE_UNAVAILABLE = 4
+    EVENT_MACHINE_AVAILABLE = 5
 
     def __str__(self) -> str:
         return self.name
@@ -229,11 +232,22 @@ class NotifyBatsimEvent(BatsimEvent):
     def __init__(self, timestamp: float, data: dict) -> None:
         super().__init__(timestamp, BatsimEventType.NOTIFY)
         self.__notify_type = BatsimNotifyType[data["type"].upper()]
+        self.__resources: Optional[Sequence[int]] = None
+
+        external_events = (BatsimNotifyType.EVENT_MACHINE_AVAILABLE,
+                           BatsimNotifyType.EVENT_MACHINE_UNAVAILABLE)
+        if self.__notify_type in external_events:
+            self.__resources = list(ProcSet.from_str(data["resources"]))
 
     @property
     def notify_type(self) -> BatsimNotifyType:
         """ The notification type. """
         return self.__notify_type
+
+    @property
+    def resources(self) -> Optional[Sequence[int]]:
+        """ The resources affected by an external event. """
+        return self.__resources
 
 
 class JobCompletedBatsimEvent(BatsimEvent):

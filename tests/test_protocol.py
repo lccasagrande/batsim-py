@@ -103,6 +103,22 @@ class TestBatsimMessage:
 
 
 class TestNotifyBatsimEvent:
+    def test_machine_unavailable_notify_event(self):
+        jsn = BatsimEventAPI.get_notify_machine_unavailable(10, [1, 2, 3])
+        e = NotifyBatsimEvent(10, jsn['data'])
+        assert e.timestamp == 10
+        assert e.type == BatsimEventType.NOTIFY
+        assert e.notify_type == BatsimNotifyType.EVENT_MACHINE_UNAVAILABLE
+        assert e.resources == [1, 2, 3]
+
+    def test_machine_available_notify_event(self):
+        jsn = BatsimEventAPI.get_notify_machine_available(10, [1, 2])
+        e = NotifyBatsimEvent(10, jsn['data'])
+        assert e.timestamp == 10
+        assert e.type == BatsimEventType.NOTIFY
+        assert e.notify_type == BatsimNotifyType.EVENT_MACHINE_AVAILABLE
+        assert e.resources == [1, 2]
+
     def test_no_more_external_event_to_occur_notify_event(self):
         jsn = BatsimEventAPI.get_notify_no_more_external_event_to_occur(10)
         e = NotifyBatsimEvent(10, jsn['data'])
@@ -557,9 +573,9 @@ class TestBatsimMessageDecoder:
             calls[e.type] += 1
 
         n = BatsimEventType.NOTIFY
-        assert all(v == 1 if e != n else v == 2 for e, v in calls.items())
+        assert all(v == 1 if e != n else v == 4 for e, v in calls.items())
         assert m.now == 0
-        assert len(m.events) == 9
+        assert len(m.events) == 11
 
 
 class TestNetworkHandler:

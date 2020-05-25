@@ -204,6 +204,32 @@ class BatsimEventAPI:
         return d
 
     @staticmethod
+    def get_notify_machine_unavailable(timestamp: float = 0, resources: Sequence[int] = (1,)) -> dict:
+        d = {
+            "timestamp": timestamp,
+            "type": "NOTIFY",
+            "data": {
+                "type": "EVENT_MACHINE_UNAVAILABLE",
+                "resources": str(ProcSet(*resources)),
+                "timestamp": timestamp
+            },
+        }
+        return d
+
+    @staticmethod
+    def get_notify_machine_available(timestamp: float = 0, resources: Sequence[int] = (1,)) -> dict:
+        d = {
+            "timestamp": timestamp,
+            "type": "NOTIFY",
+            "data": {
+                "type": "EVENT_MACHINE_AVAILABLE",
+                "resources": str(ProcSet(*resources)),
+                "timestamp": timestamp
+            },
+        }
+        return d
+
+    @staticmethod
     def get_notify_no_more_static_job_to_submit(timestamp: float = 0) -> dict:
         d = {
             "timestamp": timestamp,

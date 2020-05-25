@@ -645,11 +645,51 @@ class TestHost:
             h._set_on()
         assert "switching on" in str(excinfo.value)
 
+    def test_is_unavailable(self):
+        h = Host(0, "n")
+        h._set_unavailable()
+        assert h.is_unavailable
+
+    def test_set_available(self):
+        h = Host(0, "n")
+        h._set_unavailable()
+        h._set_available()
+        assert not h.is_unavailable
+
+    def test_set_available_without_being_unavailable_must_raise(self):
+        h = Host(0, "n")
+        with pytest.raises(SystemError) as excinfo:
+            h._set_available()
+        assert "unavailable" in str(excinfo.value)
+
+    def test_set_unavailable_when_already_allocated_must_not_raise(self):
+        h = Host(0, "n")
+        h._allocate("job")
+        h._set_unavailable()
+        assert h.is_unavailable and h.jobs
+
+    def test_set_unavailable_must_return_to_last_state(self):
+        h = Host(0, "n")
+        h._allocate("job")
+        h._start_computing()
+        h._set_unavailable()
+        assert h.is_unavailable and not h.is_computing
+        h._set_available()
+        assert h.is_computing and not h.is_unavailable
+
     def test_allocate_valid(self):
         p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
         h = Host(0, "n", pstates=[p1])
         h._allocate("job")
         assert h.is_idle and h.jobs and h.jobs[0] == "job"
+
+    def test_allocate_when_unavailable_must_raise(self):
+        h = Host(0, "n")
+        h._set_unavailable()
+        with pytest.raises(RuntimeError) as excinfo:
+            h._allocate("job")
+
+        assert "unavailable" in str(excinfo.value)
 
     def test_allocate_multiple_jobs_valid(self):
         p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
@@ -680,6 +720,15 @@ class TestHost:
         h._allocate("job")
         h._start_computing()
         assert h.is_computing and h.state == HostState.COMPUTING
+
+    def test_start_computing_when_unavailable_must_raise(self):
+        p1 = PowerState(1, PowerStateType.COMPUTATION, 10, 100)
+        h = Host(0, "n", pstates=[p1])
+        h._allocate("job")
+        h._set_unavailable()
+        with pytest.raises(SystemError) as excinfo:
+            h._start_computing()
+        assert "Unavailable" in str(excinfo.value)
 
     def test_start_computing_when_off_must_raise(self):
         p1 = PowerState(0, PowerStateType.SLEEP, 10, 10)
@@ -745,7 +794,6 @@ class TestHost:
 
 
 class TestStorage:
-
     def test_repr(self):
         assert repr(Storage(0, "0", True)) == f"Storage_{0}"
 
@@ -759,16 +807,52 @@ class TestStorage:
         assert s.id == 0
         assert s.name == "0"
         assert s.metadata == m
+        assert not s.is_unavailable
 
     def test_metadata_optional(self):
         m = {"n": 0}
         s = Storage(0, "0", True)
         assert s.metadata == None
 
+    def test_is_unavailable(self):
+        m = {"n": 0}
+        s = Storage(0, "0", True, m)
+        s._set_unavailable()
+        assert s.is_unavailable
+
+    def test_set_available(self):
+        s = Storage(0, "0")
+        s._set_unavailable()
+        s._set_available()
+        assert not s.is_unavailable
+
+    def test_set_available_without_being_unavailable_must_raise(self):
+        m = {"n": 0}
+        s = Storage(0, "0", True, m)
+        with pytest.raises(SystemError) as excinfo:
+            s._set_available()
+        assert "unavailable" in str(excinfo.value)
+
+    def test_set_unavailable_when_already_allocated_must_not_raise(self):
+        m = {"n": 0}
+        s = Storage(0, "0", True, m)
+        s._allocate("job")
+        s._set_unavailable()
+        assert s.is_unavailable and s.jobs
+
     def test_allocate_valid(self):
         s = Storage(0, "n")
         s._allocate("job")
         assert s.jobs and s.jobs[0] == "job"
+
+    def test_allocate_when_unavailable_must_raise(self):
+        m = {"n": 0}
+        s = Storage(0, "0", True, m)
+        s._set_unavailable()
+        with pytest.raises(RuntimeError) as excinfo:
+            s._allocate("job")
+
+        assert "unavailable" in str(excinfo.value)
 
     def test_allocate_multiple_jobs_valid(self):
         s = Storage(0, "n")
@@ -859,13 +943,36 @@ class TestPlatform:
         h1._switch_off()
         assert p.state == [HostState.SWITCHING_OFF, HostState.IDLE]
 
-    def test_get_available(self):
+    def test_get_not_allocated_hosts(self):
         h1 = Host(0, "n")
         h2 = Host(1, "n")
         p = Platform([h1, h2])
         h1._allocate("j1")
 
-        assert p.get_available() == [h2]
+        assert p.get_not_allocated_hosts() == [h2]
+
+    def test_get_with_host(self):
+        h1 = Host(0, "n")
+        s1 = Storage(1, "n")
+        p = Platform([h1, s1])
+
+        assert p.get(0) == h1
+
+    def test_get_with_storage(self):
+        h1 = Host(0, "n")
+        s1 = Storage(1, "n")
+        p = Platform([h1, s1])
+
+        assert p.get(1) == s1
+
+    def test_get_not_found_must_raise(self):
+        h1 = Host(0, "n")
+        s1 = Storage(1, "n")
+        p = Platform([h1, s1])
+        with pytest.raises(LookupError) as excinfo:
+            p.get(2)
+
+        assert "no resources" in str(excinfo.value)
 
     def test_get_host_by_id(self):
         h1 = Host(0, "n")
