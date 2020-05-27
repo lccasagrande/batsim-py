@@ -1,0 +1,45 @@
+{
+    "nb_res": 2,
+    "jobs": [
+        {
+            "id": "1",
+            "subtime": 0,
+            "walltime": 30,
+            "res": 1,
+            "profile": "10"
+        },
+        {
+            "id": "2",
+            "subtime": 0,
+            "walltime": 30,
+            "res": 1,
+            "profile": "pfs"
+        },
+        {
+            "id": "3",
+            "subtime": 0,
+            "walltime": 300,
+            "res": 1,
+            "profile": "staging"
+        }
+    ],
+    "profiles": {
+        "10": {
+            "type": "parallel_homogeneous_total",
+            "cpu": 10e6,
+            "com": 0
+        },
+        "pfs": {
+            "type": "parallel_homogeneous_pfs",
+            "bytes_to_read": 10e6,
+            "bytes_to_write": 10e6,
+            "storage": "nfs"
+        },
+        "staging": {
+            "type": "data_staging",
+            "nb_bytes": 20e6,
+            "from": "pfs",
+            "to": "nfs"
+        }
+    }
+}

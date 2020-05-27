@@ -1,0 +1,41 @@
+{
+    "nb_res": 2,
+    "jobs": [
+        {
+            "id": "1",
+            "res": 1,
+            "subtime": 1,
+            "walltime": 240,
+            "profile": "20",
+            "user": "0"
+        },
+        {
+            "id": "2",
+            "res": 1,
+            "subtime": 3,
+            "walltime": 80,
+            "profile": "120",
+            "user": "1"
+        },
+        {
+            "id": "3",
+            "res": 1,
+            "subtime": 24,
+            "walltime": 240,
+            "profile": "120",
+            "user": "1"
+        }
+    ],
+    "profiles": {
+        "120": {
+            "cpu": 120000000,
+            "com": 0,
+            "type": "parallel_homogeneous"
+        },
+        "20": {
+            "cpu": 20000000,
+            "com": 0,
+            "type": "parallel_homogeneous"
+        }
+    }
+}

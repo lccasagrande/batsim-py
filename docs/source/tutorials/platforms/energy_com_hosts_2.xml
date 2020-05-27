@@ -30,7 +30,7 @@
         <link id="0" bandwidth="41.279125MBps" latency="59.904us"/>
         <link id="loopback" bandwidth="1MBps" latency="15us" sharing_policy="FATPIPE"/>
         <link id="storage_read" bandwidth="1MBps" latency="0.11ms"/>
-        <link id="storage_write" bandwidth="4MBps" latency="0.11ms"/>
+        <link id="storage_write" bandwidth="1MBps" latency="0.11ms"/>
         <!-- Links. -->
 
 
