@@ -170,24 +170,24 @@ class TestParallelHomogeneousPFSJobProfile:
         assert p.name == name
 
     def test_zero_bytes_to_read_must_be_valid(self):
-        p = jobs.ParallelHomogeneousPFSJobProfile("n", 0, 1)
+        p = jobs.ParallelHomogeneousPFSJobProfile("n", 0, 1, "pfs")
         assert p.bytes_to_read == 0
 
     def test_zero_bytes_to_write_must_be_valid(self):
-        p = jobs.ParallelHomogeneousPFSJobProfile("n", 1, 0)
+        p = jobs.ParallelHomogeneousPFSJobProfile("n", 1, 0, "pfs")
         assert p.bytes_to_write == 0
 
     def test_zero_bytes_to_write_and_read_must_raise(self):
         with pytest.raises(ValueError):
-            jobs.ParallelHomogeneousPFSJobProfile("n", 0, 0)
+            jobs.ParallelHomogeneousPFSJobProfile("n", 0, 0, "pfs")
 
     def test_negative_bytes_to_write_must_raise(self):
         with pytest.raises(ValueError):
-            jobs.ParallelHomogeneousPFSJobProfile("n", 1, -1)
+            jobs.ParallelHomogeneousPFSJobProfile("n", 1, -1, "pfs")
 
     def test_negative_bytes_to_read_must_raise(self):
         with pytest.raises(ValueError):
-            jobs.ParallelHomogeneousPFSJobProfile("n", -1, 1)
+            jobs.ParallelHomogeneousPFSJobProfile("n", -1, 1, "pfs")
 
     def test_empty_storage_must_raise(self):
         with pytest.raises(ValueError):

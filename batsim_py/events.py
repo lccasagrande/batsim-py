@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class JobEvent(Enum):
-    """ Job Events """
+    """ Job Event Types """
     SUBMITTED = 0
     ALLOCATED = 1
     REJECTED = 2
@@ -11,12 +11,12 @@ class JobEvent(Enum):
 
 
 class HostEvent(Enum):
-    """ Host Events """
+    """ Host Event Types """
     STATE_CHANGED = 0
     COMPUTATION_POWER_STATE_CHANGED = 1
 
 
 class SimulatorEvent(Enum):
-    """ Simulator Events """
+    """ Simulator Event Types """
     SIMULATION_BEGINS = 0
     SIMULATION_ENDS = 1

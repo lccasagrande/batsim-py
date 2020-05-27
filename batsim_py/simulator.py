@@ -55,15 +55,21 @@ Callbacks = DefaultDict[float, List[Callback]]
 BatsimVerbosity = Literal["quiet", "network-only", "information", "debug"]
 
 
-class Reservation(NamedTuple):
-    """ Describes a host reservation.
+class Reservation:
+    """ Describes the reservation of a host.
+
+    Args:
+        host_id: The host id.
+        release_time: The remaining time to the host be released.
 
     Attributes:
         host_id: The host id.
-        release_time: The expected time in which the host will be released.
+        release_time: The remaining time to the host be released.
     """
-    host_id: int
-    release_time: float
+
+    def __init__(self, host_id: int, release_time: float) -> None:
+        self.host_id = host_id
+        self.release_time = release_time
 
 
 class SimulatorHandler:
@@ -73,7 +79,7 @@ class SimulatorHandler:
 
     Args:
         tcp_address: An address string consisting of three parts as follows:
-            protocol://interface:port. Defaults to None. If no tcp_address
+            protocol://interface:port. Defaults to None. If no address
             is provided, a random one will be used.
 
     Raises:
@@ -122,20 +128,20 @@ class SimulatorHandler:
 
     @property
     def jobs(self) -> Sequence[Job]:
-        """ A sequence with all jobs in the system.
+        """ A sequence with all the jobs in the system.
 
-        This includes only jobs that are not finished.
+        This does not include jobs that already finished.
         """
         return list(self.__jobs)
 
     @property
     def queue(self) -> Sequence[Job]:
-        """ A sequence of all jobs that were not allocated.  """
+        """ A sequence of all jobs in the queue. """
         return [j for j in self.__jobs if j.is_submitted]
 
     @property
     def agenda(self) -> Iterator[Reservation]:
-        """ The expected release time of each host. """
+        """ Host reservations. """
         if self.__platform:
             for host in self.__platform.hosts:
                 release_t = 0.
@@ -157,7 +163,7 @@ class SimulatorHandler:
 
     @property
     def is_running(self) -> bool:
-        """ Whether the simulation is running."""
+        """ Whether the simulation is running or not."""
         return self.__simulator is not None
 
     @property
@@ -167,10 +173,7 @@ class SimulatorHandler:
 
     @property
     def is_submitter_finished(self) -> bool:
-        """ Whether there are still some jobs to be submitted.
-
-        In other words, it tells if the workload has finished.
-        """
+        """ Whether there are still some jobs to be submitted or not. """
         return self.__no_more_jobs_to_submit
 
     def start(self,
@@ -181,28 +184,29 @@ class SimulatorHandler:
               allow_compute_sharing=False,
               allow_storage_sharing=True,
               external_events: Optional[str] = None) -> None:
-        """ Starts the simulation process.
+        """ Start the simulation process.
 
         Args:
             platform: The XML file defining the platform. It must follow the
-                format expected by Batsim and SimGrid. Check their documentation
-                on how to describe the platform.
+                format expected by Batsim and SimGrid. Check their documentation 
+                to know how to define a platform
             workload: A JSON file defining the jobs and their profiles.
                 The simulation process will only submit the jobs that are
-                defined in this json. Moreover, the Batsim is responsible for
+                defined in this JSON. Moreover, Batsim is responsible for 
                 the submission process.
-            verbosity: The Batsim verbosity level. Defaults to "quiet". Available
-                values: quiet, network-only, information, debug.
+            verbosity: The Batsim verbosity level. Defaults to "quiet".
             simulation_time: The maximum simulation time. Defaults to None.
                 If this argument is set, the simulation will stop only when this
                 time is reached, no matter if there are jobs to be submitted or
                 running. Otherwise, the simulation will only stop when all jobs
                 in the workload were completed or rejected.
-            allow_compute_sharing: Whether a host can be used by multiple jobs.
-                Defaults to False.
-            allow_storage_sharing: Whether a storage can be used by multiple jobs.
-                Defaults to True.
-            external_events: The file containing external events to simulate.
+            allow_compute_sharing: Whether a host can be used by multiple jobs 
+                or not. Defaults to False.
+            allow_storage_sharing: Whether a storage can be used by multiple jobs 
+                or not. Defaults to True.
+            external_events: The file containing external events to simulate. 
+                Check the Batsim documentation to know what kind of external 
+                events are supported.
 
         Raises:
             RuntimeError: In case of simulation already running.
@@ -221,11 +225,11 @@ class SimulatorHandler:
 
         if verbosity not in ("quiet", "network-only", "information", "debug"):
             raise ValueError('This `verbosity` argument value is not accepted '
-                             'by Batsim, got {}'.format(verbosity))
+                             f'by Batsim, got {verbosity}')
 
         if simulation_time is not None and simulation_time <= 0:
             raise ValueError('Expected `simulation_time` to be greater '
-                             'than zero, got {}.'.format(simulation_time))
+                             f'than zero, got {simulation_time}.')
 
         self.__jobs = []
         self.__current_time = 0.
@@ -235,8 +239,8 @@ class SimulatorHandler:
         # There isn't an option to avoid exporting batsim results
         tmp_dir = tempfile.gettempdir() + "/batsim"
         cmd = (
-            f'batsim -E --forward-profiles-on-submission '
-            f'--disable-schedule-tracing --disable-machine-state-tracing '
+            'batsim -E --forward-profiles-on-submission '
+            '--disable-schedule-tracing --disable-machine-state-tracing '
             f'-s {self.__network.address} -p {platform} -w {workload} '
             f'-v {verbosity}  -e {tmp_dir}'
         )
@@ -279,15 +283,17 @@ class SimulatorHandler:
         Args:
             time: The time to proceed. Defaults to 0. It's possible to proceed
                 directly to the next event or to a specific time. If the time is
-                unset (equals 0), the simulation will proceed to the next event.
+                unset (equals 0), the simulation will proceed to the next 
+                event. Otherwise, if a time 't' is provided, the simulation will 
+                proceed directly to it and only events that occur before 't' will 
+                be dispatched. 
 
         Raises:
             ValueError: In case of invalid arguments value.
             RuntimeError: In case of the simulation is not running or
-                a deadlock happened. The latter case occurs only when
-                there are no more events to happen and no time was specified.
-                Consequently, the simulation does not know what to do and a
-                deadlock error is raised by Batsim.
+                a deadlock happened. The latter case occurs only when there are 
+                no more events to happen. Consequently, the simulation does not 
+                know what to do and a deadlock error is raised by Batsim.
         """
 
         def unflag(_):
@@ -298,8 +304,8 @@ class SimulatorHandler:
             raise RuntimeError("The simulation is not running.")
 
         if time < 0:
-            raise ValueError(f'Expected `time` argument to be a number '
-                             'greater than zero, got {time}.')
+            raise ValueError('Expected `time` argument to be a number '
+                             f'greater than zero, got {time}.')
 
         if not time:
             # Go to the next event.
@@ -333,10 +339,11 @@ class SimulatorHandler:
 
         Args:
             event: The event to subscribe.
-            call: The function to be called when the event is dispatched.
+            call: The function to be called when the event is dispatched. It
+                must accept the event sender as an argument.
 
         Raises:
-            RuntimeError: In case of the simulation is not running.
+            RuntimeError: In case of simulation is not running.
         """
         assert callable(call)
         self.__subscriptions[event].append(call)
@@ -347,13 +354,13 @@ class SimulatorHandler:
         The simulation will call the function at the defined time.
 
         Args:
-            at: The time to call the function.
-            call: The function to be called. The function must accept the current
-                simulation time as argument.
+            at: The time which the function must be called.
+            call: A function that receives the current simulation time as 
+                an argument.
 
         Raises:
             ValueError: In case of invalid arguments value.
-            RuntimeError: In case of the simulation is not running.
+            RuntimeError: In case of simulation is not running.
         """
         assert callable(call)
 
@@ -363,7 +370,7 @@ class SimulatorHandler:
         if at <= self.current_time:
             raise ValueError('Expected `at` argument to be a number '
                              'greater than the current simulation time'
-                             ', got {}.'.format(at))
+                             f', got {at}.')
 
         self.__callbacks[at].append(call)
         self.__set_batsim_call_me_later(at)
@@ -374,18 +381,23 @@ class SimulatorHandler:
                  storage_mapping: Dict[str, int] = None) -> None:
         """ Allocate resources for a job.
 
-        To start computing, a job must allocate some resources first.
-        When this resources are ready, the job will automatically starts.
-        Thus, the allocate must be the result of the scheduling policy.
+        To start computing, a job must allocate some resources first. When these 
+        resources are ready, the simulator will automatically start the job. If 
+        for some reason any allocated resource is not ready (because it’s off or 
+        switching On/Off), the simulator will try to initialize the resource and 
+        will wait until it’s ready to start the job.
 
         Args:
             job_id: The job id.
-            hosts_id: The sequence of hosts ids to be allocated for the job.
-            storage_mapping: A mapping of storage names to resources.
+            hosts_id: A sequence of host ids to be allocated for the job.
+            storage_mapping: A mapping of storage names to resource ids. If 
+                the job needs a storage resource, this argument is required. 
+                Otherwise, it can just be ignored.
 
         Raises:
-            RuntimeError: In case of the simulation is not running.
-            LookupError: In case of job or resource not found.
+            RuntimeError: In case of simulation is not running.
+            LookupError: In case of job/resource not found or resource type 
+                is invalid.
         """
         assert job_id and hosts_id
 
@@ -415,16 +427,13 @@ class SimulatorHandler:
         self.__start_runnable_jobs()
 
     def kill_job(self, job_id: str) -> None:
-        """ Kill a job.
-
-        This job can be running or waiting in the queue. This is different from 
-        the reject request in that a job cannot be rejected when it's running. 
+        """ Kill a job that is running.
 
         Args:
-            job_id: The job id.
+            job_id: The id of the job to kill.
 
         Raises:
-            RuntimeError: In case of the simulation is not running or the job
+            RuntimeError: In case of simulation is not running or the job 
                 cannot be killed.
             LookupError: In case of job not found.
         """
@@ -445,16 +454,16 @@ class SimulatorHandler:
         self.__handle_batsim_events()
 
     def reject_job(self, job_id: str) -> None:
-        """ Reject a job.
+        """ Rejects a job.
 
-        A rejected job will not be scheduled nor accounted. Only jobs in the
-        queue can be rejected
+        Only jobs in the queue can be rejected. Once a job is rejected, it 
+        cannot be scheduled anymore.
 
         Args:
-            job_id: The job id.
+            job_id: The id of the job to reject.
 
         Raises:
-            RuntimeError: In case of the simulation is not running or the job
+            RuntimeError: In case of simulation is not running or the job 
                 cannot be rejected.
             LookupError: In case of job not found.
         """
@@ -478,11 +487,12 @@ class SimulatorHandler:
         """ Switch on hosts.
 
         Args:
-            hosts_id: The sequence of hosts id to be switched on.
+            hosts_id: A sequence of host ids to be switched on.
 
         Raises:
-            RuntimeError: In case of the simulation is not running or the 
-                host cannot switch on.
+            RuntimeError: In case of the simulation is not running or the host 
+                cannot switch on because it's in an invalid state or the power 
+                state is not defined.
             LookupError: In case of host not found.
         """
         if not self.is_running:
@@ -503,12 +513,14 @@ class SimulatorHandler:
         """ Switch off hosts.
 
         Args:
-            hosts_id: The sequence of hosts id to be switched off.
+            hosts_id: A sequence of host ids to be switched off.
 
         Raises:
-            RuntimeError: In case of the simulation is not running or the 
-                host cannot switch off.
-            LookupError: In case of host not found or power state could not be found.
+            RuntimeError: In case of simulation is not running or a host cannot 
+                switch off because it's in an invalid state or the power state is 
+                not defined.
+            LookupError: In case of host not found or the 'off' power state could 
+                not be found.
         """
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
@@ -525,9 +537,9 @@ class SimulatorHandler:
             self.__dispatch_event(HostEvent.STATE_CHANGED, host)
 
     def switch_power_state(self, host_id: int, pstate_id: int) -> None:
-        """ Switch the computation power of host.
+        """ Switch the host computation power state.
 
-        This is useful if you want to act like a DVFS policy.
+        This is useful if you want to implement a DVFS policy.
 
         Args:
             host_id: The host id.
@@ -535,8 +547,8 @@ class SimulatorHandler:
 
         Raises:
             RuntimeError: In case of the simulation is not running or the 
-                power state were not defined or the host cannot switch.
-            LookupError: In case of host or power state were not found.
+                power state were is defined or the host cannot switch.
+            LookupError: In case of host or power state could not be found.
         """
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
@@ -568,8 +580,8 @@ class SimulatorHandler:
     def __start_runnable_jobs(self) -> None:
         """ Start runnable jobs.
 
-        This is an internal method used to starts jobs that were allocated.
-        A job can only starts if the hosts are idle. Thus, this method ensures
+        This is an internal method used to starts jobs that were allocated. 
+        A job can only starts if the hosts are idle. Thus, this method ensures 
         that the host can compute the job.
         """
         if not self.is_running:

@@ -8,10 +8,7 @@ from typing import List
 
 
 class HostState(Enum):
-    """ Batsim Host State
-
-    This class enumerates the distinct states a host can be in.
-    """
+    """ Batsim Host State Types """
 
     IDLE = 0
     SWITCHING_ON = 1
@@ -25,16 +22,13 @@ class HostState(Enum):
 
 
 class StorageState(Enum):
-    """ Batsim Storage State """
+    """ Batsim Storage State Types """
     AVAILABLE = 0
     UNAVAILABLE = 1
 
 
 class PowerStateType(Enum):
-    """ Batsim Host Power State Type
-
-    This class enumerates the distinct power state types a host can be in.
-    """
+    """ Batsim Host Power State Types """
     SLEEP = 0
     COMPUTATION = 1
     SWITCHING_ON = 2
@@ -45,12 +39,10 @@ class PowerStateType(Enum):
 
 
 class PowerState:
-    """ This class describes a host power state (model).
+    """ This class describes a power state model.
 
     When the host is on, the energy consumption naturally depends on both the 
-    current CPU load and the host energy profile. Following this principle, 
-    we adopt a special case from the model used in SimGrid which, the host can 
-    be idle (0% cpu) or at full load (100% cpu)
+    current CPU load and the host energy profile.
 
     Args:
         pstate_id: The power state id. Must be unique.
@@ -60,9 +52,8 @@ class PowerState:
 
     Raises:
         AssertionError: In case of invalid arguments type.
-        ValueError: In case of power profile values are not equal when the
-            power state type is not a computation one or watts values are
-            invalid.
+        ValueError: In case of watts are invalid values or the power profile 
+            values are not equal when the power state type is not a computation one.
 
     Examples:
         >>> ps1 = PowerState(0, PowerStateType.COMPUTATION, 90, 160)
@@ -182,30 +173,30 @@ class Storage:
 
     @property
     def is_unavailable(self) -> bool:
-        """ Whether the storage is unavailable. """
+        """ Whether the storage is unavailable or not. """
         return self.state == StorageState.UNAVAILABLE
 
     @property
     def is_allocated(self) -> bool:
-        """ Whether the storage is being used by a job. """
+        """ Whether the storage is being used by a job or not. """
         return bool(self.__jobs)
 
     @property
     def is_shareable(self) -> bool:
-        """ Whether multiple jobs can share this storage. """
+        """ Whether multiple jobs can share this storage or not. """
         return self.__allow_sharing
 
     def _set_unavailable(self) -> None:
-        """ The storage become unavailable. 
+        """ The storage becomes unavailable. 
 
         This is an internal method to be used by the simulator only as 
         a response from an external event file. Unavailable storages 
-        cannot allocate jobs.
+        cannot be allocated.
         """
         self.__state = StorageState.UNAVAILABLE
 
     def _set_available(self) -> None:
-        """ The storage become available. 
+        """ The storage becomes available. 
 
         Raises:
             SystemError: In case of storage is not unavailable.
@@ -217,16 +208,16 @@ class Storage:
         self.__state = StorageState.AVAILABLE
 
     def _allocate(self, job_id: str) -> None:
-        """ Allocate storage for a job.
+        """ Allocate the storage for a job.
 
         This is an internal method to be used by the simulator only.
 
         Args:
-            job_id: The job that will use this storage.
+            job_id: The id of the job that will use this storage.
 
         Raises:
-            RuntimeError: In case of storage is not shareable and is already 
-                being used by another job or the storage is unavailable.
+            RuntimeError: In case of storage the storage is unavailable or it is 
+                not shareable and is already being used by another job.
         """
 
         if self.is_unavailable:
@@ -251,28 +242,28 @@ class Storage:
 class Host:
     """ This class describes a Batsim computing resource (host).
 
-    A host is the resource on which a job can run.
+    A host is a resource on which a job can execute.
 
     Args:
         id: The host id. Must be unique within a platform.
         name: The host name.
-        pstates: The host power states. Defaults to None.
-            A host can have several computing power states and only one sleep 
-            and transition (On/Off) power states. Computing power states serves 
+        pstates: The host power states. Defaults to None. 
+            A host can have several computing power states but only one sleep 
+            and transition (On/Off) power states. Computing power states serve 
             as a way to implement different DVFS levels while the transition 
             power states are used only to simulate the costs of switching On/Off. 
             A host cannot be used when it's being switched On/Off or sleeping. 
             If you only want to implement DVFS, there is no need to provide a sleep 
-            and a transition power state. Moreover, if you provide a sleeping power 
-            state you must provide both transition power states (switching On/Off).
-        allow_sharing: Whether multiple jobs can share the host. 
+            power state and a transition power state. Moreover, if you provide a sleep 
+            power state you must also provide both transition power states.
+        allow_sharing: Whether multiple jobs can share the host or not. 
             Defaults to False.
-        metadata: Extra host properties that can be used by some functions
+        metadata: Extra host properties that can be used by some functions 
             beyond the scope of Batsim or Batsim-py. Defaults to None.
 
     Raises:
         AssertionError: In case of invalid arguments type.
-        ValueError: In case of missing pstates or the pstates ids are not unique.
+        ValueError: In case of missing pstates or pstate ids are not unique.
 
     Examples:
         >>> ps1 = PowerState(0, PowerStateType.COMPUTATION, 10, 100)
@@ -354,7 +345,7 @@ class Host:
 
     @property
     def jobs(self) -> List[str]:
-        """ All jobs id that are allocated in this host. """
+        """ A sequence of job ids that are allocated on this host. """
         return list(self.__jobs)
 
     @property
@@ -364,7 +355,7 @@ class Host:
 
     @property
     def pstates(self) -> Optional[List[PowerState]]:
-        """ All power states of the host. """
+        """ A sequence of all power states defined. """
         if self.__pstates:
             return list(self.__pstates)
         else:
@@ -380,47 +371,47 @@ class Host:
 
     @property
     def is_allocated(self) -> bool:
-        """ Whether this host was allocated for some job. """
+        """ Whether this host was allocated for some job or not. """
         return bool(self.__jobs)
 
     @property
     def is_idle(self) -> bool:
-        """ Whether this host is idle (0% cpu). """
+        """ Whether this host is idle (0% cpu)  or not. """
         return self.__state == HostState.IDLE
 
     @property
     def is_computing(self) -> bool:
-        """ Whether this host is computing (100% cpu). """
+        """ Whether this host is computing (100% cpu) or not. """
         return self.__state == HostState.COMPUTING
 
     @property
     def is_switching_off(self) -> bool:
-        """ Whether this host is switching off. """
+        """ Whether this host is switching off or not. """
         return self.__state == HostState.SWITCHING_OFF
 
     @property
     def is_switching_on(self) -> bool:
-        """ Whether this host is switching on. """
+        """ Whether this host is switching on or not. """
         return self.__state == HostState.SWITCHING_ON
 
     @property
     def is_sleeping(self) -> bool:
-        """ Whether this host is sleeping. """
+        """ Whether this host is sleeping or not. """
         return self.__state == HostState.SLEEPING
 
     @property
     def is_shareable(self) -> bool:
-        """ Whether multiple jobs can share this host. """
+        """ Whether multiple jobs can share this host or not. """
         return self.__allow_sharing
 
     @property
     def is_unavailable(self) -> bool:
-        """ Whether it's possible to execute jobs. """
+        """ Whether it's possible to execute jobs or not. """
         return self.__state == HostState.UNAVAILABLE
 
     @property
     def power(self) -> Optional[float]:
-        """ Current host consumption (in Watts). """
+        """ Instantaneous power consumption (in Watts). """
         if not self.pstate:
             return None
         elif self.is_computing:
@@ -464,7 +455,7 @@ class Host:
             RuntimeError: In case of power states were not defined.
 
         Returns:
-            The power state with id.
+            The power state with the corresponding id.
         """
         if not self.__pstates:
             raise RuntimeError('Cannot get undefined power states. Make sure the '
@@ -478,29 +469,29 @@ class Host:
         return ps
 
     def get_sleep_pstate(self) -> PowerState:
-        """ Get the host sleep power state.
+        """ Get the sleep power state.
 
         Raises:
             LookupError: In case of sleep power state could not be found.
             RuntimeError: In case of power states were not defined.
 
         Returns:
-            The host sleep power state.
+            The sleep power state.
         """
         return self.get_pstate_by_type(PowerStateType.SLEEP)[0]
 
     def get_default_pstate(self) -> PowerState:
-        """ Get the default host power state.
+        """ Get the default power state.
 
-        The default power state is the first computation state provided which,
-        are sorted by its id.
+        The default power state is the first computation state provided in 
+        the sequence power states which, is sorted by the id.
 
         Raises:
-            LookupError: In case of default power state could not be found.
+            LookupError: In case of power state could not be found.
             RuntimeError: In case of power states were not defined.
 
         Returns:
-            The host default power state.
+            The default power state.
         """
         return self.get_pstate_by_type(PowerStateType.COMPUTATION)[0]
 
@@ -717,16 +708,16 @@ class Host:
 
 
 class Platform:
-    """ This class describes a platform.
+    """ This class describes a computing platform.
 
-    A platform is composed by a set of resources (computing, storage and network).
+    A platform is composed of a set of resources (computing, storage, and network).
 
     Args:
         resources: the platform resources (hosts and storages).
 
     Raises:
-        ValueError: In case of invalid platform size.
-        SystemError: In case of invalid resources id.
+        ValueError: In case of invalid size.
+        SystemError: In case of invalid resource ids.
     """
 
     def __init__(self, resources: Sequence[Union[Host, Storage]]) -> None:
@@ -745,7 +736,7 @@ class Platform:
 
     @property
     def power(self) -> float:
-        """ The current consumption (in Watts). """
+        """ The instantaneous power consumption (in Watts). """
         return sum(h.power for h in self.hosts if h.power)
 
     @property
@@ -809,8 +800,7 @@ class Platform:
             The host with the corresponding id.
 
         Raises:
-            LookupError: In case of resource not found or it's not 
-                a computing resource.
+            LookupError: In case of resource not found or invalid resource type.
         """
         if host_id >= self.size:
             raise LookupError(f"There're no resources with id {host_id}.")
@@ -832,8 +822,7 @@ class Platform:
             The storage with the corresponding id.
 
         Raises:
-            LookupError: In case of resource not found or it's not 
-                a storage resource.
+            LookupError: In case of resource not found or invalid resource type.
         """
         if storage_id >= self.size:
             raise LookupError(f"There're no resources with id {storage_id}.")
@@ -841,6 +830,6 @@ class Platform:
         resource = self.__resources[storage_id]
         if not isinstance(resource, Storage):
             raise LookupError(f"A storage with id {storage_id} could not "
-                              "be found, got {resource}.")
+                              f"be found, got {resource}.")
 
         return resource

@@ -6,51 +6,56 @@ evaluate Resource and Job Management System (RJMS) policies. **Batsim-py allows 
 
 Main Features
 -------------
-- Developed on Python 3.7
-- Simple API for evaluating Scheduling/Shutdown/DVFS policies
+- Developed on Python 3.8
+- Simple API for evaluating the performance of Scheduling/Shutdown/DVFS policies
 - Time/Event-based design
 - Simple to be extended
 - Fully documented
 
 Simulation Inputs
 -----------------
-To evaluate the behavior of a RJMS policy you must provide:
+To evaluate the behavior of a RJMS policy, you must provide:
 
-- A `platform <https://batsim.readthedocs.io/en/latest/input-platform.html>`_ description (XML): describes the type of resources and how they are distributed within a computing platform (grid, cluster, ...).
-- A `workload <https://batsim.readthedocs.io/en/latest/input-workload.html>`_ (JSON): defines the jobs to be submitted to the system and their profiles. The profiles will determine the job behavior.
+- A `platform <https://batsim.readthedocs.io/en/latest/input-platform.html>`_ description (XML): describes the network and resource characteristics. 
+- A `workload <https://batsim.readthedocs.io/en/latest/input-workload.html>`_ (JSON): defines the jobs to be submitted to the system and their execution profiles. 
 
-The expected format of both files are the same adopted in Batsim. 
-Check their great `documentation <https://batsim.readthedocs.io/en/latest/>`_ to get further information on how to define platforms and workloads.
+The expected format of both files is the same adopted in Batsim. Check `Batsim docs <https://batsim.readthedocs.io/en/latest/>`_ to get further information on how to define platforms and workloads.
 
 Quickstart 
 ------------
 
-1. Clone the repository and navigate to the downloaded folder:
+1. Make sure you have Batsim v3.1.0 installed and working. Otherwise, you must follow `Batsim installation <https://batsim.readthedocs.io/en/latest/installation.html>`_ instructions.
+
+.. code-block:: bash
+
+    batsim --version
+
+2. Clone the repository and navigate to the downloaded folder:
 
 .. code-block:: bash
 
     git clone https://github.com/lccasagrande/batsim-py.git
     cd batsim-py
 
-2. Install required packages: 
+3. Install required packages: 
 
 .. code-block:: bash
 
     pip install -e .
 
-3. [Optional] Run tests:
+4. Run tests:
 
 .. code-block:: bash
 
     python setup.py test
 
-4. Go to the `Tutorials`_  section and run an example.
+5. [Optional] Go to the `Tutorials`_  section and run an example.
 
 For further information, check the `API Documentation`_ to understand how to customize the simulation behavior.
 
 Tutorials
 ---------
-The tutorials section provides examples about different simulation scenarios:
+The tutorials section provides examples of different simulation scenarios:
 
 - `Scheduling`_
 - `Shutdown`_

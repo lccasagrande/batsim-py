@@ -436,13 +436,10 @@ class TestSimulatorHandler:
         mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
         s.proceed_time()
 
-        agenda = [
-            Reservation(0, e.job.walltime - 10),
-            Reservation(1, 0),
-        ]
-
+        agenda = list(s.agenda)
         assert s.current_time == 10
-        assert list(s.agenda) == agenda
+        assert agenda[0].host_id == 0 and agenda[0].release_time == e.job.walltime - 10
+        assert agenda[1].host_id == 1 and agenda[1].release_time == 0
 
     def test_agenda_with_job_without_walltime(self, mocker):
         s = SimulatorHandler()
@@ -460,13 +457,11 @@ class TestSimulatorHandler:
         mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
         s.proceed_time()
 
-        agenda = [
-            Reservation(0, np.inf),
-            Reservation(1, 0),
-        ]
+        agenda = list(s.agenda)
 
         assert s.current_time == 10
-        assert list(s.agenda) == agenda
+        assert agenda[0].host_id == 0 and agenda[0].release_time == np.inf
+        assert agenda[1].host_id == 1 and agenda[1].release_time == 0
 
     def test_agenda_with_multiple_jobs_in_one_host(self, mocker):
         s = SimulatorHandler()
@@ -489,13 +484,10 @@ class TestSimulatorHandler:
         mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
         s.proceed_time()
 
-        agenda = [
-            Reservation(0, e2.job.walltime-10),
-            Reservation(1, 0),
-        ]
-
+        agenda = list(s.agenda)
         assert s.current_time == 10
-        assert list(s.agenda) == agenda
+        assert agenda[0].host_id == 0 and agenda[0].release_time == e2.job.walltime-10
+        assert agenda[1].host_id == 1 and agenda[1].release_time ==0
 
     def test_allocate_not_running_must_raise(self):
         s = SimulatorHandler()

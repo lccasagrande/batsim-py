@@ -6,10 +6,7 @@ from typing import Dict
 
 
 class JobState(Enum):
-    """ Batsim Job State
-
-        This class enumerates the distinct states a job can be in.
-    """
+    """ Batsim Job State Types """
 
     UNKNOWN = 0
     SUBMITTED = 1
@@ -27,8 +24,6 @@ class JobState(Enum):
 
 class JobProfile(ABC):
     """ Batsim Job Profile base class.
-
-    This is the base class for the different profiles a job can execute.
 
     Args:
         name: The profile name. Must be unique within a workload.
@@ -50,7 +45,7 @@ class DelayJobProfile(JobProfile):
 
     Args:
         name: The profile name. Must be unique within a workload.
-        delay: The seconds to sleep.
+        delay: The sleep time.
 
     Raises:
         ValueError: In case of delay is not greater than zero.
@@ -71,37 +66,37 @@ class DelayJobProfile(JobProfile):
 
     @property
     def delay(self) -> float:
-        """The time which the job will sleep. """
+        """The sleep time. """
         return self.__delay
 
 
 class ParallelJobProfile(JobProfile):
     """ Batsim Parallel Job Profile class.
 
-    This class describes a job that performs a set of computations
-    and communications on allocated hosts.
+    This class describes a job that performs a set of computations and 
+    communications on the allocated hosts.
 
     Args:
         name: The profile name. Must be unique within a workload.
-        cpu: A list that defines the amount of flop/s to be 
-            computed on each allocated host.
-        com: A list [host x host] that defines the amount of bytes 
-            to be transferred between allocated hosts.
+        cpu: A list that defines the amount of flops to be computed on each 
+            allocated host.
+        com: A list [host x host] that defines the amount of bytes to be 
+            transferred between the allocated hosts.
 
     Raises:
-        ValueError: In case of `com` argument invalid size or `cpu` is empty
-            or values are less than zero.
+        ValueError: In case of `cpu` is not provided or `com` has an invalid size 
+            or their values are less than zero.
 
     Examples:
-        Two hosts computing 10E6 flop/s each with local communication only.
+        Two hosts computing 10E6 flops each with local communication only.
 
         >>> profile = ParallelJobProfile(name="parallel", cpu=[10e6, 10e6], com=[5e6, 0, 0, 5e6])
 
-        Two hosts computing 2E6 flop/s each with host 1 sending 5E6 bytes to host 2.
+        Two hosts computing 2E6 flops each with host 1 sending 5E6 bytes to host 2.
 
         >>> profile = ParallelJobProfile(name="parallel", cpu=[2e6, 2e6], com=[0, 5e6, 0, 0])
 
-        One host computing 2E6 flop/s with host 1 sending 5E6 bytes to host 2 and host 2 sending 10E6 bytes to host 1.
+        One host computing 2E6 flops with host 1 sending 5E6 bytes to host 2 and host 2 sending 10E6 bytes to host 1.
 
         >>> profile = ParallelJobProfile(name="parallel", cpu=[2e6, 0], com=[0, 5e6, 10e6, 0])
     """
@@ -132,7 +127,7 @@ class ParallelJobProfile(JobProfile):
 
     @property
     def cpu(self) -> Sequence[float]:
-        """The amount of flop/s to be computed on each host."""
+        """The amount of flops to be computed on each host."""
         return self.__cpu
 
     @property
@@ -144,18 +139,17 @@ class ParallelJobProfile(JobProfile):
 class ParallelHomogeneousJobProfile(JobProfile):
     """ Batsim Parallel Homogeneous Job Profile class.
 
-    This class describes a job that performs the same computation
-    and communication on all allocated hosts.
+    This class describes a job that performs the same computation and 
+    communication on all allocated hosts.
 
     Args:
         name: The profile name. Must be unique within a workload.
-        cpu: The amount of flop/s to be computed on each allocated host.
-        com: The amount of bytes to send and receive between each pair of hosts.
+        cpu: The amount of flops to be computed on each allocated host.
+        com: The amount of bytes to be sent and received between each pair of hosts. 
             The loopback communication of each machine defaults to 0.
 
     Raises:
-        ValueError: In case of both `com` and `cpu` arguments are not greater
-            than zero or any of them is negative.
+        ValueError: In case of `com` or `cpu` are not greater than zero.
 
     Examples:
         >>> profile = ParallelHomogeneousJobProfile("name", cpu=10e6, com=5e6)
@@ -181,7 +175,7 @@ class ParallelHomogeneousJobProfile(JobProfile):
 
     @property
     def cpu(self) -> float:
-        """The amount of flop/s to be computed on each host."""
+        """The amount of flops to be computed on each host."""
         return self.__cpu
 
     @property
@@ -193,18 +187,17 @@ class ParallelHomogeneousJobProfile(JobProfile):
 class ParallelHomogeneousTotalJobProfile(JobProfile):
     """ Batsim Parallel Homogeneous Total Job Profile class.
 
-    This class describes a job that equally distributes the total
-    amount of computation and communication between the allocated hosts.
+    This class describes a job that equally distributes the total amount of 
+    computation and communication between the allocated hosts.
 
     Args:
         name: The profile name. Must be unique within a workload.
-        cpu: The total amount of flop/s to be computed over all hosts.
+        cpu: The total amount of flops to be computed on all hosts.
         com: The total amount of bytes to be sent and received on each
             pair of hosts.
 
     Raises:
-        ValueError: In case of both `com` and `cpu` arguments are not greater
-            than zero or any of them is negative.
+        ValueError: In case of `com` or `cpu` are not greater than zero.
 
     Examples:
         >>> profile = ParallelHomogeneousTotalJobProfile("name", cpu=10e6, com=5e6)
@@ -230,7 +223,7 @@ class ParallelHomogeneousTotalJobProfile(JobProfile):
 
     @property
     def cpu(self) -> float:
-        """The total amount of flop/s to be computed."""
+        """The total amount of flops to be computed."""
         return self.__cpu
 
     @property
@@ -246,11 +239,11 @@ class ComposedJobProfile(JobProfile):
 
     Args:
         name: The profile name. Must be unique within a workload.
-        profiles: The profiles name to execute sequentially.
-        repeat: The number of times to repeat the sequence.
+        profiles: The profile names to execute sequentially.
+        repeat: The number of times to repeat the sequence. Defaults to 1.
 
     Raises:
-        ValueError: In case of `repeat` argument is less than 1 or profiles
+        ValueError: In case of `repeat` argument is less than 1 or profiles list 
             is empty.
 
     Examples:
@@ -275,7 +268,7 @@ class ComposedJobProfile(JobProfile):
 
     @property
     def repeat(self) -> int:
-        """The number of times that the profile sequence will repeat."""
+        """The number of times to repeat the profile sequence."""
         return self.__repeat
 
     @property
@@ -287,7 +280,7 @@ class ComposedJobProfile(JobProfile):
 class ParallelHomogeneousPFSJobProfile(JobProfile):
     """ Batsim Homogeneous Job with IO to/from PFS Profile class.
 
-    This class describes a job that represents an IO transfer between
+    This class describes a job that represents an IO transfer between 
     the allocated hosts and a storage resource. 
 
     Args:
@@ -297,9 +290,8 @@ class ParallelHomogeneousPFSJobProfile(JobProfile):
         storage: The storage resource label.
 
     Raises:
-        ValueError: In case of both `bytes_to_read` and `bytes_to_write` arguments
-            are not greater than zero or any of them is negative and `storage` 
-            argument is not a valid string.
+        ValueError: In case of `bytes_to_read` or `bytes_to_write` are not greater 
+            than zero or `storage` is not a valid string.
 
     Examples:
         >>> pfs = ParallelHomogeneousPFSJobProfile("pfs", bytes_to_read=10e6, bytes_to_write=1e6, storage="pfs")
@@ -309,7 +301,7 @@ class ParallelHomogeneousPFSJobProfile(JobProfile):
                  name: str,
                  bytes_to_read: float,
                  bytes_to_write: float,
-                 storage: str = 'pfs') -> None:
+                 storage: str) -> None:
         if bytes_to_read == 0 and bytes_to_write == 0:
             raise ValueError('Expected `bytes_to_read` or `bytes_to_write` '
                              'arguments to be defined.')
@@ -340,7 +332,7 @@ class ParallelHomogeneousPFSJobProfile(JobProfile):
 
     @property
     def storage(self) -> str:
-        """ The storage label """
+        """ The storage label. """
         return self.__storage
 
 
@@ -358,7 +350,7 @@ class DataStagingJobProfile(JobProfile):
 
     Raises:
         ValueError: In case of `nb_bytes` argument is not greater than or equal 
-            to zero and `src` and `dest` arguments are not valid strings.
+            to zero and `src` or `dest` arguments are not valid strings.
 
     Examples:
         >>> data = DataStagingJobProfile("data", nb_bytes=10e6, src="pfs", dest="nfs")
@@ -403,14 +395,7 @@ class DataStagingJobProfile(JobProfile):
 
 
 class Job:
-    """ Batsim Job class.
-
-    This class describes a rigid job.
-
-    Attributes:
-        WORKLOAD_SEPARATOR: A character that separates the workload name from 
-            the job name. By default, Batsim submits the workload along with 
-            the job name in the id field.
+    """ This class describes a rigid job.
 
     Args:
         name: The job name. Must be unique within a workload.
@@ -418,11 +403,11 @@ class Job:
         res: The number of resources requested.
         profile: The job profile to be executed.
         subtime: The submission time.
-        walltime: The execution time limit (maximum execution time).
-        user: The job owner name.
+        walltime: The execution time limit (maximum execution time). 
+            Defaults to None.
+        user: The job owner's name. Defaults to None.
 
     Raises:
-        AssertionError: In case of invalid arguments type.
         ValueError: In case of invalid arguments value.
     """
 
@@ -476,7 +461,7 @@ class Job:
 
     @property
     def id(self) -> str:
-        """ The Job ID """
+        """ The job ID. """
         return self.__id
 
     @property
@@ -516,7 +501,7 @@ class Job:
 
     @property
     def user(self) -> Optional[str]:
-        """ The job owner name. """
+        """ The job owner's name. """
         return self.__user
 
     @property
@@ -526,7 +511,7 @@ class Job:
 
     @property
     def allocation(self) -> Optional[Sequence[int]]:
-        """ The allocated resources id. """
+        """ The allocated resource ids. """
         if self.__allocation:
             return list(self.__allocation)
         else:
@@ -539,17 +524,17 @@ class Job:
 
     @property
     def is_runnable(self) -> bool:
-        """ Whether this job is able to start. """
+        """ Whether this job is able to start or not. """
         return self.__state == JobState.ALLOCATED
 
     @property
     def is_submitted(self) -> bool:
-        """ Whether this job was submitted. """
+        """ Whether this job was submitted or not. """
         return self.__state == JobState.SUBMITTED
 
     @property
     def is_finished(self) -> bool:
-        """ Whether this job has finished. """
+        """ Whether this job has finished or not. """
         states = (JobState.COMPLETED_SUCCESSFULLY,
                   JobState.COMPLETED_FAILED,
                   JobState.COMPLETED_WALLTIME_REACHED,
@@ -559,7 +544,7 @@ class Job:
 
     @property
     def is_rejected(self) -> bool:
-        """ Whether this job was rejected. """
+        """ Whether this job was rejected or not. """
         return self.__state == JobState.REJECTED
 
     @property
@@ -582,7 +567,10 @@ class Job:
 
     @property
     def runtime(self) -> Optional[float]:
-        """ The job runtime. """
+        """ The job runtime. 
+
+        The minimum value is 1 second.
+        """
         if self.stop_time is None or self.start_time is None:
             return None
         else:
@@ -629,24 +617,24 @@ class Job:
         This is an internal method to be used by the simulator only.
 
         Args:
-            hosts: A sequence of hosts id.
+            hosts: A sequence of host ids.
             storage_mapping: The resource ids of the storages to use. 
                 Defaults to None. Required only if the job needs a storage 
                 resource.
 
         Raises:
-            RuntimeError: In case of the job is not in the queue (e.g. job 
-                is runnable or running).
+            RuntimeError: In case of job is not in the queue (e.g. job is 
+                runnable or running).
             ValueError: In case of the number of allocated resources does not 
                 match the number requested or the job needs a storage and 
-                the mapping is not defined nor valid.
+                the mapping is not defined or valid.
         """
         if not self.is_submitted:
             raise RuntimeError('The job is not in the queue anymore, '
-                               'got {}'.format(self.state))
+                               f'got {self.state}')
         if len(hosts) != self.res:
             raise ValueError('Expected `hosts` argument to be a list '
-                             'of length {}, got {}'.format(self.res, hosts))
+                             f'of length {self.res}, got {hosts}')
 
         if isinstance(self.profile, DataStagingJobProfile):
             if not storage_mapping:
@@ -676,22 +664,22 @@ class Job:
         self.__state = JobState.ALLOCATED
 
     def _reject(self) -> None:
-        """ Reject the job. 
+        """ Rejects the job. 
 
         This is an internal method to be used by the simulator only.
 
         Raises:
-            RuntimeError: In case of the job is not in the queue (e.g. job 
+            RuntimeError: In case of job is not in the queue (e.g. job 
                 is runnable or running).
         """
         if not self.is_submitted:
             raise RuntimeError('Cannot reject a job that is not in the '
-                               'queue, got {}'.format(self.state))
+                               f'queue, got {self.state}')
 
         self.__state = JobState.REJECTED
 
     def _submit(self, subtime: float) -> None:
-        """ Submit the job. 
+        """ Submits the job. 
 
         This is an internal method to be used by the simulator only.
 
@@ -699,15 +687,15 @@ class Job:
             subtime: The submission time.
 
         Raises:
-            RuntimeError: In case of the job was already submitted.
-            ValueError: In case of the subtime is invalid.
+            RuntimeError: In case of job was already submitted.
+            ValueError: In case of subtime is invalid.
         """
         if self.state != JobState.UNKNOWN:
             raise RuntimeError('This job was already submitted.'
-                               'got, {}'.format(self.state))
+                               f'got, {self.state}')
         if subtime < 0:
             raise ValueError('Expected `subtime` argument to be greather '
-                             'than zero, got {}'.format(subtime))
+                             f'than zero, got {subtime}')
 
         self.__state = JobState.SUBMITTED
         self.__subtime = float(subtime)
@@ -721,18 +709,17 @@ class Job:
             current_time: The current simulation time.
 
         Raises:
-            RuntimeError: In case of the job is not runnable
-            ValueError: In case of the current time is less than the 
-                submission time.
+            RuntimeError: In case of job is not runnable
+            ValueError: In case of current time is less than the submission time.
         """
         if not self.is_runnable:
             raise RuntimeError('The job cannot start if it is not '
-                               'runnable, got {}'.format(self.state))
+                               f'runnable, got {self.state}')
 
         if current_time < self.subtime:
             raise ValueError('The `current_time` argument cannot be less '
                              'than the job submission time, '
-                             'got {}'.format(current_time))
+                             f'got {current_time}')
 
         self.__start_time = float(current_time)
         self.__state = JobState.RUNNING
@@ -744,16 +731,16 @@ class Job:
 
         Args:
             current_time: The current simulation time.
-            final_state: The last state of the job.
+            final_state: The job final state.
 
         Raises:
             RuntimeError: In case of the job is not running.
-            ValueError: In case of the current time is less than the job start 
+            ValueError: In case of current time is less than the job start 
                 time or the final state is not one of the possible ones.
         """
         if not self.is_running or self.start_time is None:
             raise RuntimeError('The job cannot be finished if it is not running'
-                               'got, {}'.format(self.state))
+                               f'got, {self.state}')
 
         valid_states = (JobState.COMPLETED_SUCCESSFULLY,
                         JobState.COMPLETED_FAILED,
@@ -762,11 +749,11 @@ class Job:
 
         if not final_state in valid_states:
             raise ValueError('Expected `final_state` argument to be valid, '
-                             'got {}'.format(final_state))
+                             f'got {final_state}')
 
         if current_time < self.start_time:
             raise ValueError('Expected `current_time` argument to be greather '
-                             'than start_time, got {}'.format(current_time))
+                             f'than start_time, got {current_time}')
 
         self.__stop_time = float(current_time)
         self.__state = final_state

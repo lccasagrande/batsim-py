@@ -1,5 +1,6 @@
 
 from abc import ABC, abstractmethod
+from enum import Enum
 from itertools import groupby
 import time as tm
 
@@ -24,7 +25,7 @@ class Monitor(ABC):
         simulator: The simulator handler.
 
     Raises:
-        RuntimeError: In case of the simulation is already running.
+        RuntimeError: In case of simulation is already running.
     """
 
     def __init__(self, simulator: SimulatorHandler):
@@ -36,34 +37,34 @@ class Monitor(ABC):
     @property
     @abstractmethod
     def info(self) -> dict:
-        """ Get monitor info about the simulation.
+        """ Get all the collected statistics.
 
         Returns:
-            A dict with all the information collected.
+            A dict containing statistics.
         """
         raise NotImplementedError
 
     @abstractmethod
     def to_csv(self, fn: str) -> None:
-        """ Dump info a csv file. """
+        """ Dump info to a CSV file. """
         raise NotImplementedError
 
     @abstractmethod
     def to_dataframe(self) -> pd.DataFrame:
-        """ Return a Dataframe object. """
+        """ Convert info into a DataFrame. """
         raise NotImplementedError
 
 
 class JobMonitor(Monitor):
-    """ Simulation Job Monitor class.
+    """ Simulator Job Monitor class.
 
-    This monitor collects statistics from each job submitted to the system.
+    This monitor collects statistics about each submitted job.
 
     Args:
         simulator: The simulator handler.
 
     Raises:
-        RuntimeError: In case of the simulation is already running.
+        RuntimeError: In case of simulation is already running.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -94,19 +95,19 @@ class JobMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation.
+        """ Get all the collected statistics.
 
         Returns:
-            A dict with all the information collected.
+            A dict containing statistics.
         """
         return self.__info
 
     def to_csv(self, fn: str) -> None:
-        """ Dump info a csv file. """
+        """ Dump info to a CSV file. """
         self.to_dataframe().to_csv(fn, index=False)
 
     def to_dataframe(self) -> pd.DataFrame:
-        """ Return a Dataframe object. """
+        """ Convert info into a DataFrame. """
         return pd.DataFrame.from_dict(self.__info)
 
     def on_simulation_begins(self, sender) -> None:
@@ -134,15 +135,15 @@ class JobMonitor(Monitor):
 
 
 class SchedulerMonitor(Monitor):
-    """ Simulation Scheduler Monitor class.
+    """ Simulator Scheduler Monitor class.
 
-    This monitor collects statistics about the scheduler performance.
+    This monitor collects statistics about scheduler performance.
 
     Args:
         simulator: The simulator handler.
 
     Raises:
-        RuntimeError: In case of the simulation is already running.
+        RuntimeError: In case of simulation is already running.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -175,19 +176,19 @@ class SchedulerMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation.
+        """ Get all the collected statistics.
 
         Returns:
-            A dict with all the information collected.
+            A dict containing statistics.
         """
         return self.__info
 
     def to_csv(self, fn: str) -> None:
-        """ Dump info a csv file. """
+        """ Dump info to a CSV file. """
         self.to_dataframe().to_csv(fn, index=False)
 
     def to_dataframe(self) -> pd.DataFrame:
-        """ Return a Dataframe object. """
+        """ Convert info into a DataFrame. """
         return pd.DataFrame.from_dict(self.__info, orient='index').T
 
     def on_simulation_begins(self, sender: SimulatorHandler) -> None:
@@ -236,17 +237,17 @@ class SchedulerMonitor(Monitor):
 
 
 class HostMonitor(Monitor):
-    """ Simulation Host Monitor class.
+    """ Simulator Host Monitor class.
 
-    This monitor collects statistics about the time each host spent on each
-    of its possible states. Moreover, it computes the total energy consumed
-    and the total number of state switches.
+    This monitor collects statistics about the time each host spent on each 
+    of its possible states. Moreover, it computes the total energy consumed 
+    and the total number of host state switches.
 
     Args:
         simulator: The simulator handler.
 
     Raises:
-        RuntimeError: In case of the simulation is already running.
+        RuntimeError: In case of simulation is already running.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -275,19 +276,19 @@ class HostMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation.
+        """ Get all the collected statistics.
 
         Returns:
-            A dict with all the information collected.
+            A dict containing statistics.
         """
         return self.__info
 
     def to_csv(self, fn: str) -> None:
-        """ Dump info a csv file. """
+        """ Dump info to a CSV file. """
         self.to_dataframe().to_csv(fn, index=False)
 
     def to_dataframe(self) -> pd.DataFrame:
-        """ Return a Dataframe object. """
+        """ Convert info into a DataFrame. """
         return pd.DataFrame.from_dict(self.__info, orient='index').T
 
     def on_simulation_begins(self, sender: SimulatorHandler) -> None:
@@ -345,16 +346,16 @@ class HostMonitor(Monitor):
 
 
 class SimulationMonitor(Monitor):
-    """ Simulation Monitor class.
+    """ Simulator Monitor class.
 
-    This monitor collects statistics about the simulation. It merges the
-    statistics from the Scheduler Monitor with the Host Monitor.
+    This monitor collects statistics about the simulation, which includes 
+    statistics about the scheduler performance and about each job. 
 
     Args:
         simulator: The simulator handler.
 
     Raises:
-        RuntimeError: In case of the simulation is already running.
+        RuntimeError: In case of simulation is already running.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -371,21 +372,21 @@ class SimulationMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation.
+        """ Get all the collected statistics.
 
         Returns:
-            A dict with all the information collected.
+            A dict containing statistics.
         """
         info = dict(self.__sched_monitor.info, **self.__hosts_monitor.info)
         info['simulation_time'] = self.__simulation_time
         return info
 
     def to_csv(self, fn: str) -> None:
-        """ Dump info a csv file. """
+        """ Dump info to a CSV file. """
         self.to_dataframe().to_csv(fn, index=False)
 
     def to_dataframe(self) -> pd.DataFrame:
-        """ Return a Dataframe object. """
+        """ Convert info into a DataFrame. """
         return pd.DataFrame.from_dict(self.info, orient='index').T
 
     def on_simulation_begins(self, sender: SimulatorHandler) -> None:
@@ -396,16 +397,15 @@ class SimulationMonitor(Monitor):
 
 
 class HostStateSwitchMonitor(Monitor):
-    """ Simulation Host State Monitor class.
+    """ Simulator Host State Monitor class.
 
-    This monitor collects statistics about the host state switches. It'll
-    record the number of hosts on each state when any host switches its state.
+    This monitor collects statistics about host state switches.
 
     Args:
         simulator: The simulator handler.
 
     Raises:
-        RuntimeError: In case of the simulation is already running.
+        RuntimeError: In case of simulation is already running.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -429,19 +429,19 @@ class HostStateSwitchMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation.
+        """ Get all the collected statistics.
 
         Returns:
-            A dict with all the information collected.
+            A dict containing statistics.
         """
         return self.__info
 
     def to_csv(self, fn: str) -> None:
-        """ Dump info a csv file. """
+        """ Dump info to a CSV file. """
         self.to_dataframe().to_csv(fn, index=False)
 
     def to_dataframe(self) -> pd.DataFrame:
-        """ Return a Dataframe object. """
+        """ Convert info into a DataFrame. """
         return pd.DataFrame.from_dict(self.__info)
 
     def on_simulation_begins(self, sender: SimulatorHandler) -> None:
@@ -489,17 +489,17 @@ class HostStateSwitchMonitor(Monitor):
         else:
             raise NotImplementedError
 
-class HostPowerStateSwitchMonitor(Monitor):
-    """ Simulation Host Power State Monitor class.
 
-    This monitor collects statistics about the host power state switches. It'll
-    record an entry when a host switches its power state.
+class HostPowerStateSwitchMonitor(Monitor):
+    """ Simulator Host Power State Monitor class.
+
+    This monitor collects statistics about host power state switches.
 
     Args:
         simulator: The simulator handler.
 
     Raises:
-        RuntimeError: In case of the simulation is already running.
+        RuntimeError: In case of simulation is already running.
     """
 
     def __init__(self, simulator: SimulatorHandler) -> None:
@@ -518,19 +518,19 @@ class HostPowerStateSwitchMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation.
+        """ Get all the collected statistics.
 
         Returns:
-            A dict with all the information collected.
+            A dict containing statistics.
         """
         return self.__info
 
     def to_csv(self, fn: str) -> None:
-        """ Dump info a csv file. """
+        """ Dump info to a CSV file. """
         self.to_dataframe().to_csv(fn, index=False)
 
     def to_dataframe(self) -> pd.DataFrame:
-        """ Return a Dataframe object. """
+        """ Convert info into a DataFrame. """
         return pd.DataFrame.from_dict(self.__info)
 
     def on_simulation_begins(self, sender: SimulatorHandler) -> None:
@@ -576,27 +576,24 @@ class HostPowerStateSwitchMonitor(Monitor):
                 self.__info['new_pstate'].append(new_pstate_id)
 
 
-class ConsumedEnergyMonitor(Monitor):
-    """ Simulation Energy Monitor class.
+class EnergyEventType(Enum):
+    """ Energy event types used in the ConsumedEnergyMonitor. """
+    POWER_STATE_TYPE = "p"
+    JOB_STARTED_TYPE = "s"
+    JOB_COMPLETED_TYPE = "e"
 
-    This monitor collects energy statistics. It'll record the platform consumed
-    energy when a job starts/finish or a host changes its state/power state.
+
+class ConsumedEnergyMonitor(Monitor):
+    """ Simulator Energy Monitor class.
+
+    This monitor collects energy statistics.
 
     Args:
         simulator: The simulator handler.
 
     Raises:
-        RuntimeError: In case of the simulation is already running.
-
-    Attributes:
-        POWER_STATE_TYPE: A signal that a power state switch ocurred.
-        JOB_STARTED_TYPE: A signal that a job started.
-        JOB_COMPLETED_TYPE: A signal that a job finished.
+        RuntimeError: In case of simulation is already running.
     """
-
-    POWER_STATE_TYPE = "p"
-    JOB_STARTED_TYPE = "s"
-    JOB_COMPLETED_TYPE = "e"
 
     def __init__(self, simulator: SimulatorHandler) -> None:
         super().__init__(simulator)
@@ -623,19 +620,19 @@ class ConsumedEnergyMonitor(Monitor):
 
     @property
     def info(self) -> dict:
-        """ Get monitor info about the simulation.
+        """ Get all the collected statistics.
 
         Returns:
-            A dict with all the information collected.
+            A dict containing statistics.
         """
         return self.__info
 
     def to_csv(self, fn: str) -> None:
-        """ Dump info a csv file. """
+        """ Dump info to a CSV file. """
         self.to_dataframe().to_csv(fn, index=False)
 
     def to_dataframe(self) -> pd.DataFrame:
-        """ Return a Dataframe object. """
+        """ Convert info into a DataFrame. """
         return pd.DataFrame.from_dict(self.__info)
 
     def on_simulation_begins(self, sender: SimulatorHandler) -> None:
@@ -649,15 +646,15 @@ class ConsumedEnergyMonitor(Monitor):
         }
 
     def on_job_started(self, sender: Job) -> None:
-        self.update_info(event_type=self.JOB_STARTED_TYPE)
+        self.update_info(event_type=EnergyEventType.JOB_STARTED_TYPE)
 
     def on_job_completed(self, sender: Job) -> None:
-        self.update_info(event_type=self.JOB_COMPLETED_TYPE)
+        self.update_info(event_type=EnergyEventType.JOB_COMPLETED_TYPE)
 
     def on_host_state_changed(self, sender: Host) -> None:
-        self.update_info(event_type=self.POWER_STATE_TYPE)
+        self.update_info(event_type=EnergyEventType.POWER_STATE_TYPE)
 
-    def update_info(self, event_type: str) -> None:
+    def update_info(self, event_type: EnergyEventType) -> None:
         assert self.simulator and self.simulator.platform
         consumed_energy = wattmin = epower = 0.
         for h in self.simulator.platform.hosts:
@@ -675,6 +672,6 @@ class ConsumedEnergyMonitor(Monitor):
         consumed_energy += self.__info['energy'][-1] if self.__info['energy'] else 0
         self.__info["time"].append(self.simulator.current_time)
         self.__info["energy"].append(consumed_energy)
-        self.__info["event_type"].append(event_type)
+        self.__info["event_type"].append(event_type.value)
         self.__info["wattmin"].append(wattmin)
         self.__info["epower"].append(epower)
