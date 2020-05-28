@@ -29,6 +29,7 @@ setup(
     author='lccasagrande',
     author_email='lcamelocasagrande@gmail.com',
     url='https://github.com/lccasagrande/batsim-py',
+    download_url=f'https://github.com/lccasagrande/batsim-py/archive/v{__version__}.tar.gz',
     project_urls={
         'Source': 'https://github.com/lccasagrande/batsim-py',
         'Documentation': 'https://lccasagrande.github.io/batsim-py/',
