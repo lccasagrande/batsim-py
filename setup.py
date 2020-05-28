@@ -31,7 +31,6 @@ setup(
     url='https://github.com/lccasagrande/batsim-py',
     download_url=f'https://github.com/lccasagrande/batsim-py/archive/v{__version__}.tar.gz',
     project_urls={
-        'Source': 'https://github.com/lccasagrande/batsim-py',
         'Documentation': 'https://lccasagrande.github.io/batsim-py/',
         'Tracker': 'https://github.com/lccasagrande/batsim-py/issues',
     },
@@ -49,7 +48,6 @@ setup(
     },
     packages=find_packages(),
     package_dir={'batsim_py': 'batsim_py'},
-    zip_safe=False,
     keywords=["Cluster", "Scheduler", "Resource and Job Management"],
     classifiers=[
         "Programming Language :: Python :: 3",
