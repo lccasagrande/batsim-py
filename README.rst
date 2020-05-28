@@ -1,5 +1,5 @@
-Batsim-py |build| |coverage| |doc| |license|
-==============================================
+Batsim-py |build| |coverage| |doc| |license| |last-release|
+===========================================================
 
 `Batsim <https://batsim.readthedocs.io/en/latest/>`_ is a scientific simulator commonly used to 
 evaluate Resource and Job Management System (RJMS) policies. **Batsim-py allows using Batsim from Python 3**.
@@ -92,3 +92,8 @@ The API documentation provides information on classes and modules in the Batsim-
 .. |license| image:: https://img.shields.io/github/license/lccasagrande/batsim-py
     :alt: GitHub
     :target: https://github.com/lccasagrande/batsim-py/blob/master/LICENSE
+
+
+.. |last-release| image:: https://img.shields.io/github/v/release/lccasagrande/batsim-py
+    :alt: GitHub release (latest by date)
+    :target: https://github.com/lccasagrande/batsim-py/releases/tag/v1.0.0
