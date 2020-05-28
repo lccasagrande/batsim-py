@@ -12,6 +12,34 @@ Main Features
 - Simple to be extended
 - Fully documented
 
+Installation
+------------
+
+1. Make sure you have Batsim v3.1.0 installed and working. Otherwise, you must follow `Batsim installation <https://batsim.readthedocs.io/en/latest/installation.html>`_ instructions. Check the version of Batsim with:
+
+.. code-block:: bash
+
+    batsim --version
+
+2. Install batsim-py from PyPI:
+
+.. code-block:: bash
+
+    pip install batsim-py
+
+3. [Optional] If you prefer, you can install batsim-py and run tests with:
+
+.. code-block:: bash
+
+    git clone https://github.com/lccasagrande/batsim-py.git
+    cd batsim-py
+    pip install -e .
+    python setup.py test
+
+4. [Optional] Go to the `Tutorials`_  section to find examples.
+
+For further information, check the `API Documentation`_ to understand how to customize the simulation behavior.
+
 Simulation Inputs
 -----------------
 To evaluate the behavior of a RJMS policy, you must provide:
@@ -20,38 +48,6 @@ To evaluate the behavior of a RJMS policy, you must provide:
 - A `workload <https://batsim.readthedocs.io/en/latest/input-workload.html>`_ (JSON): defines the jobs to be submitted to the system and their execution profiles. 
 
 The expected format of both files is the same adopted in Batsim. Check `Batsim docs <https://batsim.readthedocs.io/en/latest/>`_ to get further information on how to define platforms and workloads.
-
-Quickstart 
-------------
-
-1. Make sure you have Batsim v3.1.0 installed and working. Otherwise, you must follow `Batsim installation <https://batsim.readthedocs.io/en/latest/installation.html>`_ instructions.
-
-.. code-block:: bash
-
-    batsim --version
-
-2. Clone the repository and navigate to the downloaded folder:
-
-.. code-block:: bash
-
-    git clone https://github.com/lccasagrande/batsim-py.git
-    cd batsim-py
-
-3. Install required packages: 
-
-.. code-block:: bash
-
-    pip install -e .
-
-4. Run tests:
-
-.. code-block:: bash
-
-    python setup.py test
-
-5. [Optional] Go to the `Tutorials`_  section and run an example.
-
-For further information, check the `API Documentation`_ to understand how to customize the simulation behavior.
 
 Tutorials
 ---------
