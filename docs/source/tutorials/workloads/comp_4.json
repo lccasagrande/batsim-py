@@ -7,7 +7,7 @@
             "subtime": 1,
             "walltime": 240,
             "profile": "120",
-            "user": "0"
+            "user_id": 0
         },
         {
             "id": "2",
@@ -15,7 +15,7 @@
             "subtime": 5,
             "walltime": 80,
             "profile": "80",
-            "user": "1"
+            "user_id": 1
         },
         {
             "id": "3",
@@ -23,7 +23,7 @@
             "subtime": 10,
             "walltime": 240,
             "profile": "120",
-            "user": "1"
+            "user_id": 2
         },
         {
             "id": "4",
@@ -31,7 +31,7 @@
             "subtime": 10,
             "walltime": 140,
             "profile": "80",
-            "user": "2"
+            "user_id": 3
         }
     ],
     "profiles": {

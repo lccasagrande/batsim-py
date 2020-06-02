@@ -183,7 +183,7 @@ class TestJobSubmittedBatsimEvent:
         assert isinstance(e.job.profile, JobProfile)
         assert e.job.subtime == 10.0
         assert e.job.walltime == 12.0
-        assert e.job.user is None
+        assert e.job.user_id is None
 
     def test_job_delay_submitted_event(self):
         event = BatsimEventAPI.get_job_submitted(10,
@@ -476,16 +476,16 @@ class TestKillJobBatsimRequest:
 
 class TestRegisterJobBatsimRequest:
     def test_request(self):
-        j = Job("n", "w", 1, DelayJobProfile("p", 10), 10.1, 10, "user")
+        j = Job("n", "w", 1, DelayJobProfile("p", 10), 10.1, 10, 1)
         r = RegisterJobBatsimRequest(10, j)
         assert r.timestamp == 10
         assert r.type == BatsimRequestType.REGISTER_JOB
         assert r.job == j
 
     def test_to_json(self):
-        j = Job("n", "w", 1, DelayJobProfile("p", 10), 10.1, 10, "user")
+        j = Job("n", "w", 1, DelayJobProfile("p", 10), 10.1, 10, 1)
         jsn = BatsimRequestAPI.get_register_job(
-            10, j.name, j.workload, j.profile.name, j.res, j.walltime, user=j.user)
+            10, j.name, j.workload, j.profile.name, j.res, j.walltime, user_id=j.user_id)
         r = RegisterJobBatsimRequest(10, j)
 
         assert r.to_json() == jsn

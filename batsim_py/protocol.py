@@ -527,7 +527,7 @@ class JobSubmittedBatsimEvent(BatsimEvent):
             profile=profile,
             subtime=timestamp,
             walltime=data["job"].get("walltime", None),
-            user=data["job"].get("user", None),
+            user_id=data["job"].get("user_id", None),
         )
 
     @property
@@ -860,8 +860,8 @@ class RegisterJobBatsimRequest(BatsimRequest):
         if self.job.walltime:
             d['job']['walltime'] = self.job.walltime
 
-        if self.job.user:
-            d['job']['user'] = self.job.user
+        if self.job.user_id:
+            d['job']['user_id'] = self.job.user_id
 
         return d
 

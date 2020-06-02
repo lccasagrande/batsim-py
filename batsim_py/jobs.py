@@ -405,7 +405,7 @@ class Job:
         subtime: The submission time.
         walltime: The execution time limit (maximum execution time). 
             Defaults to None.
-        user: The job owner's name. Defaults to None.
+        user_id: The user id. Defaults to None.
 
     Raises:
         ValueError: In case of invalid arguments value.
@@ -420,7 +420,7 @@ class Job:
                  profile: JobProfile,
                  subtime: float,
                  walltime: Optional[float] = None,
-                 user: Optional[str] = None) -> None:
+                 user_id: Optional[int] = None) -> None:
 
         if not name:
             raise ValueError('Expected `name` argument to be a '
@@ -448,7 +448,7 @@ class Job:
         self.__profile = profile
         self.__subtime = float(subtime)
         self.__walltime = walltime
-        self.__user = user
+        self.__user_id = user_id
         self.__storage_mapping: Optional[Dict[str, int]] = None
 
         self.__state: JobState = JobState.UNKNOWN
@@ -500,9 +500,9 @@ class Job:
         return self.__walltime
 
     @property
-    def user(self) -> Optional[str]:
-        """ The job owner's name. """
-        return self.__user
+    def user_id(self) -> Optional[int]:
+        """ The user id. """
+        return self.__user_id
 
     @property
     def state(self) -> JobState:

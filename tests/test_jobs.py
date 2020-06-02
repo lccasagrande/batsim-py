@@ -227,12 +227,12 @@ class TestJob:
         name, workload, res, subtime = "1", "w", 2, 1
         profile = jobs.DelayJobProfile("p", 100)
 
-        j = jobs.Job(name, workload, res, profile, subtime)
+        j = jobs.Job(name, workload, res, profile, subtime, user_id=22)
 
         assert j.name == name and j.workload == j.workload
         assert j.res == res and j.profile == profile
         assert j.subtime == subtime and j.state == jobs.JobState.UNKNOWN
-        assert j.walltime is None and j.user is None and j.allocation is None
+        assert j.walltime is None and j.user_id == 22 and j.allocation is None
         assert j.start_time is None and j.stop_time is None
 
     def test_repr(self):
