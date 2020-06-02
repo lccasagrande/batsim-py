@@ -185,6 +185,19 @@ class TestJobSubmittedBatsimEvent:
         assert e.job.walltime == 12.0
         assert e.job.user_id is None
 
+    def test_event_with_metadata(self):
+        event = BatsimEventAPI.get_job_submitted(
+            10,
+            "dyn!my_new_job",
+            "delay_10s",
+            1,
+            12.0,
+            BatsimJobProfileAPI.get_delay(10),
+            extra_property=True)
+        e = JobSubmittedBatsimEvent(10, event["data"])
+
+        assert e.job.metadata.get('extra_property', False) == True
+
     def test_job_delay_submitted_event(self):
         event = BatsimEventAPI.get_job_submitted(10,
                                                  "dyn!my_new_job",

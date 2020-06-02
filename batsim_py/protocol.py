@@ -529,6 +529,9 @@ class JobSubmittedBatsimEvent(BatsimEvent):
             walltime=data["job"].get("walltime", None),
             user_id=data["job"].get("user_id", None),
         )
+        for k, v in data['job'].items():
+            if k not in ('profile', 'res', 'id', 'walltime'):
+                self.__job.metadata[k] = v
 
     @property
     def job(self) -> Job:

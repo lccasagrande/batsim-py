@@ -94,7 +94,8 @@ class BatsimEventAPI:
             profile_name: str = "p",
             res: int = 1,
             walltime: Optional[float] = None,
-            profile: dict = None) -> dict:
+            profile: dict = None,
+            **job_kwargs) -> dict:
         d: dict = {
             "timestamp": timestamp,
             "type": "JOB_SUBMITTED",
@@ -109,6 +110,10 @@ class BatsimEventAPI:
         }
         if walltime is not None:
             d["data"]["job"]["walltime"] = walltime
+
+        for k, v in job_kwargs.items():
+            d['data']['job'][k] = v
+
         d["data"]["profile"] = profile or BatsimJobProfileAPI.get_delay()
         return d
 

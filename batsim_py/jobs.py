@@ -450,6 +450,7 @@ class Job:
         self.__walltime = walltime
         self.__user_id = user_id
         self.__storage_mapping: Optional[Dict[str, int]] = None
+        self.metadata: dict = {}
 
         self.__state: JobState = JobState.UNKNOWN
         self.__allocation: Optional[Sequence[int]] = None
