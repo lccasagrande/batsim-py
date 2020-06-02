@@ -59,16 +59,16 @@ class Reservation:
     """ Describes the reservation of a host.
 
     Args:
-        host_id: The host id.
+        host: The host.
         release_time: The remaining time to the host be released.
 
     Attributes:
-        host_id: The host id.
+        host: The host.
         release_time: The remaining time to the host be released.
     """
 
-    def __init__(self, host_id: int, release_time: float) -> None:
-        self.host_id = host_id
+    def __init__(self, host: Host, release_time: float) -> None:
+        self.host = host
         self.release_time = release_time
 
 
@@ -154,7 +154,7 @@ class SimulatorHandler:
                         job_release_t = np.inf
 
                     release_t = max(release_t, job_release_t)
-                yield Reservation(host.id, release_t)
+                yield Reservation(host, release_t)
 
     @property
     def platform(self) -> Platform:

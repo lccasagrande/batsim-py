@@ -20,7 +20,6 @@ from batsim_py.protocol import SimulationBeginsBatsimEvent
 from batsim_py.protocol import SimulationEndsBatsimEvent
 from batsim_py.resources import Host, PowerStateType
 from batsim_py.simulator import SimulatorHandler
-from batsim_py.simulator import Reservation
 
 from .utils import BatsimEventAPI
 from .utils import BatsimJobProfileAPI
@@ -438,8 +437,8 @@ class TestSimulatorHandler:
 
         agenda = list(s.agenda)
         assert s.current_time == 10
-        assert agenda[0].host_id == 0 and agenda[0].release_time == e.job.walltime - 10
-        assert agenda[1].host_id == 1 and agenda[1].release_time == 0
+        assert agenda[0].host.id == 0 and agenda[0].release_time == e.job.walltime - 10
+        assert agenda[1].host.id == 1 and agenda[1].release_time == 0
 
     def test_agenda_with_job_without_walltime(self, mocker):
         s = SimulatorHandler()
@@ -460,8 +459,8 @@ class TestSimulatorHandler:
         agenda = list(s.agenda)
 
         assert s.current_time == 10
-        assert agenda[0].host_id == 0 and agenda[0].release_time == np.inf
-        assert agenda[1].host_id == 1 and agenda[1].release_time == 0
+        assert agenda[0].host.id == 0 and agenda[0].release_time == np.inf
+        assert agenda[1].host.id == 1 and agenda[1].release_time == 0
 
     def test_agenda_with_multiple_jobs_in_one_host(self, mocker):
         s = SimulatorHandler()
@@ -486,8 +485,8 @@ class TestSimulatorHandler:
 
         agenda = list(s.agenda)
         assert s.current_time == 10
-        assert agenda[0].host_id == 0 and agenda[0].release_time == e2.job.walltime-10
-        assert agenda[1].host_id == 1 and agenda[1].release_time ==0
+        assert agenda[0].host.id == 0 and agenda[0].release_time == e2.job.walltime-10
+        assert agenda[1].host.id == 1 and agenda[1].release_time == 0
 
     def test_allocate_not_running_must_raise(self):
         s = SimulatorHandler()
