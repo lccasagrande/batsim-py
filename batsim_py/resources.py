@@ -10,12 +10,12 @@ from typing import List
 class HostState(Enum):
     """ Batsim Host State Types """
 
-    IDLE = 0
-    SWITCHING_ON = 1
-    SLEEPING = 2
-    SWITCHING_OFF = 3
-    COMPUTING = 4
-    UNAVAILABLE = 5
+    UNAVAILABLE = 0
+    SLEEPING = 1
+    SWITCHING_OFF = 2
+    SWITCHING_ON = 3
+    IDLE = 4
+    COMPUTING = 5
 
     def __str__(self) -> str:
         return self.name
@@ -30,9 +30,9 @@ class StorageState(Enum):
 class PowerStateType(Enum):
     """ Batsim Host Power State Types """
     SLEEP = 0
-    COMPUTATION = 1
+    SWITCHING_OFF = 1
     SWITCHING_ON = 2
-    SWITCHING_OFF = 3
+    COMPUTATION = 3
 
     def __str__(self) -> str:
         return self.name
