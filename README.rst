@@ -96,4 +96,4 @@ The API documentation provides information on classes and modules in the Batsim-
 
 .. |last-release| image:: https://img.shields.io/github/v/release/lccasagrande/batsim-py
     :alt: GitHub release (latest by date)
-    :target: https://github.com/lccasagrande/batsim-py/releases/tag/v1.0.0
+    :target: https://github.com/lccasagrande/batsim-py/releases/latest
