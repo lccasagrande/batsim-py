@@ -419,9 +419,11 @@ class TestSimulatorHandler:
         s = SimulatorHandler()
         assert not list(s.agenda)
 
-    def test_agenda(self, mocker):
+    def test_agenda_with_job_not_running(self, mocker):
         s = SimulatorHandler()
         s.start("p", "w")
+
+        s.switch_off([h.id for h in s.platform.hosts])
 
         e = BatsimEventAPI.get_job_submitted(res=1, walltime=100)
         e = JobSubmittedBatsimEvent(0, e['data'])
@@ -437,8 +439,7 @@ class TestSimulatorHandler:
 
         agenda = list(s.agenda)
         assert s.current_time == 10
-        assert agenda[0].host.id == 0 and agenda[0].release_time == e.job.walltime - 10
-        assert agenda[1].host.id == 1 and agenda[1].release_time == 0
+        assert agenda[0].host.id == 0 and agenda[0].release_time == e.job.walltime
 
     def test_agenda_with_job_without_walltime(self, mocker):
         s = SimulatorHandler()
