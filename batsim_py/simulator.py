@@ -148,7 +148,10 @@ class SimulatorHandler:
                 for job_id in host.jobs:
                     job = next(j for j in self.__jobs if j.id == job_id)
                     if job.walltime:
-                        runtime = self.current_time - job.subtime
+                        runtime = 0.
+                        if job.is_running:
+                            assert job.start_time
+                            runtime = self.current_time - job.start_time
                         job_release_t = job.walltime - runtime
                     else:
                         job_release_t = np.inf
