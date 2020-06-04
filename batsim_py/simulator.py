@@ -150,7 +150,7 @@ class SimulatorHandler:
                     if job.walltime:
                         runtime = 0.
                         if job.is_running:
-                            assert job.start_time
+                            assert job.start_time is not None
                             runtime = self.current_time - job.start_time
                         job_release_t = job.walltime - runtime
                     else:
