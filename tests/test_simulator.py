@@ -50,6 +50,16 @@ class TestSimulatorHandler:
 
         mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
 
+    def test_current_time_must_truncate(self, mocker):
+        s = SimulatorHandler()
+        s.start("p", "w")
+
+        e = BatsimEventAPI.get_notify_no_more_static_job_to_submit(10)
+        msg = BatsimMessage(10.999, [NotifyBatsimEvent(10.999, e['data'])])
+        mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
+        s.proceed_time()
+        assert s.current_time == 10.
+
     def test_batsim_not_found_must_raise(self, mocker):
         mocker.patch("batsim_py.simulator.which", return_value=None)
         with pytest.raises(ImportError) as excinfo:

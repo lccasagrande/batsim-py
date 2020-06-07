@@ -1,5 +1,6 @@
 import atexit
 from collections import defaultdict
+import decimal
 from shutil import which
 import signal
 import subprocess
@@ -172,7 +173,12 @@ class SimulatorHandler:
     @property
     def current_time(self) -> float:
         """ The current simulation time. """
-        return float(f"{self.__current_time:.1f}")
+        t = self.__current_time
+
+        # Truncate:
+        t = float(decimal.Decimal(t).quantize(decimal.Decimal('1.'),
+                                              rounding=decimal.ROUND_DOWN))
+        return t
 
     @property
     def is_submitter_finished(self) -> bool:
@@ -280,7 +286,7 @@ class SimulatorHandler:
             self.__callbacks.clear()
             self.__dispatch_event(SimulatorEvent.SIMULATION_ENDS, self)
 
-    def proceed_time(self, time: float = 0) -> None:
+    def proceed_time(self, time: int = 0) -> None:
         """ Proceed the simulation process to the next event or time.
 
         Args:
