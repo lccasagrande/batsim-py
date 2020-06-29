@@ -55,10 +55,10 @@ class TestSimulatorHandler:
         s.start("p", "w")
 
         e = BatsimEventAPI.get_notify_no_more_static_job_to_submit(10)
-        msg = BatsimMessage(10.999, [NotifyBatsimEvent(10.999, e['data'])])
+        msg = BatsimMessage(10.00199, [NotifyBatsimEvent(10.00199, e['data'])])
         mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
         s.proceed_time()
-        assert s.current_time == 10.
+        assert s.current_time == 10.001
 
     def test_batsim_not_found_must_raise(self, mocker):
         mocker.patch("batsim_py.simulator.which", return_value=None)
@@ -277,7 +277,8 @@ class TestSimulatorHandler:
         msg = BatsimMessage(50, [SimulationEndsBatsimEvent(50)])
         mocker.patch.object(protocol.NetworkHandler, 'recv', return_value=msg)
         s.proceed_time(50)
-        simulator.SimulatorHandler.set_callback.assert_called_once()
+        simulator.SimulatorHandler.set_callback.assert_called_once_with(
+            50, mocker.ANY)
 
     def test_proceed_time_with_submitter_finished_without_external_events_must_not_allow_callback(self, mocker):
         s = SimulatorHandler()
@@ -382,6 +383,26 @@ class TestSimulatorHandler:
             s.set_callback(10, foo)
 
         assert "running" in str(excinfo.value)
+
+    def test_callback_must_truncate_time(self, mocker):
+        def x(a): return
+
+        mocker.patch("batsim_py.simulator.CallMeLaterBatsimRequest")
+
+        s = SimulatorHandler()
+        s.start("p", "w")
+        s.set_callback(0.001999, x)
+        simulator.CallMeLaterBatsimRequest.assert_called_once_with(  # type: ignore
+            0, 0.001)
+
+    def test_callback_must_truncate_time_and_raise(self, mocker):
+        def x(a): return
+        s = SimulatorHandler()
+        s.start("p", "w")
+        with pytest.raises(ValueError) as excinfo:
+            s.set_callback(0.000999, x)
+
+        assert "at" in str(excinfo.value)
 
     def test_callback_invalid_time_must_raise(self, mocker):
         def foo(p): pass
