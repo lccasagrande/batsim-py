@@ -13,7 +13,6 @@ from typing import List
 from typing import DefaultDict
 from typing import Optional
 from typing import Iterator
-from typing import NamedTuple
 from typing import overload
 from typing import Literal
 
@@ -89,6 +88,7 @@ class SimulatorHandler:
     Examples:
         >>> handler = SimulatorHandler("tcp://localhost:28000")
     """
+    __TIME_PRECISION = 0.001
 
     def __init__(self, tcp_address: Optional[str] = None) -> None:
         if which('batsim') is None:
@@ -176,8 +176,8 @@ class SimulatorHandler:
         t = self.__current_time
 
         # Truncate:
-        t = float(decimal.Decimal(t).quantize(decimal.Decimal('1.'),
-                                              rounding=decimal.ROUND_DOWN))
+        exp = decimal.Decimal(str(self.__TIME_PRECISION))
+        t = float(decimal.Decimal(t).quantize(exp, decimal.ROUND_DOWN))
         return t
 
     @property
@@ -286,16 +286,16 @@ class SimulatorHandler:
             self.__callbacks.clear()
             self.__dispatch_event(SimulatorEvent.SIMULATION_ENDS, self)
 
-    def proceed_time(self, time: int = 0) -> None:
+    def proceed_time(self, time: float = 0) -> None:
         """ Proceed the simulation process to the next event or time.
 
         Args:
-            time: The time to proceed. Defaults to 0. It's possible to proceed
-                directly to the next event or to a specific time. If the time is
-                unset (equals 0), the simulation will proceed to the next 
-                event. Otherwise, if a time 't' is provided, the simulation will 
-                proceed directly to it and only events that occur before 't' will 
-                be dispatched. 
+            time: The time to proceed (min is 0.001 sec). Defaults to 0. It's 
+                possible to proceed directly to the next event or to a specific 
+                time. If the time is unset (equals 0), the simulation will proceed 
+                to the next event. Otherwise, if a time 't' is provided, the 
+                simulation will proceed directly to it and only events that occur 
+                before 't' will be dispatched. 
 
         Raises:
             ValueError: In case of invalid arguments value.
@@ -363,7 +363,7 @@ class SimulatorHandler:
         The simulation will call the function at the defined time.
 
         Args:
-            at: The time which the function must be called.
+            at: The time which the function must be called (min is 0.001 sec).
             call: A function that receives the current simulation time as 
                 an argument.
 
@@ -375,6 +375,10 @@ class SimulatorHandler:
 
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
+
+        # Truncate:
+        exp = decimal.Decimal(str(self.__TIME_PRECISION))
+        at = float(decimal.Decimal(at).quantize(exp, decimal.ROUND_DOWN))
 
         if at <= self.current_time:
             raise ValueError('Expected `at` argument to be a number '
