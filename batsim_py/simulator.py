@@ -1,6 +1,6 @@
 import atexit
 from collections import defaultdict
-import decimal
+import math
 from shutil import which
 import signal
 import subprocess
@@ -8,6 +8,7 @@ import sys
 import tempfile
 from typing import Dict
 from typing import Callable, Union
+from typing import Union
 from typing import Sequence
 from typing import List
 from typing import DefaultDict
@@ -88,7 +89,6 @@ class SimulatorHandler:
     Examples:
         >>> handler = SimulatorHandler("tcp://localhost:28000")
     """
-    __TIME_PRECISION = 0.001
 
     def __init__(self, tcp_address: Optional[str] = None) -> None:
         if which('batsim') is None:
@@ -171,14 +171,9 @@ class SimulatorHandler:
         return self.__simulator is not None
 
     @property
-    def current_time(self) -> float:
-        """ The current simulation time. """
-        t = self.__current_time
-
-        # Truncate:
-        exp = decimal.Decimal(str(self.__TIME_PRECISION))
-        t = float(decimal.Decimal(t).quantize(exp, decimal.ROUND_DOWN))
-        return t
+    def current_time(self) -> int:
+        """ The current simulation time (seconds). """
+        return math.floor(self.__current_time)
 
     @property
     def is_submitter_finished(self) -> bool:
@@ -286,11 +281,11 @@ class SimulatorHandler:
             self.__callbacks.clear()
             self.__dispatch_event(SimulatorEvent.SIMULATION_ENDS, self)
 
-    def proceed_time(self, time: float = 0) -> None:
+    def proceed_time(self, time: int = 0) -> None:
         """ Proceed the simulation process to the next event or time.
 
         Args:
-            time: The time to proceed (min is 0.001 sec). Defaults to 0. It's 
+            time: The time to proceed (min is 1 sec). Defaults to 0. It's 
                 possible to proceed directly to the next event or to a specific 
                 time. If the time is unset (equals 0), the simulation will proceed 
                 to the next event. Otherwise, if a time 't' is provided, the 
@@ -312,10 +307,6 @@ class SimulatorHandler:
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
 
-        if time < 0:
-            raise ValueError('Expected `time` argument to be a number '
-                             f'greater than zero, got {time}.')
-
         if not time:
             # Go to the next event.
             self.__wait_callback = False
@@ -328,10 +319,8 @@ class SimulatorHandler:
             self.set_callback(time + self.current_time, unflag)
 
         self.__goto_next_batsim_event()
-        self.__start_runnable_jobs()
         while self.is_running and self.__wait_callback:
             self.__goto_next_batsim_event()
-            self.__start_runnable_jobs()
 
     @overload
     def subscribe(self, event: JobEvent, call: JobListener) -> None: ...
@@ -357,13 +346,13 @@ class SimulatorHandler:
         assert callable(call)
         self.__subscriptions[event].append(call)
 
-    def set_callback(self, at: float, call: Callable[[float], None]) -> None:
+    def set_callback(self, at: int, call: Callable[[float], None]) -> None:
         """ Setup a callback.
 
         The simulation will call the function at the defined time.
 
         Args:
-            at: The time which the function must be called (min is 0.001 sec).
+            at: The time which the function must be called (min is 1 sec).
             call: A function that receives the current simulation time as 
                 an argument.
 
@@ -375,10 +364,6 @@ class SimulatorHandler:
 
         if not self.is_running:
             raise RuntimeError("The simulation is not running.")
-
-        # Truncate:
-        exp = decimal.Decimal(str(self.__TIME_PRECISION))
-        at = float(decimal.Decimal(at).quantize(exp, decimal.ROUND_DOWN))
 
         if at <= self.current_time:
             raise ValueError('Expected `at` argument to be a number '
@@ -637,6 +622,8 @@ class SimulatorHandler:
         self.__handle_batsim_events()
         if self.__simulation_time and self.current_time >= self.__simulation_time:
             self.close()
+        else:
+            self.__start_runnable_jobs()
 
     def __close_simulator(self) -> None:
         """ Close the simulator process. """
@@ -647,6 +634,7 @@ class SimulatorHandler:
 
     def __set_batsim_call_me_later(self, at: float) -> None:
         """ Setup a call me later request. """
+        at += 0.09  # Last batsim priority
         request = CallMeLaterBatsimRequest(self.current_time, at)
         if not any(isinstance(r, CallMeLaterBatsimRequest) and r.at == request.at for r in self.__batsim_requests):
             self.__batsim_requests.append(request)
@@ -732,10 +720,10 @@ class SimulatorHandler:
 
     def __on_batsim_requested_call(self, _) -> None:
         """ Handle batsim answer to call me back request.  """
-        if self.current_time in self.__callbacks:
-            for callback in self.__callbacks[self.current_time]:
-                callback(self.current_time)
-            del self.__callbacks[self.current_time]
+        for t in list(self.__callbacks.keys()):
+            if t <= self.__current_time:  # batsim time
+                for call in self.__callbacks.pop(t):
+                    call(self.current_time)  # local time
 
     def __on_batsim_job_submitted(self, event: JobSubmittedBatsimEvent) -> None:
         """ Handle batsim job submitted event.  """
