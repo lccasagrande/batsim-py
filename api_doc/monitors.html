@@ -1,0 +1,673 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Monitors &mdash; Batsim-py 1.0.5 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Jobs" href="jobs.html" />
+    <link rel="prev" title="Events" href="events.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> Batsim-py
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scheduling.html">Scheduling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/shutdown.html">Shutdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/dvfs.html">DVFS</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="simulator.html">Simulator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">Events</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Monitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resources</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Batsim-py</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Monitors</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/api_doc/monitors.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="module-batsim_py.monitors">
+<span id="monitors"></span><h1>Monitors<a class="headerlink" href="#module-batsim_py.monitors" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="batsim_py.monitors.ConsumedEnergyMonitor">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.monitors.</code><code class="sig-name descname">ConsumedEnergyMonitor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">simulator</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#ConsumedEnergyMonitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.ConsumedEnergyMonitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulator Energy Monitor class.</p>
+<p>This monitor collects energy statistics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>simulator</strong> (<a class="reference internal" href="simulator.html#batsim_py.simulator.SimulatorHandler" title="batsim_py.simulator.SimulatorHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorHandler</span></code></a>) – The simulator handler.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – In case of simulation is already running.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="batsim_py.monitors.ConsumedEnergyMonitor.info">
+<em class="property">property </em><code class="sig-name descname">info</code><a class="headerlink" href="#batsim_py.monitors.ConsumedEnergyMonitor.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the collected statistics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict containing statistics.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.ConsumedEnergyMonitor.to_csv">
+<code class="sig-name descname">to_csv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#ConsumedEnergyMonitor.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.ConsumedEnergyMonitor.to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump info to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.ConsumedEnergyMonitor.to_dataframe">
+<code class="sig-name descname">to_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#ConsumedEnergyMonitor.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.ConsumedEnergyMonitor.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert info into a DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.monitors.EnergyEventType">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.monitors.</code><code class="sig-name descname">EnergyEventType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#EnergyEventType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.EnergyEventType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Energy event types used in the ConsumedEnergyMonitor.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.monitors.HostMonitor">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.monitors.</code><code class="sig-name descname">HostMonitor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">simulator</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#HostMonitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.HostMonitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulator Host Monitor class.</p>
+<p>This monitor collects statistics about the time each host spent on each
+of its possible states. Moreover, it computes the total energy consumed
+and the total number of host state switches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>simulator</strong> (<a class="reference internal" href="simulator.html#batsim_py.simulator.SimulatorHandler" title="batsim_py.simulator.SimulatorHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorHandler</span></code></a>) – The simulator handler.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – In case of simulation is already running.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="batsim_py.monitors.HostMonitor.info">
+<em class="property">property </em><code class="sig-name descname">info</code><a class="headerlink" href="#batsim_py.monitors.HostMonitor.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the collected statistics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict containing statistics.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.HostMonitor.to_csv">
+<code class="sig-name descname">to_csv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#HostMonitor.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.HostMonitor.to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump info to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.HostMonitor.to_dataframe">
+<code class="sig-name descname">to_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#HostMonitor.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.HostMonitor.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert info into a DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.monitors.HostPowerStateSwitchMonitor">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.monitors.</code><code class="sig-name descname">HostPowerStateSwitchMonitor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">simulator</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#HostPowerStateSwitchMonitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.HostPowerStateSwitchMonitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulator Host Power State Monitor class.</p>
+<p>This monitor collects statistics about host power state switches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>simulator</strong> (<a class="reference internal" href="simulator.html#batsim_py.simulator.SimulatorHandler" title="batsim_py.simulator.SimulatorHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorHandler</span></code></a>) – The simulator handler.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – In case of simulation is already running.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="batsim_py.monitors.HostPowerStateSwitchMonitor.info">
+<em class="property">property </em><code class="sig-name descname">info</code><a class="headerlink" href="#batsim_py.monitors.HostPowerStateSwitchMonitor.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the collected statistics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict containing statistics.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.HostPowerStateSwitchMonitor.to_csv">
+<code class="sig-name descname">to_csv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#HostPowerStateSwitchMonitor.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.HostPowerStateSwitchMonitor.to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump info to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.HostPowerStateSwitchMonitor.to_dataframe">
+<code class="sig-name descname">to_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#HostPowerStateSwitchMonitor.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.HostPowerStateSwitchMonitor.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert info into a DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.monitors.HostStateSwitchMonitor">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.monitors.</code><code class="sig-name descname">HostStateSwitchMonitor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">simulator</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#HostStateSwitchMonitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.HostStateSwitchMonitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulator Host State Monitor class.</p>
+<p>This monitor collects statistics about host state switches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>simulator</strong> (<a class="reference internal" href="simulator.html#batsim_py.simulator.SimulatorHandler" title="batsim_py.simulator.SimulatorHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorHandler</span></code></a>) – The simulator handler.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – In case of simulation is already running.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="batsim_py.monitors.HostStateSwitchMonitor.info">
+<em class="property">property </em><code class="sig-name descname">info</code><a class="headerlink" href="#batsim_py.monitors.HostStateSwitchMonitor.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the collected statistics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict containing statistics.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.HostStateSwitchMonitor.to_csv">
+<code class="sig-name descname">to_csv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#HostStateSwitchMonitor.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.HostStateSwitchMonitor.to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump info to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.HostStateSwitchMonitor.to_dataframe">
+<code class="sig-name descname">to_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#HostStateSwitchMonitor.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.HostStateSwitchMonitor.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert info into a DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.monitors.JobMonitor">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.monitors.</code><code class="sig-name descname">JobMonitor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">simulator</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#JobMonitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.JobMonitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulator Job Monitor class.</p>
+<p>This monitor collects statistics about each submitted job.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>simulator</strong> (<a class="reference internal" href="simulator.html#batsim_py.simulator.SimulatorHandler" title="batsim_py.simulator.SimulatorHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorHandler</span></code></a>) – The simulator handler.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – In case of simulation is already running.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="batsim_py.monitors.JobMonitor.info">
+<em class="property">property </em><code class="sig-name descname">info</code><a class="headerlink" href="#batsim_py.monitors.JobMonitor.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the collected statistics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict containing statistics.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.JobMonitor.to_csv">
+<code class="sig-name descname">to_csv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#JobMonitor.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.JobMonitor.to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump info to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.JobMonitor.to_dataframe">
+<code class="sig-name descname">to_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#JobMonitor.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.JobMonitor.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert info into a DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.monitors.Monitor">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.monitors.</code><code class="sig-name descname">Monitor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">simulator</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#Monitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.Monitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulation Monitor base class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>simulator</strong> (<a class="reference internal" href="simulator.html#batsim_py.simulator.SimulatorHandler" title="batsim_py.simulator.SimulatorHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorHandler</span></code></a>) – The simulator handler.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – In case of simulation is already running.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="batsim_py.monitors.Monitor.info">
+<em class="property">abstract property </em><code class="sig-name descname">info</code><a class="headerlink" href="#batsim_py.monitors.Monitor.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the collected statistics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict containing statistics.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.Monitor.to_csv">
+<em class="property">abstract </em><code class="sig-name descname">to_csv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#Monitor.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.Monitor.to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump info to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.Monitor.to_dataframe">
+<em class="property">abstract </em><code class="sig-name descname">to_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#Monitor.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.Monitor.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert info into a DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.monitors.SchedulerMonitor">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.monitors.</code><code class="sig-name descname">SchedulerMonitor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">simulator</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#SchedulerMonitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.SchedulerMonitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulator Scheduler Monitor class.</p>
+<p>This monitor collects statistics about scheduler performance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>simulator</strong> (<a class="reference internal" href="simulator.html#batsim_py.simulator.SimulatorHandler" title="batsim_py.simulator.SimulatorHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorHandler</span></code></a>) – The simulator handler.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – In case of simulation is already running.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="batsim_py.monitors.SchedulerMonitor.info">
+<em class="property">property </em><code class="sig-name descname">info</code><a class="headerlink" href="#batsim_py.monitors.SchedulerMonitor.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the collected statistics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict containing statistics.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.SchedulerMonitor.to_csv">
+<code class="sig-name descname">to_csv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#SchedulerMonitor.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.SchedulerMonitor.to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump info to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.SchedulerMonitor.to_dataframe">
+<code class="sig-name descname">to_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#SchedulerMonitor.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.SchedulerMonitor.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert info into a DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.monitors.SimulationMonitor">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.monitors.</code><code class="sig-name descname">SimulationMonitor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">simulator</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#SimulationMonitor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.SimulationMonitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulator Monitor class.</p>
+<p>This monitor collects statistics about the simulation, which includes
+statistics about the scheduler performance and about each job.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>simulator</strong> (<a class="reference internal" href="simulator.html#batsim_py.simulator.SimulatorHandler" title="batsim_py.simulator.SimulatorHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorHandler</span></code></a>) – The simulator handler.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – In case of simulation is already running.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="batsim_py.monitors.SimulationMonitor.info">
+<em class="property">property </em><code class="sig-name descname">info</code><a class="headerlink" href="#batsim_py.monitors.SimulationMonitor.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all the collected statistics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A dict containing statistics.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.SimulationMonitor.to_csv">
+<code class="sig-name descname">to_csv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#SimulationMonitor.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.SimulationMonitor.to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump info to a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.monitors.SimulationMonitor.to_dataframe">
+<code class="sig-name descname">to_dataframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/monitors.html#SimulationMonitor.to_dataframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.monitors.SimulationMonitor.to_dataframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert info into a DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="jobs.html" class="btn btn-neutral float-right" title="Jobs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="events.html" class="btn btn-neutral float-left" title="Events" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Lucas C. Casagrande
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

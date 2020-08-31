@@ -1,0 +1,327 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Batsim-py &mdash; Batsim-py 1.0.5 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Scheduling" href="tutorials/scheduling.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home" alt="Documentation Home"> Batsim-py
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/scheduling.html">Scheduling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/shutdown.html">Shutdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/dvfs.html">DVFS</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api_doc/simulator.html">Simulator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_doc/events.html">Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_doc/monitors.html">Monitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_doc/jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_doc/resources.html">Resources</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Batsim-py</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Batsim-py     </li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="batsim-py-build-coverage-doc-license-last-release">
+<h1>Batsim-py <a class="reference external" href="https://travis-ci.org/lccasagrande/batsim-py"><img alt="coverage" src="https://travis-ci.org/lccasagrande/batsim-py.svg?branch=master" /></a> <a class="reference external" href="https://coveralls.io/github/lccasagrande/batsim-py?branch=master&amp;kill_cache=1"><img alt="coverage" src="https://coveralls.io/repos/github/lccasagrande/batsim-py/badge.svg?branch=master&amp;kill_cache=1" /></a> <a class="reference external" href="https://lccasagrande.github.io/batsim-py/index.html"><img alt="doc" src="https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat" /></a> <a class="reference external" href="https://github.com/lccasagrande/batsim-py/blob/master/LICENSE"><img alt="GitHub" src="https://img.shields.io/github/license/lccasagrande/batsim-py" /></a> <a class="reference external" href="https://github.com/lccasagrande/batsim-py/releases/latest"><img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/lccasagrande/batsim-py" /></a><a class="headerlink" href="#batsim-py-build-coverage-doc-license-last-release" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="https://batsim.readthedocs.io/en/latest/">Batsim</a> is a scientific simulator commonly used to
+evaluate Resource and Job Management System (RJMS) policies. <strong>Batsim-py allows using Batsim from Python 3</strong>.</p>
+<div class="section" id="main-features">
+<h2>Main Features<a class="headerlink" href="#main-features" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Developed on Python 3.8</p></li>
+<li><p>Simple API for evaluating the performance of Scheduling/Shutdown/DVFS policies</p></li>
+<li><p>Time/Event-based design</p></li>
+<li><p>Simple to be extended</p></li>
+<li><p>Fully documented</p></li>
+</ul>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>Make sure you have Batsim v3.1.0 installed and working. Otherwise, you must follow <a class="reference external" href="https://batsim.readthedocs.io/en/latest/installation.html">Batsim installation</a> instructions. Check the version of Batsim with:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>batsim --version
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Install batsim-py from PyPI:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install batsim-py
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>[Optional] If you prefer, you can install batsim-py and run tests with:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/lccasagrande/batsim-py.git
+<span class="nb">cd</span> batsim-py
+pip install -e .
+python setup.py <span class="nb">test</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>[Optional] Go to the <a class="reference internal" href="#tutorials">Tutorials</a>  section to find examples.</p></li>
+</ol>
+<p>For further information, check the <a class="reference internal" href="#api-documentation">API Documentation</a> to understand how to customize the simulation behavior.</p>
+</div>
+<div class="section" id="simulation-inputs">
+<h2>Simulation Inputs<a class="headerlink" href="#simulation-inputs" title="Permalink to this headline">¶</a></h2>
+<p>To evaluate the behavior of a RJMS policy, you must provide:</p>
+<ul class="simple">
+<li><p>A <a class="reference external" href="https://batsim.readthedocs.io/en/latest/input-platform.html">platform</a> description (XML): describes the network and resource characteristics.</p></li>
+<li><p>A <a class="reference external" href="https://batsim.readthedocs.io/en/latest/input-workload.html">workload</a> (JSON): defines the jobs to be submitted to the system and their execution profiles.</p></li>
+</ul>
+<p>The expected format of both files is the same adopted in Batsim. Check <a class="reference external" href="https://batsim.readthedocs.io/en/latest/">Batsim docs</a> to get further information on how to define platforms and workloads.</p>
+</div>
+<div class="section" id="tutorials">
+<h2>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this headline">¶</a></h2>
+<p>The tutorials section provides examples of different simulation scenarios:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://lccasagrande.github.io/batsim-py/tutorials/scheduling.html">Scheduling</a></p></li>
+<li><p><a class="reference external" href="https://lccasagrande.github.io/batsim-py/tutorials/shutdown.html">Shutdown</a></p></li>
+<li><p><a class="reference external" href="https://lccasagrande.github.io/batsim-py/tutorials/dvfs.html">DVFS</a></p></li>
+</ul>
+</div>
+<div class="section" id="api-documentation">
+<h2>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h2>
+<p>The API documentation provides information on classes and modules in the Batsim-py package.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://lccasagrande.github.io/batsim-py/api_doc/simulator.html">Simulator</a></p></li>
+<li><p><a class="reference external" href="https://lccasagrande.github.io/batsim-py/api_doc/events.html">Events</a></p></li>
+<li><p><a class="reference external" href="https://lccasagrande.github.io/batsim-py/api_doc/monitors.html">Monitors</a></p></li>
+<li><p><a class="reference external" href="https://lccasagrande.github.io/batsim-py/api_doc/jobs.html">Jobs</a></p></li>
+<li><p><a class="reference external" href="https://lccasagrande.github.io/batsim-py/api_doc/resources.html">Resources</a></p></li>
+</ul>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tutorials/scheduling.html" class="btn btn-neutral float-right" title="Scheduling" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Lucas C. Casagrande
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

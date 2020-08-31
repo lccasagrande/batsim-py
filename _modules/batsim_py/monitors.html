@@ -1,0 +1,895 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>batsim_py.monitors &mdash; Batsim-py 1.0.5 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> Batsim-py
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/scheduling.html">Scheduling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/shutdown.html">Shutdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/dvfs.html">DVFS</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/simulator.html">Simulator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/events.html">Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/monitors.html">Monitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/resources.html">Resources</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Batsim-py</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>batsim_py.monitors</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for batsim_py.monitors</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">groupby</span>
+<span class="kn">import</span> <span class="nn">time</span> <span class="k">as</span> <span class="nn">tm</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">procset</span> <span class="kn">import</span> <span class="n">ProcSet</span>
+
+<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">SimulatorEvent</span>
+<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">JobEvent</span>
+<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">HostEvent</span>
+<span class="kn">from</span> <span class="nn">.jobs</span> <span class="kn">import</span> <span class="n">JobState</span>
+<span class="kn">from</span> <span class="nn">.jobs</span> <span class="kn">import</span> <span class="n">Job</span>
+<span class="kn">from</span> <span class="nn">.resources</span> <span class="kn">import</span> <span class="n">HostState</span>
+<span class="kn">from</span> <span class="nn">.resources</span> <span class="kn">import</span> <span class="n">Host</span>
+<span class="kn">from</span> <span class="nn">.resources</span> <span class="kn">import</span> <span class="n">PowerStateType</span>
+<span class="kn">from</span> <span class="nn">.simulator</span> <span class="kn">import</span> <span class="n">SimulatorHandler</span>
+
+
+<div class="viewcode-block" id="Monitor"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.Monitor">[docs]</a><span class="k">class</span> <span class="nc">Monitor</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simulation Monitor base class.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        simulator: The simulator handler.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: In case of simulation is already running.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">simulator</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Monitors cannot be created when the simulation &#39;</span>
+                               <span class="s1">&#39;is already running.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span> <span class="o">=</span> <span class="n">simulator</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get all the collected statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict containing statistics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+<div class="viewcode-block" id="Monitor.to_csv"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.Monitor.to_csv">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Dump info to a CSV file. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Monitor.to_dataframe"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.Monitor.to_dataframe">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Convert info into a DataFrame. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div></div>
+
+
+<div class="viewcode-block" id="JobMonitor"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.JobMonitor">[docs]</a><span class="k">class</span> <span class="nc">JobMonitor</span><span class="p">(</span><span class="n">Monitor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simulator Job Monitor class.</span>
+
+<span class="sd">    This monitor collects statistics about each submitted job.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        simulator: The simulator handler.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: In case of simulation is already running.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;job_id&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;workload_name&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;submission_time&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;requested_number_of_resources&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;requested_time&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;success&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;final_state&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;starting_time&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;execution_time&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;finish_time&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;waiting_time&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;turnaround_time&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;stretch&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;allocated_resources&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;consumed_energy&#39;</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="p">}</span>
+
+        <span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_BEGINS</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">on_simulation_begins</span><span class="p">)</span>
+        <span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">JobEvent</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_info</span><span class="p">)</span>
+        <span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">JobEvent</span><span class="o">.</span><span class="n">REJECTED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_info</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get all the collected statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict containing statistics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span>
+
+<div class="viewcode-block" id="JobMonitor.to_csv"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.JobMonitor.to_csv">[docs]</a>    <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Dump info to a CSV file. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="JobMonitor.to_dataframe"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.JobMonitor.to_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Convert info into a DataFrame. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">on_simulation_begins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+
+    <span class="k">def</span> <span class="nf">update_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">Job</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">alloc</span> <span class="o">=</span> <span class="n">ProcSet</span><span class="p">(</span><span class="o">*</span><span class="n">sender</span><span class="o">.</span><span class="n">allocation</span><span class="p">)</span> <span class="k">if</span> <span class="n">sender</span><span class="o">.</span><span class="n">allocation</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_SUCCESSFULLY</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;job_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;workload_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">workload</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;submission_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">subtime</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;requested_number_of_resources&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">res</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;requested_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">walltime</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;success&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">success</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;final_state&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">state</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;starting_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;execution_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">runtime</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;finish_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">stop_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;waiting_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">waiting_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;turnaround_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">turnaround_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;stretch&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">stretch</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;allocated_resources&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">alloc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;consumed_energy&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchedulerMonitor"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.SchedulerMonitor">[docs]</a><span class="k">class</span> <span class="nc">SchedulerMonitor</span><span class="p">(</span><span class="n">Monitor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simulator Scheduler Monitor class.</span>
+
+<span class="sd">    This monitor collects statistics about scheduler performance.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        simulator: The simulator handler.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: In case of simulation is already running.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;makespan&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;max_slowdown&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;max_stretch&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;max_waiting_time&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;max_turnaround_time&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;mean_slowdown&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;mean_pp_slowdown&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;mean_stretch&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;mean_waiting_time&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;mean_turnaround_time&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;nb_jobs&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;nb_jobs_finished&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;nb_jobs_killed&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;nb_jobs_rejected&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;nb_jobs_success&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_BEGINS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_simulation_begins</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_ENDS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_simulation_ends</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">JobEvent</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_job_completed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">JobEvent</span><span class="o">.</span><span class="n">SUBMITTED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_job_submitted</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">JobEvent</span><span class="o">.</span><span class="n">REJECTED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_job_rejected</span><span class="p">,)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get all the collected statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict containing statistics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span>
+
+<div class="viewcode-block" id="SchedulerMonitor.to_csv"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.SchedulerMonitor.to_csv">[docs]</a>    <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Dump info to a CSV file. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SchedulerMonitor.to_dataframe"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.SchedulerMonitor.to_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Convert info into a DataFrame. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">T</span></div>
+
+    <span class="k">def</span> <span class="nf">on_simulation_begins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span> <span class="o">=</span> <span class="n">sender</span>
+
+    <span class="k">def</span> <span class="nf">on_simulation_ends</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;makespan&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sender</span><span class="o">.</span><span class="n">current_time</span>
+        <span class="n">nb_finished</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;nb_jobs_finished&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;mean_waiting_time&#39;</span><span class="p">]</span> <span class="o">/=</span> <span class="n">nb_finished</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;mean_slowdown&#39;</span><span class="p">]</span> <span class="o">/=</span> <span class="n">nb_finished</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;mean_pp_slowdown&#39;</span><span class="p">]</span> <span class="o">/=</span> <span class="n">nb_finished</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;mean_stretch&#39;</span><span class="p">]</span> <span class="o">/=</span> <span class="n">nb_finished</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;mean_turnaround_time&#39;</span><span class="p">]</span> <span class="o">/=</span> <span class="n">nb_finished</span>
+
+    <span class="k">def</span> <span class="nf">on_job_submitted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">Job</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;nb_jobs&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">on_job_rejected</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">Job</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;nb_jobs_rejected&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">on_job_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">Job</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;makespan&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;mean_slowdown&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sender</span><span class="o">.</span><span class="n">slowdown</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;mean_pp_slowdown&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sender</span><span class="o">.</span><span class="n">per_processor_slowdown</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;mean_stretch&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sender</span><span class="o">.</span><span class="n">stretch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;mean_waiting_time&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sender</span><span class="o">.</span><span class="n">waiting_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;mean_turnaround_time&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sender</span><span class="o">.</span><span class="n">turnaround_time</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="n">sender</span><span class="o">.</span><span class="n">waiting_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;max_stretch&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="n">sender</span><span class="o">.</span><span class="n">stretch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;max_stretch&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;max_slowdown&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="n">sender</span><span class="o">.</span><span class="n">slowdown</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;max_slowdown&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;max_turnaround_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="n">sender</span><span class="o">.</span><span class="n">turnaround_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;max_turnaround_time&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;nb_jobs_finished&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">sender</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_SUCCESSFULLY</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;nb_jobs_success&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">sender</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_KILLED</span> <span class="ow">or</span> <span class="n">sender</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_WALLTIME_REACHED</span> <span class="ow">or</span> <span class="n">sender</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_FAILED</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;nb_jobs_killed&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="HostMonitor"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.HostMonitor">[docs]</a><span class="k">class</span> <span class="nc">HostMonitor</span><span class="p">(</span><span class="n">Monitor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simulator Host Monitor class.</span>
+
+<span class="sd">    This monitor collects statistics about the time each host spent on each </span>
+<span class="sd">    of its possible states. Moreover, it computes the total energy consumed </span>
+<span class="sd">    and the total number of host state switches.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        simulator: The simulator handler.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: In case of simulation is already running.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_state</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;time_idle&#39;</span><span class="p">:</span>  <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;time_computing&#39;</span><span class="p">:</span>  <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;time_switching_off&#39;</span><span class="p">:</span>  <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;time_switching_on&#39;</span><span class="p">:</span>  <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;time_sleeping&#39;</span><span class="p">:</span>  <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;consumed_joules&#39;</span><span class="p">:</span>  <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;energy_waste&#39;</span><span class="p">:</span>  <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;nb_switches&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;nb_computing_machines&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_BEGINS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_simulation_begins</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_ENDS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_simulation_ends</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_host_state_changed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">HostEvent</span><span class="o">.</span><span class="n">COMPUTATION_POWER_STATE_CHANGED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_host_state_changed</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get all the collected statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict containing statistics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span>
+
+<div class="viewcode-block" id="HostMonitor.to_csv"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.HostMonitor.to_csv">[docs]</a>    <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Dump info to a CSV file. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HostMonitor.to_dataframe"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.HostMonitor.to_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Convert info into a DataFrame. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">T</span></div>
+
+    <span class="k">def</span> <span class="nf">on_simulation_begins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span> <span class="o">=</span> <span class="n">sender</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span>
+        <span class="n">t_now</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_state</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">hosts</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__last_state</span><span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">t_now</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">power</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;nb_computing_machines&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="k">def</span> <span class="nf">on_simulation_ends</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">hosts</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_info</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_host_state_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">Host</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_info</span><span class="p">(</span><span class="n">sender</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">Host</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span>
+        <span class="n">t_start</span><span class="p">,</span> <span class="n">power</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">pstate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__last_state</span><span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+
+        <span class="c1"># Update Info</span>
+        <span class="n">time_spent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span> <span class="o">-</span> <span class="n">t_start</span>
+        <span class="n">energy_consumption</span> <span class="o">=</span> <span class="n">time_spent</span> <span class="o">*</span> <span class="p">(</span><span class="n">power</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">energy_wasted</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">IDLE</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;time_idle&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">time_spent</span>
+            <span class="n">energy_wasted</span> <span class="o">=</span> <span class="n">energy_consumption</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">COMPUTING</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;time_computing&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">time_spent</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SWITCHING_OFF</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;time_switching_off&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">time_spent</span>
+            <span class="n">energy_wasted</span> <span class="o">=</span> <span class="n">energy_consumption</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SWITCHING_ON</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;time_switching_on&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">time_spent</span>
+            <span class="n">energy_wasted</span> <span class="o">=</span> <span class="n">energy_consumption</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SLEEPING</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;time_sleeping&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">time_spent</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;consumed_joules&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">energy_consumption</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;energy_waste&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">energy_wasted</span>
+
+        <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span> <span class="ow">and</span> <span class="n">pstate</span><span class="o">.</span><span class="n">id</span> <span class="o">!=</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;nb_switches&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Update Last State</span>
+        <span class="n">t_now</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_state</span><span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">t_now</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">power</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SimulationMonitor"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.SimulationMonitor">[docs]</a><span class="k">class</span> <span class="nc">SimulationMonitor</span><span class="p">(</span><span class="n">Monitor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simulator Monitor class.</span>
+
+<span class="sd">    This monitor collects statistics about the simulation, which includes </span>
+<span class="sd">    statistics about the scheduler performance and about each job. </span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        simulator: The simulator handler.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: In case of simulation is already running.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__sched_monitor</span> <span class="o">=</span> <span class="n">SchedulerMonitor</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__hosts_monitor</span> <span class="o">=</span> <span class="n">HostMonitor</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__sim_start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__simulation_time</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_BEGINS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_simulation_begins</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_ENDS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_simulation_ends</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get all the collected statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict containing statistics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__sched_monitor</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">__hosts_monitor</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+        <span class="n">info</span><span class="p">[</span><span class="s1">&#39;simulation_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__simulation_time</span>
+        <span class="k">return</span> <span class="n">info</span>
+
+<div class="viewcode-block" id="SimulationMonitor.to_csv"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.SimulationMonitor.to_csv">[docs]</a>    <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Dump info to a CSV file. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimulationMonitor.to_dataframe"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.SimulationMonitor.to_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Convert info into a DataFrame. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">T</span></div>
+
+    <span class="k">def</span> <span class="nf">on_simulation_begins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__sim_start_time</span> <span class="o">=</span> <span class="n">tm</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">on_simulation_ends</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__simulation_time</span> <span class="o">=</span> <span class="n">tm</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">__sim_start_time</span></div>
+
+
+<div class="viewcode-block" id="HostStateSwitchMonitor"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.HostStateSwitchMonitor">[docs]</a><span class="k">class</span> <span class="nc">HostStateSwitchMonitor</span><span class="p">(</span><span class="n">Monitor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simulator Host State Monitor class.</span>
+
+<span class="sd">    This monitor collects statistics about host state switches.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        simulator: The simulator handler.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: In case of simulation is already running.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_host_state</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;nb_sleeping&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;nb_switching_on&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;nb_switching_off&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;nb_idle&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;nb_computing&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;nb_unavailable&#39;</span><span class="p">:</span> <span class="p">[]</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_BEGINS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_simulation_begins</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_host_state_changed</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get all the collected statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict containing statistics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span>
+
+<div class="viewcode-block" id="HostStateSwitchMonitor.to_csv"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.HostStateSwitchMonitor.to_csv">[docs]</a>    <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Dump info to a CSV file. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HostStateSwitchMonitor.to_dataframe"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.HostStateSwitchMonitor.to_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Convert info into a DataFrame. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">on_simulation_begins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span> <span class="o">=</span> <span class="n">sender</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_host_state</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+
+        <span class="c1"># Update initial state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">hosts</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_key_from_state</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__last_host_state</span><span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">on_host_state_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">Host</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span><span class="p">:</span>
+            <span class="c1"># Update new info from last one</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span>
+
+        <span class="c1"># Update info</span>
+        <span class="n">old_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__last_host_state</span><span class="p">[</span><span class="n">sender</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+        <span class="n">new_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_key_from_state</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="n">old_key</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="n">new_key</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_host_state</span><span class="p">[</span><span class="n">sender</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_key</span>
+
+    <span class="k">def</span> <span class="nf">__get_key_from_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">HostState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">IDLE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;nb_idle&quot;</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">COMPUTING</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;nb_computing&quot;</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SLEEPING</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;nb_sleeping&quot;</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SWITCHING_OFF</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;nb_switching_off&quot;</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SWITCHING_ON</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;nb_switching_on&quot;</span>
+        <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">UNAVAILABLE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;nb_unavailable&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+<div class="viewcode-block" id="HostPowerStateSwitchMonitor"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.HostPowerStateSwitchMonitor">[docs]</a><span class="k">class</span> <span class="nc">HostPowerStateSwitchMonitor</span><span class="p">(</span><span class="n">Monitor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simulator Host Power State Monitor class.</span>
+
+<span class="sd">    This monitor collects statistics about host power state switches.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        simulator: The simulator handler.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: In case of simulation is already running.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_pstate_id</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;machine_id&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;new_pstate&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_BEGINS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_simulation_begins</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">HostEvent</span><span class="o">.</span><span class="n">COMPUTATION_POWER_STATE_CHANGED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_host_power_state_changed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_host_power_state_changed</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get all the collected statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict containing statistics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span>
+
+<div class="viewcode-block" id="HostPowerStateSwitchMonitor.to_csv"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.HostPowerStateSwitchMonitor.to_csv">[docs]</a>    <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Dump info to a CSV file. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HostPowerStateSwitchMonitor.to_dataframe"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.HostPowerStateSwitchMonitor.to_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Convert info into a DataFrame. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">on_simulation_begins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span> <span class="o">=</span> <span class="n">sender</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+
+        <span class="n">hosts</span> <span class="o">=</span> <span class="p">[</span><span class="n">h</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">hosts</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_pstate_id</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">id</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hosts</span><span class="p">}</span>  <span class="c1"># type:ignore</span>
+
+        <span class="c1"># Record initial state</span>
+        <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">hs</span> <span class="ow">in</span> <span class="n">groupby</span><span class="p">(</span><span class="n">hosts</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>  <span class="c1"># type:ignore</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span><span class="p">)</span>
+            <span class="n">procset</span> <span class="o">=</span> <span class="n">ProcSet</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">hs</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;machine_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">procset</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;new_pstate&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_host_power_state_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">Host</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">sender</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__last_pstate_id</span> <span class="ow">and</span> <span class="n">sender</span><span class="o">.</span><span class="n">pstate</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">__last_pstate_id</span><span class="p">[</span><span class="n">sender</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">!=</span> <span class="n">sender</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">sender</span><span class="o">.</span><span class="n">pstate</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">__last_pstate_id</span><span class="p">[</span><span class="n">sender</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">sender</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">id</span>
+            <span class="k">if</span> <span class="n">sender</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">PowerStateType</span><span class="o">.</span><span class="n">SWITCHING_OFF</span><span class="p">:</span>
+                <span class="n">new_pstate_id</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span>
+            <span class="k">elif</span> <span class="n">sender</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">PowerStateType</span><span class="o">.</span><span class="n">SWITCHING_ON</span><span class="p">:</span>
+                <span class="n">new_pstate_id</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_pstate_id</span> <span class="o">=</span> <span class="n">sender</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">id</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;new_pstate&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">new_pstate_id</span><span class="p">:</span>
+                <span class="c1"># Update last record</span>
+                <span class="n">procset</span> <span class="o">=</span> <span class="n">ProcSet</span><span class="o">.</span><span class="n">from_str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;machine_id&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">procset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ProcSet</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;machine_id&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">procset</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Record new state</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;machine_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sender</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;new_pstate&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_pstate_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EnergyEventType"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.EnergyEventType">[docs]</a><span class="k">class</span> <span class="nc">EnergyEventType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Energy event types used in the ConsumedEnergyMonitor. &quot;&quot;&quot;</span>
+    <span class="n">POWER_STATE_TYPE</span> <span class="o">=</span> <span class="s2">&quot;p&quot;</span>
+    <span class="n">JOB_STARTED_TYPE</span> <span class="o">=</span> <span class="s2">&quot;s&quot;</span>
+    <span class="n">JOB_COMPLETED_TYPE</span> <span class="o">=</span> <span class="s2">&quot;e&quot;</span></div>
+
+
+<div class="viewcode-block" id="ConsumedEnergyMonitor"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.ConsumedEnergyMonitor">[docs]</a><span class="k">class</span> <span class="nc">ConsumedEnergyMonitor</span><span class="p">(</span><span class="n">Monitor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simulator Energy Monitor class.</span>
+
+<span class="sd">    This monitor collects energy statistics.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        simulator: The simulator handler.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RuntimeError: In case of simulation is already running.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_state</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;energy&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;event_type&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;wattmin&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;epower&#39;</span><span class="p">:</span> <span class="p">[]</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_BEGINS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_simulation_begins</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">JobEvent</span><span class="o">.</span><span class="n">STARTED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_job_started</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">JobEvent</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_job_completed</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span>
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">on_host_state_changed</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span>
+            <span class="n">HostEvent</span><span class="o">.</span><span class="n">COMPUTATION_POWER_STATE_CHANGED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_host_state_changed</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get all the collected statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dict containing statistics.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span>
+
+<div class="viewcode-block" id="ConsumedEnergyMonitor.to_csv"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.ConsumedEnergyMonitor.to_csv">[docs]</a>    <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Dump info to a CSV file. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ConsumedEnergyMonitor.to_dataframe"><a class="viewcode-back" href="../../api_doc/monitors.html#batsim_py.monitors.ConsumedEnergyMonitor.to_dataframe">[docs]</a>    <span class="k">def</span> <span class="nf">to_dataframe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Convert info into a DataFrame. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">on_simulation_begins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">SimulatorHandler</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span> <span class="o">=</span> <span class="n">sender</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span>
+        <span class="n">t_now</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__last_state</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">h</span><span class="o">.</span><span class="n">id</span><span class="p">:</span> <span class="p">(</span><span class="n">t_now</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">power</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">hosts</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">on_job_started</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">Job</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_info</span><span class="p">(</span><span class="n">event_type</span><span class="o">=</span><span class="n">EnergyEventType</span><span class="o">.</span><span class="n">JOB_STARTED_TYPE</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_job_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">Job</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_info</span><span class="p">(</span><span class="n">event_type</span><span class="o">=</span><span class="n">EnergyEventType</span><span class="o">.</span><span class="n">JOB_COMPLETED_TYPE</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_host_state_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">Host</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_info</span><span class="p">(</span><span class="n">event_type</span><span class="o">=</span><span class="n">EnergyEventType</span><span class="o">.</span><span class="n">POWER_STATE_TYPE</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">:</span> <span class="n">EnergyEventType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span>
+        <span class="n">consumed_energy</span> <span class="o">=</span> <span class="n">wattmin</span> <span class="o">=</span> <span class="n">epower</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">hosts</span><span class="p">:</span>
+            <span class="n">t_start</span><span class="p">,</span> <span class="n">power</span><span class="p">,</span> <span class="n">pstate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__last_state</span><span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+            <span class="n">t_now</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span>
+            <span class="n">wattage</span> <span class="o">=</span> <span class="n">power</span> <span class="ow">or</span> <span class="mi">0</span>
+
+            <span class="n">epower</span> <span class="o">+=</span> <span class="n">wattage</span>
+            <span class="n">consumed_energy</span> <span class="o">+=</span> <span class="n">wattage</span> <span class="o">*</span> <span class="p">(</span><span class="n">t_now</span> <span class="o">-</span> <span class="n">t_start</span><span class="p">)</span>
+            <span class="n">wattmin</span> <span class="o">+=</span> <span class="n">pstate</span><span class="o">.</span><span class="n">watt_full</span> <span class="k">if</span> <span class="n">pstate</span> <span class="k">else</span> <span class="mi">0</span>
+
+            <span class="c1"># Update Last State</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__last_state</span><span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">t_now</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">power</span><span class="p">,</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span><span class="p">)</span>
+
+        <span class="n">consumed_energy</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;energy&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s1">&#39;energy&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">current_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s2">&quot;energy&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">consumed_energy</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s2">&quot;event_type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event_type</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s2">&quot;wattmin&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wattmin</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__info</span><span class="p">[</span><span class="s2">&quot;epower&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epower</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Lucas C. Casagrande
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

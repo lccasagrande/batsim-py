@@ -1,0 +1,1053 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>batsim_py.resources &mdash; Batsim-py 1.0.5 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> Batsim-py
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/scheduling.html">Scheduling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/shutdown.html">Shutdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/dvfs.html">DVFS</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/simulator.html">Simulator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/events.html">Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/monitors.html">Monitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/resources.html">Resources</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Batsim-py</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>batsim_py.resources</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for batsim_py.resources</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Set</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+
+<div class="viewcode-block" id="HostState"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.HostState">[docs]</a><span class="k">class</span> <span class="nc">HostState</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Host State Types &quot;&quot;&quot;</span>
+
+    <span class="n">UNAVAILABLE</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SLEEPING</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">SWITCHING_OFF</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">SWITCHING_ON</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">IDLE</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">COMPUTING</span> <span class="o">=</span> <span class="mi">5</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span></div>
+
+
+<div class="viewcode-block" id="StorageState"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.StorageState">[docs]</a><span class="k">class</span> <span class="nc">StorageState</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Storage State Types &quot;&quot;&quot;</span>
+    <span class="n">AVAILABLE</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">UNAVAILABLE</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="PowerStateType"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.PowerStateType">[docs]</a><span class="k">class</span> <span class="nc">PowerStateType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Host Power State Types &quot;&quot;&quot;</span>
+    <span class="n">SLEEP</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SWITCHING_OFF</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">SWITCHING_ON</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">COMPUTATION</span> <span class="o">=</span> <span class="mi">3</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span></div>
+
+
+<div class="viewcode-block" id="PowerState"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.PowerState">[docs]</a><span class="k">class</span> <span class="nc">PowerState</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; This class describes a power state model.</span>
+
+<span class="sd">    When the host is on, the energy consumption naturally depends on both the </span>
+<span class="sd">    current CPU load and the host energy profile.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        pstate_id: The power state id. Must be unique.</span>
+<span class="sd">        pstate_type: The power state type.</span>
+<span class="sd">        watt_idle: Consumption (Watts) when the host is up but without anything to do.</span>
+<span class="sd">        watt_full: Consumption (Watts) when the host cpu is at 100%.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        AssertionError: In case of invalid arguments type.</span>
+<span class="sd">        ValueError: In case of watts are invalid values or the power profile </span>
+<span class="sd">            values are not equal when the power state type is not a computation one.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; ps1 = PowerState(0, PowerStateType.COMPUTATION, 90, 160)</span>
+<span class="sd">        &gt;&gt;&gt; ps2 = PowerState(0, PowerStateType.SLEEP, 10, 10)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">pstate_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">pstate_type</span><span class="p">:</span> <span class="n">PowerStateType</span><span class="p">,</span>
+                 <span class="n">watt_idle</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">watt_full</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">watt_idle</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `watt_idle` argument to be greater &#39;</span>
+                             <span class="s1">&#39;than or equal to zero, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">watt_idle</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">watt_full</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `watt_full` argument to be greater &#39;</span>
+                             <span class="s1">&#39;than or equal to zero, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">watt_full</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">pstate_type</span> <span class="o">!=</span> <span class="n">PowerStateType</span><span class="o">.</span><span class="n">COMPUTATION</span> <span class="ow">and</span> <span class="n">watt_idle</span> <span class="o">!=</span> <span class="n">watt_full</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `watt_idle` and `watt_full` &#39;</span>
+                             <span class="s1">&#39;arguments to have the same value when &#39;</span>
+                             <span class="s1">&#39;power state type is not COMPUTATION, &#39;</span>
+                             <span class="s1">&#39;got </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">watt_idle</span><span class="p">,</span> <span class="n">watt_full</span><span class="p">))</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pstate_type</span><span class="p">,</span> <span class="n">PowerStateType</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__id</span> <span class="o">=</span> <span class="n">pstate_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__type</span> <span class="o">=</span> <span class="n">pstate_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__watt_idle</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">watt_idle</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__watt_full</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">watt_full</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2"> (</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The Power State ID &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__id</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">watt_idle</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Consumption (Watts) when the host is up but without anything to do. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__watt_idle</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">watt_full</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Consumption (Watts) when the host cpu is at 100%. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__watt_full</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PowerStateType</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The power state type. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__type</span></div>
+
+
+<div class="viewcode-block" id="Storage"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.Storage">[docs]</a><span class="k">class</span> <span class="nc">Storage</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; This class describes a Batsim storage resource.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        id: The storage id. Must be unique within a platform.</span>
+<span class="sd">        name: The storage name.</span>
+<span class="sd">        allow_sharing: Whether multiple jobs can share the storage. </span>
+<span class="sd">            Defaults to True.</span>
+<span class="sd">        metadata: Extra storage properties that can be used by some functions</span>
+<span class="sd">            beyond the scope of Batsim or Batsim-py. Defaults to None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">allow_sharing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                 <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__allow_sharing</span> <span class="o">=</span> <span class="n">allow_sharing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">=</span> <span class="n">StorageState</span><span class="o">.</span><span class="n">AVAILABLE</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Storage_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Storage_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Storage ID &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__id</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Storage name. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StorageState</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The storage current state. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Storage extra properties. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__metadata</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__metadata</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; All jobs that are using this storage. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_unavailable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether the storage is unavailable or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">StorageState</span><span class="o">.</span><span class="n">UNAVAILABLE</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_allocated</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether the storage is being used by a job or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_shareable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether multiple jobs can share this storage or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__allow_sharing</span>
+
+    <span class="k">def</span> <span class="nf">_set_unavailable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The storage becomes unavailable. </span>
+
+<span class="sd">        This is an internal method to be used by the simulator only as </span>
+<span class="sd">        a response from an external event file. Unavailable storages </span>
+<span class="sd">        cannot be allocated.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">=</span> <span class="n">StorageState</span><span class="o">.</span><span class="n">UNAVAILABLE</span>
+
+    <span class="k">def</span> <span class="nf">_set_available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The storage becomes available. </span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            SystemError: In case of storage is not unavailable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="n">StorageState</span><span class="o">.</span><span class="n">UNAVAILABLE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">SystemError</span><span class="p">(</span><span class="s2">&quot;A storage must be unavailable to become &quot;</span>
+                              <span class="sa">f</span><span class="s2">&quot;available, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">=</span> <span class="n">StorageState</span><span class="o">.</span><span class="n">AVAILABLE</span>
+
+    <span class="k">def</span> <span class="nf">_allocate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Allocate the storage for a job.</span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            job_id: The id of the job that will use this storage.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of storage the storage is unavailable or it is </span>
+<span class="sd">                not shareable and is already being used by another job.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_unavailable</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;This storage is unavailable.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shareable</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_allocated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;This storage cannot be used by multiple jobs.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_release</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Release storage.</span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            job_id: The job that will release this storage.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Host"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.Host">[docs]</a><span class="k">class</span> <span class="nc">Host</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; This class describes a Batsim computing resource (host).</span>
+
+<span class="sd">    A host is a resource on which a job can execute.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        id: The host id. Must be unique within a platform.</span>
+<span class="sd">        name: The host name.</span>
+<span class="sd">        pstates: The host power states. Defaults to None. </span>
+<span class="sd">            A host can have several computing power states but only one sleep </span>
+<span class="sd">            and transition (On/Off) power states. Computing power states serve </span>
+<span class="sd">            as a way to implement different DVFS levels while the transition </span>
+<span class="sd">            power states are used only to simulate the costs of switching On/Off. </span>
+<span class="sd">            A host cannot be used when it&#39;s being switched On/Off or sleeping. </span>
+<span class="sd">            If you only want to implement DVFS, there is no need to provide a sleep </span>
+<span class="sd">            power state and a transition power state. Moreover, if you provide a sleep </span>
+<span class="sd">            power state you must also provide both transition power states.</span>
+<span class="sd">        allow_sharing: Whether multiple jobs can share the host or not. </span>
+<span class="sd">            Defaults to False.</span>
+<span class="sd">        metadata: Extra host properties that can be used by some functions </span>
+<span class="sd">            beyond the scope of Batsim or Batsim-py. Defaults to None.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        AssertionError: In case of invalid arguments type.</span>
+<span class="sd">        ValueError: In case of missing pstates or pstate ids are not unique.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; ps1 = PowerState(0, PowerStateType.COMPUTATION, 10, 100)</span>
+<span class="sd">        &gt;&gt;&gt; ps2 = PowerState(1, PowerStateType.COMPUTATION, 15, 150)</span>
+<span class="sd">        &gt;&gt;&gt; h = Host(0, &quot;Host_0&quot;, [ps1, ps2])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">pstates</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">PowerState</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">allow_sharing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">=</span> <span class="n">HostState</span><span class="o">.</span><span class="n">IDLE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__allow_sharing</span> <span class="o">=</span> <span class="n">allow_sharing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__pstates</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__current_pstate</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state_before_unavailable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">HostState</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">pstates</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pstates</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pstates</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `pstates` argument to have unique &#39;</span>
+                                 <span class="s1">&#39;ids, got </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pstates</span><span class="p">))</span>
+
+            <span class="n">v</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pstates</span><span class="p">:</span>
+                <span class="n">v</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">type</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">COMPUTATION</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The host must have at least one COMPUTATION &#39;</span>
+                                 <span class="s1">&#39;power state, got </span><span class="si">{}</span><span class="s1">.&#39;</span>
+                                 <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">COMPUTATION</span><span class="p">]))</span>
+
+            <span class="n">nb</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SLEEP</span><span class="p">]</span>
+            <span class="n">nb</span> <span class="o">+=</span> <span class="n">v</span><span class="p">[</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SWITCHING_OFF</span><span class="p">]</span>
+            <span class="n">nb</span> <span class="o">+=</span> <span class="n">v</span><span class="p">[</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SWITCHING_ON</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">nb</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SLEEP</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The host sleeping power state was not &#39;</span>
+                                     <span class="s1">&#39;defined or is not unique, got </span><span class="si">{}</span><span class="s1">&#39;</span>
+                                     <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SLEEP</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SWITCHING_OFF</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The host switching off power state was &#39;</span>
+                                     <span class="s1">&#39;not defined or is not unique, got </span><span class="si">{}</span><span class="s1">&#39;</span>
+                                     <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SWITCHING_OFF</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SWITCHING_ON</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The host switching on power state was &#39;</span>
+                                     <span class="s1">&#39;not defined or is not unique, got </span><span class="si">{}</span><span class="s1">&#39;</span>
+                                     <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SWITCHING_ON</span><span class="p">]))</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">__pstates</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">pstates</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__current_pstate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default_pstate</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Host_</span><span class="si">%i</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Host_</span><span class="si">%i</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The Host ID &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__id</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Host name. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HostState</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Host current state. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; A sequence of job ids that are allocated on this host. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pstate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">PowerState</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Host current power state. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__current_pstate</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pstates</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">PowerState</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot; A sequence of all power states defined. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pstates</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__pstates</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Host extra properties. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__metadata</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__metadata</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_allocated</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether this host was allocated for some job or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_idle</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether this host is idle (0% cpu)  or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">IDLE</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_computing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether this host is computing (100% cpu) or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">COMPUTING</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_switching_off</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether this host is switching off or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SWITCHING_OFF</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_switching_on</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether this host is switching on or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SWITCHING_ON</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_sleeping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether this host is sleeping or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">SLEEPING</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_shareable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether multiple jobs can share this host or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__allow_sharing</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_unavailable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether it&#39;s possible to execute jobs or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">==</span> <span class="n">HostState</span><span class="o">.</span><span class="n">UNAVAILABLE</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">power</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Instantaneous power consumption (in Watts). &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pstate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_computing</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">watt_full</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">watt_idle</span>
+
+<div class="viewcode-block" id="Host.get_pstate_by_type"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.Host.get_pstate_by_type">[docs]</a>    <span class="k">def</span> <span class="nf">get_pstate_by_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ps_type</span><span class="p">:</span> <span class="n">PowerStateType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">PowerState</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Get a power state by type.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ps_type: The power state type.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of power states were not defined.</span>
+<span class="sd">            LookupError: In case of power state could not be found.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            All power states with the corresponding power state type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pstates</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Cannot get undefined power states. Make sure the &#39;</span>
+                               <span class="s1">&#39;power states are defined in the &#39;</span>
+                               <span class="s1">&#39;platform description (XML).&#39;</span><span class="p">)</span>
+
+        <span class="n">pstates</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pstates</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">ps_type</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pstates</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="s1">&#39;Power states with type </span><span class="si">{}</span><span class="s1"> could not &#39;</span>
+                              <span class="s1">&#39;be found.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ps_type</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">pstates</span></div>
+
+<div class="viewcode-block" id="Host.get_pstate_by_id"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.Host.get_pstate_by_id">[docs]</a>    <span class="k">def</span> <span class="nf">get_pstate_by_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pstate_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PowerState</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get a power state by id.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pstate_id: The power state id.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            LookupError: In case of power state could not be found.</span>
+<span class="sd">            RuntimeError: In case of power states were not defined.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The power state with the corresponding id.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pstates</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Cannot get undefined power states. Make sure the &#39;</span>
+                               <span class="s1">&#39;power states are defined in the &#39;</span>
+                               <span class="s1">&#39;platform description (XML).&#39;</span><span class="p">)</span>
+
+        <span class="n">ps</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pstates</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">pstate_id</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ps</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="s1">&#39;Power state with id </span><span class="si">{}</span><span class="s1"> could not &#39;</span>
+                              <span class="s1">&#39;be found.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pstate_id</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">ps</span></div>
+
+<div class="viewcode-block" id="Host.get_sleep_pstate"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.Host.get_sleep_pstate">[docs]</a>    <span class="k">def</span> <span class="nf">get_sleep_pstate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PowerState</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get the sleep power state.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            LookupError: In case of sleep power state could not be found.</span>
+<span class="sd">            RuntimeError: In case of power states were not defined.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The sleep power state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pstate_by_type</span><span class="p">(</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SLEEP</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Host.get_default_pstate"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.Host.get_default_pstate">[docs]</a>    <span class="k">def</span> <span class="nf">get_default_pstate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PowerState</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get the default power state.</span>
+
+<span class="sd">        The default power state is the first computation state provided in </span>
+<span class="sd">        the sequence power states which, is sorted by the id.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            LookupError: In case of power state could not be found.</span>
+<span class="sd">            RuntimeError: In case of power states were not defined.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The default power state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pstate_by_type</span><span class="p">(</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">COMPUTATION</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">_switch_off</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Switch off the host.</span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+<span class="sd">        It simulates the sleeping routine and its time/cost.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            LookupError: In case of switching off or sleep power states</span>
+<span class="sd">                could not be found.</span>
+<span class="sd">            RuntimeError: In case of power states were not defined or the</span>
+<span class="sd">                host cannot be switched off which, occurs when the host is</span>
+<span class="sd">                not idle or it&#39;s allocated for a job.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">s_off_ps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pstate_by_type</span><span class="p">(</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SWITCHING_OFF</span><span class="p">)</span>
+        <span class="n">s_ps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pstate_by_type</span><span class="p">(</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SLEEP</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">s_off_ps</span> <span class="ow">and</span> <span class="n">s_ps</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_allocated</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_idle</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;A host must be idle and free to be able to &#39;</span>
+                               <span class="s1">&#39;switch off, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_pstate</span><span class="p">(</span><span class="n">s_off_ps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_state</span><span class="p">(</span><span class="n">HostState</span><span class="o">.</span><span class="n">SWITCHING_OFF</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_switch_on</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Switch on the host.</span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+<span class="sd">        It simulates the bootup routine and its time/cost.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            LookupError: In case of switching on power state could not be found.</span>
+<span class="sd">            RuntimeError: In case of power states were not defined or</span>
+<span class="sd">                the current host state is not sleeping.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pstate_by_type</span><span class="p">(</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SWITCHING_ON</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_sleeping</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;A host must be sleeping to switch on, &#39;</span>
+                               <span class="s1">&#39;got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_pstate</span><span class="p">(</span><span class="n">ps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_state</span><span class="p">(</span><span class="n">HostState</span><span class="o">.</span><span class="n">SWITCHING_ON</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_computation_pstate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pstate_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Set a computation power state.</span>
+
+<span class="sd">        This is useful when DVFS is desired. It&#39;s an internal method to be</span>
+<span class="sd">        used by the simulator only.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pstate_id: The power state id.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of power states were not defined or it is </span>
+<span class="sd">                not a computation one or the current host state is not idle </span>
+<span class="sd">                nor computing.</span>
+<span class="sd">            LookupError: In case of power state could not be found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">next_ps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pstate_by_id</span><span class="p">(</span><span class="n">pstate_id</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">next_ps</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="n">PowerStateType</span><span class="o">.</span><span class="n">COMPUTATION</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;The power state is not a computation one, &#39;</span><span class="p">,</span>
+                               <span class="s1">&#39;got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">next_ps</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_idle</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_computing</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;A host must be idle or computing to switch to &#39;</span>
+                               <span class="s1">&#39;another computation power state, &#39;</span>
+                               <span class="s1">&#39;got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_pstate</span><span class="p">(</span><span class="n">next_ps</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_off</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Finish the switching off routine and sleep.</span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            SystemError: In case of the current host state is not switching off.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_switching_off</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">SystemError</span><span class="p">(</span><span class="s1">&#39;A host must be switching off to sleep, &#39;</span>
+                              <span class="s1">&#39;got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">))</span>
+
+        <span class="n">ps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_pstate_by_type</span><span class="p">(</span><span class="n">PowerStateType</span><span class="o">.</span><span class="n">SLEEP</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_pstate</span><span class="p">(</span><span class="n">ps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_state</span><span class="p">(</span><span class="n">HostState</span><span class="o">.</span><span class="n">SLEEPING</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_on</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Finish the switching on routine and wake up.</span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            SystemError: In case of the current host state is not switching on.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_switching_on</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">SystemError</span><span class="p">(</span><span class="s1">&#39;A host must be switching on to wake up, &#39;</span>
+                              <span class="s1">&#39;got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">))</span>
+
+        <span class="n">ps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default_pstate</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_pstate</span><span class="p">(</span><span class="n">ps</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_state</span><span class="p">(</span><span class="n">HostState</span><span class="o">.</span><span class="n">IDLE</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_unavailable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The host become unavailable. </span>
+
+<span class="sd">        This is an internal method to be used by the simulator only as </span>
+<span class="sd">        a response from an external event file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state_before_unavailable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_state</span><span class="p">(</span><span class="n">HostState</span><span class="o">.</span><span class="n">UNAVAILABLE</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The host become available. </span>
+
+<span class="sd">        This is an internal method to be used by the simulator only as </span>
+<span class="sd">        a response from an external event file.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            SystemError: In case of host is not unavailable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_unavailable</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">SystemError</span><span class="p">(</span><span class="s2">&quot;A host must be unavailable to become &quot;</span>
+                              <span class="sa">f</span><span class="s2">&quot;available, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state_before_unavailable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_state</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__state_before_unavailable</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state_before_unavailable</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_allocate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Allocate the host for a job.</span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            job_id: The job that will use this host.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of host is not shareable and is already </span>
+<span class="sd">                being used by another job or the host is unavailable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_unavailable</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;This host is currently unavailable.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_shareable</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_allocated</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;This host cannot be used by multiple jobs.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_start_computing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Start computing.</span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            SystemError: In case of the current host power state is not a </span>
+<span class="sd">                computation one or there are no jobs allocated or the host is</span>
+<span class="sd">                unavailable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_unavailable</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">SystemError</span><span class="p">(</span><span class="s1">&#39;Unavailable hosts cannot execute jobs.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_idle</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_computing</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">SystemError</span><span class="p">(</span><span class="s1">&#39;A host must be idle or computing to be able to &#39;</span>
+                              <span class="s1">&#39;start a new job, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">SystemError</span><span class="p">(</span><span class="s1">&#39;The host must be allocated for a job &#39;</span>
+                              <span class="s1">&#39;before start computing.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_state</span><span class="p">(</span><span class="n">HostState</span><span class="o">.</span><span class="n">COMPUTING</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_release</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Release the resource.</span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            job_id: The job that will release this host.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">job_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__set_state</span><span class="p">(</span><span class="n">HostState</span><span class="o">.</span><span class="n">IDLE</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__set_pstate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_pstate</span><span class="p">:</span> <span class="n">PowerState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Set the power state.</span>
+
+<span class="sd">        This is an internal method to be used by the host instance only.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AssertionError: In case of invalid argument type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">__current_pstate</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_pstate</span><span class="p">,</span> <span class="n">PowerState</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__current_pstate</span> <span class="o">=</span> <span class="n">new_pstate</span>
+
+    <span class="k">def</span> <span class="nf">__set_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_state</span><span class="p">:</span> <span class="n">HostState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Set the state.</span>
+
+<span class="sd">        This is an internal method to be used by the host instance only.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AssertionError: In case of invalid argument type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">HostState</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">=</span> <span class="n">new_state</span></div>
+
+
+<div class="viewcode-block" id="Platform"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.Platform">[docs]</a><span class="k">class</span> <span class="nc">Platform</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; This class describes a computing platform.</span>
+
+<span class="sd">    A platform is composed of a set of resources (computing, storage, and network).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        resources: the platform resources (hosts and storages).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: In case of invalid size.</span>
+<span class="sd">        SystemError: In case of invalid resource ids.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resources</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Host</span><span class="p">,</span> <span class="n">Storage</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">resources</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;A platform must contain at least one resource.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">resources</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">SystemError</span><span class="p">(</span><span class="s1">&#39;The simulator expected resources id to &#39;</span>
+                              <span class="s1">&#39;be a sequence starting from 0&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__resources</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">resources</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="n">h</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The number of resources in the platform. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__resources</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">power</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The instantaneous power consumption (in Watts). &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">power</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span> <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">power</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">HostState</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; The current platform state. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">h</span><span class="o">.</span><span class="n">state</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">resources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Host</span><span class="p">,</span> <span class="n">Storage</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot; Platform resources. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__resources</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">storages</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Storage</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Platform storage resources. &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__resources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">Storage</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">r</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">hosts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Host</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Platform computing resources. &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__resources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">Host</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">r</span>
+
+<div class="viewcode-block" id="Platform.get_not_allocated_hosts"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.Platform.get_not_allocated_hosts">[docs]</a>    <span class="k">def</span> <span class="nf">get_not_allocated_hosts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Host</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Get available hosts.</span>
+
+<span class="sd">        An available host is the one that is not allocated for a job.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list with available hosts.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">h</span><span class="p">:</span> <span class="ow">not</span> <span class="n">h</span><span class="o">.</span><span class="n">is_allocated</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hosts</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Platform.get"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.Platform.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Host</span><span class="p">,</span> <span class="n">Storage</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Get resource by id.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource_id: The resource id.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The resource with the corresponding id.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            LookupError: In case of resource not found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">resource_id</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;There&#39;re no resources with id </span><span class="si">{</span><span class="n">resource_id</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__resources</span><span class="p">[</span><span class="n">resource_id</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Platform.get_host"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.Platform.get_host">[docs]</a>    <span class="k">def</span> <span class="nf">get_host</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Host</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get host by id.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            host_id: The host id.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The host with the corresponding id.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            LookupError: In case of resource not found or invalid resource type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">host_id</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;There&#39;re no resources with id </span><span class="si">{</span><span class="n">host_id</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="n">resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__resources</span><span class="p">[</span><span class="n">host_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="n">Host</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;A host with id </span><span class="si">{</span><span class="n">host_id</span><span class="si">}</span><span class="s2"> could not be &quot;</span>
+                              <span class="sa">f</span><span class="s2">&quot;found, got </span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">resource</span></div>
+
+<div class="viewcode-block" id="Platform.get_storage"><a class="viewcode-back" href="../../api_doc/resources.html#batsim_py.resources.Platform.get_storage">[docs]</a>    <span class="k">def</span> <span class="nf">get_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">storage_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Storage</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Get storage by id.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            storage_id: The storage id.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The storage with the corresponding id.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            LookupError: In case of resource not found or invalid resource type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">storage_id</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;There&#39;re no resources with id </span><span class="si">{</span><span class="n">storage_id</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="n">resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__resources</span><span class="p">[</span><span class="n">storage_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="n">Storage</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;A storage with id </span><span class="si">{</span><span class="n">storage_id</span><span class="si">}</span><span class="s2"> could not &quot;</span>
+                              <span class="sa">f</span><span class="s2">&quot;be found, got </span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">resource</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Lucas C. Casagrande
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

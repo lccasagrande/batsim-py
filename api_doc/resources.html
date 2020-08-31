@@ -1,0 +1,922 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Resources &mdash; Batsim-py 1.0.5 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Jobs" href="jobs.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> Batsim-py
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scheduling.html">Scheduling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/shutdown.html">Shutdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/dvfs.html">DVFS</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="simulator.html">Simulator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="monitors.html">Monitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Resources</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Batsim-py</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Resources</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/api_doc/resources.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="module-batsim_py.resources">
+<span id="resources"></span><h1>Resources<a class="headerlink" href="#module-batsim_py.resources" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="batsim_py.resources.Host">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.resources.</code><code class="sig-name descname">Host</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">pstates</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">allow_sharing</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">metadata</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#Host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.Host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class describes a Batsim computing resource (host).</p>
+<p>A host is a resource on which a job can execute.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The host id. Must be unique within a platform.</p></li>
+<li><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The host name.</p></li>
+<li><p><strong>pstates</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<a class="reference internal" href="#batsim_py.resources.PowerState" title="batsim_py.resources.PowerState"><code class="xref py py-class docutils literal notranslate"><span class="pre">PowerState</span></code></a>]]) – The host power states. Defaults to None.
+A host can have several computing power states but only one sleep
+and transition (On/Off) power states. Computing power states serve
+as a way to implement different DVFS levels while the transition
+power states are used only to simulate the costs of switching On/Off.
+A host cannot be used when it’s being switched On/Off or sleeping.
+If you only want to implement DVFS, there is no need to provide a sleep
+power state and a transition power state. Moreover, if you provide a sleep
+power state you must also provide both transition power states.</p></li>
+<li><p><strong>allow_sharing</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether multiple jobs can share the host or not.
+Defaults to False.</p></li>
+<li><p><strong>metadata</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>]) – Extra host properties that can be used by some functions
+beyond the scope of Batsim or Batsim-py. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>AssertionError</strong> – In case of invalid arguments type.</p></li>
+<li><p><strong>ValueError</strong> – In case of missing pstates or pstate ids are not unique.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ps1</span> <span class="o">=</span> <span class="n">PowerState</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">PowerStateType</span><span class="o">.</span><span class="n">COMPUTATION</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ps2</span> <span class="o">=</span> <span class="n">PowerState</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">PowerStateType</span><span class="o">.</span><span class="n">COMPUTATION</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">150</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">Host</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Host_0&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">ps1</span><span class="p">,</span> <span class="n">ps2</span><span class="p">])</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="batsim_py.resources.Host.get_default_pstate">
+<code class="sig-name descname">get_default_pstate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#Host.get_default_pstate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.Host.get_default_pstate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the default power state.</p>
+<p>The default power state is the first computation state provided in
+the sequence power states which, is sorted by the id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>LookupError</strong> – In case of power state could not be found.</p></li>
+<li><p><strong>RuntimeError</strong> – In case of power states were not defined.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#batsim_py.resources.PowerState" title="batsim_py.resources.PowerState"><code class="xref py py-class docutils literal notranslate"><span class="pre">PowerState</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The default power state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.get_pstate_by_id">
+<code class="sig-name descname">get_pstate_by_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pstate_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#Host.get_pstate_by_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.Host.get_pstate_by_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a power state by id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>pstate_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The power state id.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>LookupError</strong> – In case of power state could not be found.</p></li>
+<li><p><strong>RuntimeError</strong> – In case of power states were not defined.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#batsim_py.resources.PowerState" title="batsim_py.resources.PowerState"><code class="xref py py-class docutils literal notranslate"><span class="pre">PowerState</span></code></a></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The power state with the corresponding id.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.get_pstate_by_type">
+<code class="sig-name descname">get_pstate_by_type</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ps_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#Host.get_pstate_by_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.Host.get_pstate_by_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a power state by type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ps_type</strong> (<a class="reference internal" href="#batsim_py.resources.PowerStateType" title="batsim_py.resources.PowerStateType"><code class="xref py py-class docutils literal notranslate"><span class="pre">PowerStateType</span></code></a>) – The power state type.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>RuntimeError</strong> – In case of power states were not defined.</p></li>
+<li><p><strong>LookupError</strong> – In case of power state could not be found.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="#batsim_py.resources.PowerState" title="batsim_py.resources.PowerState"><code class="xref py py-class docutils literal notranslate"><span class="pre">PowerState</span></code></a>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>All power states with the corresponding power state type.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.get_sleep_pstate">
+<code class="sig-name descname">get_sleep_pstate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#Host.get_sleep_pstate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.Host.get_sleep_pstate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the sleep power state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>LookupError</strong> – In case of sleep power state could not be found.</p></li>
+<li><p><strong>RuntimeError</strong> – In case of power states were not defined.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#batsim_py.resources.PowerState" title="batsim_py.resources.PowerState"><code class="xref py py-class docutils literal notranslate"><span class="pre">PowerState</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The sleep power state.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.id">
+<em class="property">property </em><code class="sig-name descname">id</code><a class="headerlink" href="#batsim_py.resources.Host.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Host ID</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.is_allocated">
+<em class="property">property </em><code class="sig-name descname">is_allocated</code><a class="headerlink" href="#batsim_py.resources.Host.is_allocated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether this host was allocated for some job or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.is_computing">
+<em class="property">property </em><code class="sig-name descname">is_computing</code><a class="headerlink" href="#batsim_py.resources.Host.is_computing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether this host is computing (100% cpu) or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.is_idle">
+<em class="property">property </em><code class="sig-name descname">is_idle</code><a class="headerlink" href="#batsim_py.resources.Host.is_idle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether this host is idle (0% cpu)  or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.is_shareable">
+<em class="property">property </em><code class="sig-name descname">is_shareable</code><a class="headerlink" href="#batsim_py.resources.Host.is_shareable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether multiple jobs can share this host or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.is_sleeping">
+<em class="property">property </em><code class="sig-name descname">is_sleeping</code><a class="headerlink" href="#batsim_py.resources.Host.is_sleeping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether this host is sleeping or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.is_switching_off">
+<em class="property">property </em><code class="sig-name descname">is_switching_off</code><a class="headerlink" href="#batsim_py.resources.Host.is_switching_off" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether this host is switching off or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.is_switching_on">
+<em class="property">property </em><code class="sig-name descname">is_switching_on</code><a class="headerlink" href="#batsim_py.resources.Host.is_switching_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether this host is switching on or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.is_unavailable">
+<em class="property">property </em><code class="sig-name descname">is_unavailable</code><a class="headerlink" href="#batsim_py.resources.Host.is_unavailable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether it’s possible to execute jobs or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.jobs">
+<em class="property">property </em><code class="sig-name descname">jobs</code><a class="headerlink" href="#batsim_py.resources.Host.jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A sequence of job ids that are allocated on this host.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.metadata">
+<em class="property">property </em><code class="sig-name descname">metadata</code><a class="headerlink" href="#batsim_py.resources.Host.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Host extra properties.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.name">
+<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#batsim_py.resources.Host.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Host name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.power">
+<em class="property">property </em><code class="sig-name descname">power</code><a class="headerlink" href="#batsim_py.resources.Host.power" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantaneous power consumption (in Watts).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.pstate">
+<em class="property">property </em><code class="sig-name descname">pstate</code><a class="headerlink" href="#batsim_py.resources.Host.pstate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Host current power state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<a class="reference internal" href="#batsim_py.resources.PowerState" title="batsim_py.resources.PowerState"><code class="xref py py-class docutils literal notranslate"><span class="pre">PowerState</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.pstates">
+<em class="property">property </em><code class="sig-name descname">pstates</code><a class="headerlink" href="#batsim_py.resources.Host.pstates" title="Permalink to this definition">¶</a></dt>
+<dd><p>A sequence of all power states defined.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<a class="reference internal" href="#batsim_py.resources.PowerState" title="batsim_py.resources.PowerState"><code class="xref py py-class docutils literal notranslate"><span class="pre">PowerState</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Host.state">
+<em class="property">property </em><code class="sig-name descname">state</code><a class="headerlink" href="#batsim_py.resources.Host.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Host current state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#batsim_py.resources.HostState" title="batsim_py.resources.HostState"><code class="xref py py-class docutils literal notranslate"><span class="pre">HostState</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.resources.HostState">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.resources.</code><code class="sig-name descname">HostState</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#HostState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.HostState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>Batsim Host State Types</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.resources.Platform">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.resources.</code><code class="sig-name descname">Platform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">resources</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#Platform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.Platform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class describes a computing platform.</p>
+<p>A platform is composed of a set of resources (computing, storage, and network).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>resources</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference internal" href="#batsim_py.resources.Host" title="batsim_py.resources.Host"><code class="xref py py-class docutils literal notranslate"><span class="pre">Host</span></code></a>, <a class="reference internal" href="#batsim_py.resources.Storage" title="batsim_py.resources.Storage"><code class="xref py py-class docutils literal notranslate"><span class="pre">Storage</span></code></a>]]) – the platform resources (hosts and storages).</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – In case of invalid size.</p></li>
+<li><p><strong>SystemError</strong> – In case of invalid resource ids.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="batsim_py.resources.Platform.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">resource_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#Platform.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.Platform.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get resource by id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>resource_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The resource id.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference internal" href="#batsim_py.resources.Host" title="batsim_py.resources.Host"><code class="xref py py-class docutils literal notranslate"><span class="pre">Host</span></code></a>, <a class="reference internal" href="#batsim_py.resources.Storage" title="batsim_py.resources.Storage"><code class="xref py py-class docutils literal notranslate"><span class="pre">Storage</span></code></a>]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The resource with the corresponding id.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>LookupError</strong> – In case of resource not found.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Platform.get_host">
+<code class="sig-name descname">get_host</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">host_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#Platform.get_host"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.Platform.get_host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get host by id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>host_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The host id.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#batsim_py.resources.Host" title="batsim_py.resources.Host"><code class="xref py py-class docutils literal notranslate"><span class="pre">Host</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The host with the corresponding id.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>LookupError</strong> – In case of resource not found or invalid resource type.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Platform.get_not_allocated_hosts">
+<code class="sig-name descname">get_not_allocated_hosts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#Platform.get_not_allocated_hosts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.Platform.get_not_allocated_hosts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get available hosts.</p>
+<p>An available host is the one that is not allocated for a job.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<a class="reference internal" href="#batsim_py.resources.Host" title="batsim_py.resources.Host"><code class="xref py py-class docutils literal notranslate"><span class="pre">Host</span></code></a>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list with available hosts.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Platform.get_storage">
+<code class="sig-name descname">get_storage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">storage_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#Platform.get_storage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.Platform.get_storage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get storage by id.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>storage_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The storage id.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#batsim_py.resources.Storage" title="batsim_py.resources.Storage"><code class="xref py py-class docutils literal notranslate"><span class="pre">Storage</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The storage with the corresponding id.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>LookupError</strong> – In case of resource not found or invalid resource type.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Platform.hosts">
+<em class="property">property </em><code class="sig-name descname">hosts</code><a class="headerlink" href="#batsim_py.resources.Platform.hosts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Platform computing resources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code>[<a class="reference internal" href="#batsim_py.resources.Host" title="batsim_py.resources.Host"><code class="xref py py-class docutils literal notranslate"><span class="pre">Host</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Platform.power">
+<em class="property">property </em><code class="sig-name descname">power</code><a class="headerlink" href="#batsim_py.resources.Platform.power" title="Permalink to this definition">¶</a></dt>
+<dd><p>The instantaneous power consumption (in Watts).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Platform.resources">
+<em class="property">property </em><code class="sig-name descname">resources</code><a class="headerlink" href="#batsim_py.resources.Platform.resources" title="Permalink to this definition">¶</a></dt>
+<dd><p>Platform resources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference internal" href="#batsim_py.resources.Host" title="batsim_py.resources.Host"><code class="xref py py-class docutils literal notranslate"><span class="pre">Host</span></code></a>, <a class="reference internal" href="#batsim_py.resources.Storage" title="batsim_py.resources.Storage"><code class="xref py py-class docutils literal notranslate"><span class="pre">Storage</span></code></a>]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Platform.size">
+<em class="property">property </em><code class="sig-name descname">size</code><a class="headerlink" href="#batsim_py.resources.Platform.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of resources in the platform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Platform.state">
+<em class="property">property </em><code class="sig-name descname">state</code><a class="headerlink" href="#batsim_py.resources.Platform.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>The current platform state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<a class="reference internal" href="#batsim_py.resources.HostState" title="batsim_py.resources.HostState"><code class="xref py py-class docutils literal notranslate"><span class="pre">HostState</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Platform.storages">
+<em class="property">property </em><code class="sig-name descname">storages</code><a class="headerlink" href="#batsim_py.resources.Platform.storages" title="Permalink to this definition">¶</a></dt>
+<dd><p>Platform storage resources.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code>[<a class="reference internal" href="#batsim_py.resources.Storage" title="batsim_py.resources.Storage"><code class="xref py py-class docutils literal notranslate"><span class="pre">Storage</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.resources.PowerState">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.resources.</code><code class="sig-name descname">PowerState</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pstate_id</span></em>, <em class="sig-param"><span class="n">pstate_type</span></em>, <em class="sig-param"><span class="n">watt_idle</span></em>, <em class="sig-param"><span class="n">watt_full</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#PowerState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.PowerState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class describes a power state model.</p>
+<p>When the host is on, the energy consumption naturally depends on both the
+current CPU load and the host energy profile.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pstate_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The power state id. Must be unique.</p></li>
+<li><p><strong>pstate_type</strong> (<a class="reference internal" href="#batsim_py.resources.PowerStateType" title="batsim_py.resources.PowerStateType"><code class="xref py py-class docutils literal notranslate"><span class="pre">PowerStateType</span></code></a>) – The power state type.</p></li>
+<li><p><strong>watt_idle</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Consumption (Watts) when the host is up but without anything to do.</p></li>
+<li><p><strong>watt_full</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – Consumption (Watts) when the host cpu is at 100%.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>AssertionError</strong> – In case of invalid arguments type.</p></li>
+<li><p><strong>ValueError</strong> – In case of watts are invalid values or the power profile
+    values are not equal when the power state type is not a computation one.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ps1</span> <span class="o">=</span> <span class="n">PowerState</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">PowerStateType</span><span class="o">.</span><span class="n">COMPUTATION</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">160</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ps2</span> <span class="o">=</span> <span class="n">PowerState</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">PowerStateType</span><span class="o">.</span><span class="n">SLEEP</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="batsim_py.resources.PowerState.id">
+<em class="property">property </em><code class="sig-name descname">id</code><a class="headerlink" href="#batsim_py.resources.PowerState.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>The Power State ID</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.PowerState.type">
+<em class="property">property </em><code class="sig-name descname">type</code><a class="headerlink" href="#batsim_py.resources.PowerState.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The power state type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#batsim_py.resources.PowerStateType" title="batsim_py.resources.PowerStateType"><code class="xref py py-class docutils literal notranslate"><span class="pre">PowerStateType</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.PowerState.watt_full">
+<em class="property">property </em><code class="sig-name descname">watt_full</code><a class="headerlink" href="#batsim_py.resources.PowerState.watt_full" title="Permalink to this definition">¶</a></dt>
+<dd><p>Consumption (Watts) when the host cpu is at 100%.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.PowerState.watt_idle">
+<em class="property">property </em><code class="sig-name descname">watt_idle</code><a class="headerlink" href="#batsim_py.resources.PowerState.watt_idle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Consumption (Watts) when the host is up but without anything to do.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.resources.PowerStateType">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.resources.</code><code class="sig-name descname">PowerStateType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#PowerStateType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.PowerStateType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>Batsim Host Power State Types</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.resources.Storage">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.resources.</code><code class="sig-name descname">Storage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">allow_sharing</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">metadata</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#Storage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.Storage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This class describes a Batsim storage resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The storage id. Must be unique within a platform.</p></li>
+<li><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The storage name.</p></li>
+<li><p><strong>allow_sharing</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Whether multiple jobs can share the storage.
+Defaults to True.</p></li>
+<li><p><strong>metadata</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>]) – Extra storage properties that can be used by some functions
+beyond the scope of Batsim or Batsim-py. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="batsim_py.resources.Storage.id">
+<em class="property">property </em><code class="sig-name descname">id</code><a class="headerlink" href="#batsim_py.resources.Storage.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Storage ID</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Storage.is_allocated">
+<em class="property">property </em><code class="sig-name descname">is_allocated</code><a class="headerlink" href="#batsim_py.resources.Storage.is_allocated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the storage is being used by a job or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Storage.is_shareable">
+<em class="property">property </em><code class="sig-name descname">is_shareable</code><a class="headerlink" href="#batsim_py.resources.Storage.is_shareable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether multiple jobs can share this storage or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Storage.is_unavailable">
+<em class="property">property </em><code class="sig-name descname">is_unavailable</code><a class="headerlink" href="#batsim_py.resources.Storage.is_unavailable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the storage is unavailable or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Storage.jobs">
+<em class="property">property </em><code class="sig-name descname">jobs</code><a class="headerlink" href="#batsim_py.resources.Storage.jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>All jobs that are using this storage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Storage.metadata">
+<em class="property">property </em><code class="sig-name descname">metadata</code><a class="headerlink" href="#batsim_py.resources.Storage.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Storage extra properties.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Storage.name">
+<em class="property">property </em><code class="sig-name descname">name</code><a class="headerlink" href="#batsim_py.resources.Storage.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Storage name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.resources.Storage.state">
+<em class="property">property </em><code class="sig-name descname">state</code><a class="headerlink" href="#batsim_py.resources.Storage.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>The storage current state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#batsim_py.resources.StorageState" title="batsim_py.resources.StorageState"><code class="xref py py-class docutils literal notranslate"><span class="pre">StorageState</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.resources.StorageState">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.resources.</code><code class="sig-name descname">StorageState</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/resources.html#StorageState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.resources.StorageState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>Batsim Storage State Types</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="jobs.html" class="btn btn-neutral float-left" title="Jobs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Lucas C. Casagrande
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

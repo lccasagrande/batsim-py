@@ -1,0 +1,978 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>batsim_py.jobs &mdash; Batsim-py 1.0.5 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> Batsim-py
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/scheduling.html">Scheduling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/shutdown.html">Shutdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/dvfs.html">DVFS</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/simulator.html">Simulator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/events.html">Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/monitors.html">Monitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/resources.html">Resources</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Batsim-py</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>batsim_py.jobs</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for batsim_py.jobs</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
+
+
+<div class="viewcode-block" id="JobState"><a class="viewcode-back" href="../../api_doc/jobs.html#batsim_py.jobs.JobState">[docs]</a><span class="k">class</span> <span class="nc">JobState</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Job State Types &quot;&quot;&quot;</span>
+
+    <span class="n">UNKNOWN</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SUBMITTED</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">RUNNING</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">COMPLETED_SUCCESSFULLY</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">COMPLETED_FAILED</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">COMPLETED_WALLTIME_REACHED</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">COMPLETED_KILLED</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">REJECTED</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">ALLOCATED</span> <span class="o">=</span> <span class="mi">8</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span></div>
+
+
+<div class="viewcode-block" id="JobProfile"><a class="viewcode-back" href="../../api_doc/jobs.html#batsim_py.jobs.JobProfile">[docs]</a><span class="k">class</span> <span class="nc">JobProfile</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Job Profile base class.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: The profile name. Must be unique within a workload.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The profile&#39;s name. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__name</span></div>
+
+
+<div class="viewcode-block" id="DelayJobProfile"><a class="viewcode-back" href="../../api_doc/jobs.html#batsim_py.jobs.DelayJobProfile">[docs]</a><span class="k">class</span> <span class="nc">DelayJobProfile</span><span class="p">(</span><span class="n">JobProfile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Delay Job Profile class.</span>
+
+<span class="sd">    This class describes a job that will sleep during the defined time.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: The profile name. Must be unique within a workload.</span>
+<span class="sd">        delay: The sleep time.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: In case of delay is not greater than zero.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        A job that will sleep for 100 seconds.</span>
+
+<span class="sd">        &gt;&gt;&gt; profile = DelayJobProfile(name=&quot;delay&quot;, delay=100)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">delay</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">delay</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `delay` argument to be a number &#39;</span>
+                             <span class="s1">&#39;greater than zero, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">delay</span><span class="p">))</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__delay</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">delay</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The sleep time. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__delay</span></div>
+
+
+<div class="viewcode-block" id="ParallelJobProfile"><a class="viewcode-back" href="../../api_doc/jobs.html#batsim_py.jobs.ParallelJobProfile">[docs]</a><span class="k">class</span> <span class="nc">ParallelJobProfile</span><span class="p">(</span><span class="n">JobProfile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Parallel Job Profile class.</span>
+
+<span class="sd">    This class describes a job that performs a set of computations and </span>
+<span class="sd">    communications on the allocated hosts.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: The profile name. Must be unique within a workload.</span>
+<span class="sd">        cpu: A list that defines the amount of flops to be computed on each </span>
+<span class="sd">            allocated host.</span>
+<span class="sd">        com: A list [host x host] that defines the amount of bytes to be </span>
+<span class="sd">            transferred between the allocated hosts.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: In case of `cpu` is not provided or `com` has an invalid size </span>
+<span class="sd">            or their values are less than zero.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        Two hosts computing 10E6 flops each with local communication only.</span>
+
+<span class="sd">        &gt;&gt;&gt; profile = ParallelJobProfile(name=&quot;parallel&quot;, cpu=[10e6, 10e6], com=[5e6, 0, 0, 5e6])</span>
+
+<span class="sd">        Two hosts computing 2E6 flops each with host 1 sending 5E6 bytes to host 2.</span>
+
+<span class="sd">        &gt;&gt;&gt; profile = ParallelJobProfile(name=&quot;parallel&quot;, cpu=[2e6, 2e6], com=[0, 5e6, 0, 0])</span>
+
+<span class="sd">        One host computing 2E6 flops with host 1 sending 5E6 bytes to host 2 and host 2 sending 10E6 bytes to host 1.</span>
+
+<span class="sd">        &gt;&gt;&gt; profile = ParallelJobProfile(name=&quot;parallel&quot;, cpu=[2e6, 0], com=[0, 5e6, 10e6, 0])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">cpu</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+                 <span class="n">com</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cpu</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `cpu` argument to be a non &#39;</span>
+                             <span class="s1">&#39;empty sequence, got </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cpu</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">com</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cpu</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">cpu</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `com` argument to be a &#39;</span>
+                             <span class="s1">&#39;list of size [host x host], got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">com</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">c</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cpu</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `cpu` argument to have values &#39;</span>
+                             <span class="s1">&#39;not less than zero.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">c</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">com</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `com` argument to have values &#39;</span>
+                             <span class="s1">&#39;not less than zero.&#39;</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__cpu</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cpu</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__com</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">com</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;The amount of flops to be computed on each host.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__cpu</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">com</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;The amount of bytes to be transferred between hosts.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__com</span></div>
+
+
+<div class="viewcode-block" id="ParallelHomogeneousJobProfile"><a class="viewcode-back" href="../../api_doc/jobs.html#batsim_py.jobs.ParallelHomogeneousJobProfile">[docs]</a><span class="k">class</span> <span class="nc">ParallelHomogeneousJobProfile</span><span class="p">(</span><span class="n">JobProfile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Parallel Homogeneous Job Profile class.</span>
+
+<span class="sd">    This class describes a job that performs the same computation and </span>
+<span class="sd">    communication on all allocated hosts.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: The profile name. Must be unique within a workload.</span>
+<span class="sd">        cpu: The amount of flops to be computed on each allocated host.</span>
+<span class="sd">        com: The amount of bytes to be sent and received between each pair of hosts. </span>
+<span class="sd">            The loopback communication of each machine defaults to 0.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: In case of `com` or `cpu` are not greater than zero.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; profile = ParallelHomogeneousJobProfile(&quot;name&quot;, cpu=10e6, com=5e6)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">cpu</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">com</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cpu</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">com</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `cpu` or `com` argument &#39;</span>
+                             <span class="s1">&#39; to be defined.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cpu</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `cpu` argument to be &#39;</span>
+                             <span class="s1">&#39;not less than zero.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">com</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `com` argument to be &#39;</span>
+                             <span class="s1">&#39;not less than zero.&#39;</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__cpu</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cpu</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__com</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">com</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The amount of flops to be computed on each host.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__cpu</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">com</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The amount of bytes to be transferred between hosts.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__com</span></div>
+
+
+<div class="viewcode-block" id="ParallelHomogeneousTotalJobProfile"><a class="viewcode-back" href="../../api_doc/jobs.html#batsim_py.jobs.ParallelHomogeneousTotalJobProfile">[docs]</a><span class="k">class</span> <span class="nc">ParallelHomogeneousTotalJobProfile</span><span class="p">(</span><span class="n">JobProfile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Parallel Homogeneous Total Job Profile class.</span>
+
+<span class="sd">    This class describes a job that equally distributes the total amount of </span>
+<span class="sd">    computation and communication between the allocated hosts.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: The profile name. Must be unique within a workload.</span>
+<span class="sd">        cpu: The total amount of flops to be computed on all hosts.</span>
+<span class="sd">        com: The total amount of bytes to be sent and received on each</span>
+<span class="sd">            pair of hosts.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: In case of `com` or `cpu` are not greater than zero.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; profile = ParallelHomogeneousTotalJobProfile(&quot;name&quot;, cpu=10e6, com=5e6)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">cpu</span><span class="p">:</span>  <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">com</span><span class="p">:</span>  <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cpu</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">com</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `cpu` or `com` arguments &#39;</span>
+                             <span class="s1">&#39; to be defined.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cpu</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `cpu` argument to be &#39;</span>
+                             <span class="s1">&#39;not less than zero.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">com</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `com` argument to be &#39;</span>
+                             <span class="s1">&#39;not less than zero.&#39;</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__cpu</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cpu</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__com</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">com</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The total amount of flops to be computed.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__cpu</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">com</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The total amount of bytes to be sent and received.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__com</span></div>
+
+
+<div class="viewcode-block" id="ComposedJobProfile"><a class="viewcode-back" href="../../api_doc/jobs.html#batsim_py.jobs.ComposedJobProfile">[docs]</a><span class="k">class</span> <span class="nc">ComposedJobProfile</span><span class="p">(</span><span class="n">JobProfile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Composed Job Profile class.</span>
+
+<span class="sd">    This class describes a job that executes a sequence of profiles.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: The profile name. Must be unique within a workload.</span>
+<span class="sd">        profiles: The profile names to execute sequentially.</span>
+<span class="sd">        repeat: The number of times to repeat the sequence. Defaults to 1.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: In case of `repeat` argument is less than 1 or profiles list </span>
+<span class="sd">            is empty.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; composed = ComposedJobProfile(&quot;composed&quot;, profiles=[&quot;p1&quot;, &quot;p2&quot;], repeat=2)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">profiles</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+                 <span class="n">repeat</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">repeat</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `repeat` argument to be greater&#39;</span>
+                             <span class="s1">&#39;than 0, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repeat</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">profiles</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `profiles` argument to be a non &#39;</span>
+                             <span class="s1">&#39;empty sequence, got </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">profiles</span><span class="p">))</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__repeat</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">repeat</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__profiles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">repeat</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The number of times to repeat the profile sequence.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repeat</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;The sequence of profiles to execute.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__profiles</span></div>
+
+
+<div class="viewcode-block" id="ParallelHomogeneousPFSJobProfile"><a class="viewcode-back" href="../../api_doc/jobs.html#batsim_py.jobs.ParallelHomogeneousPFSJobProfile">[docs]</a><span class="k">class</span> <span class="nc">ParallelHomogeneousPFSJobProfile</span><span class="p">(</span><span class="n">JobProfile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Homogeneous Job with IO to/from PFS Profile class.</span>
+
+<span class="sd">    This class describes a job that represents an IO transfer between </span>
+<span class="sd">    the allocated hosts and a storage resource. </span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: The profile name. Must be unique within a workload.</span>
+<span class="sd">        bytes_to_read: The amount of bytes to read.</span>
+<span class="sd">        bytes_to_write: The amount of bytes to write.</span>
+<span class="sd">        storage: The storage resource label.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: In case of `bytes_to_read` or `bytes_to_write` are not greater </span>
+<span class="sd">            than zero or `storage` is not a valid string.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; pfs = ParallelHomogeneousPFSJobProfile(&quot;pfs&quot;, bytes_to_read=10e6, bytes_to_write=1e6, storage=&quot;pfs&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">bytes_to_read</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">bytes_to_write</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">storage</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">bytes_to_read</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">bytes_to_write</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `bytes_to_read` or `bytes_to_write` &#39;</span>
+                             <span class="s1">&#39;arguments to be defined.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">bytes_to_read</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `bytes_to_read` argument to be &#39;</span>
+                             <span class="s1">&#39;not less than zero, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bytes_to_read</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">bytes_to_write</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `bytes_to_write` argument to be &#39;</span>
+                             <span class="s1">&#39;not less than zero, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bytes_to_write</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">storage</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `storage` argument to be a &#39;</span>
+                             <span class="s1">&#39;valid string, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">storage</span><span class="p">))</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__bytes_to_read</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">bytes_to_read</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__bytes_to_write</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">bytes_to_write</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">storage</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">bytes_to_read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The amount of bytes to read. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__bytes_to_read</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">bytes_to_write</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The amount of bytes to write. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__bytes_to_write</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">storage</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The storage label. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__storage</span></div>
+
+
+<div class="viewcode-block" id="DataStagingJobProfile"><a class="viewcode-back" href="../../api_doc/jobs.html#batsim_py.jobs.DataStagingJobProfile">[docs]</a><span class="k">class</span> <span class="nc">DataStagingJobProfile</span><span class="p">(</span><span class="n">JobProfile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Batsim Data Staging Job Profile class.</span>
+
+<span class="sd">    This class describes a job that represents an IO transfer between</span>
+<span class="sd">    two storage resources.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: The profile name. Must be unique within a workload.</span>
+<span class="sd">        nb_bytes: The amount of bytes to be transferred.</span>
+<span class="sd">        src: The sending storage label (source).</span>
+<span class="sd">        dest: The receiving storage label (destination).</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: In case of `nb_bytes` argument is not greater than or equal </span>
+<span class="sd">            to zero and `src` or `dest` arguments are not valid strings.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; data = DataStagingJobProfile(&quot;data&quot;, nb_bytes=10e6, src=&quot;pfs&quot;, dest=&quot;nfs&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">nb_bytes</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">src</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">dest</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">nb_bytes</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `nb_bytes` argument to be a &#39;</span>
+                             <span class="s1">&#39;positive number, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nb_bytes</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `src` argument to be a &#39;</span>
+                             <span class="s1">&#39;valid string, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">src</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dest</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `dest` argument to be a &#39;</span>
+                             <span class="s1">&#39;valid string, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dest</span><span class="p">))</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__nb_bytes</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">nb_bytes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__src</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dest</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dest</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The receiving storage label.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dest</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">src</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The sending storage label. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__src</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nb_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The amount of bytes to be transferred. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__nb_bytes</span></div>
+
+
+<div class="viewcode-block" id="Job"><a class="viewcode-back" href="../../api_doc/jobs.html#batsim_py.jobs.Job">[docs]</a><span class="k">class</span> <span class="nc">Job</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; This class describes a rigid job.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: The job name. Must be unique within a workload.</span>
+<span class="sd">        workload: The job workload name.</span>
+<span class="sd">        res: The number of resources requested.</span>
+<span class="sd">        profile: The job profile to be executed.</span>
+<span class="sd">        subtime: The submission time.</span>
+<span class="sd">        walltime: The execution time limit (maximum execution time). </span>
+<span class="sd">            Defaults to None.</span>
+<span class="sd">        user_id: The user id. Defaults to None.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: In case of invalid arguments value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">WORKLOAD_SEPARATOR</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;!&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">workload</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">res</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                 <span class="n">profile</span><span class="p">:</span> <span class="n">JobProfile</span><span class="p">,</span>
+                 <span class="n">subtime</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                 <span class="n">walltime</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">user_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `name` argument to be a &#39;</span>
+                             <span class="s1">&#39;valid string, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">workload</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `workload` argument to be a &#39;</span>
+                             <span class="s1">&#39;valid string, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">workload</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">res</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `res` argument to be greater &#39;</span>
+                             <span class="s1">&#39;than zero, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">res</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">subtime</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `subtime` argument to be greater &#39;</span>
+                             <span class="s1">&#39;than or equal to zero, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">subtime</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">walltime</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">walltime</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `walltime` argument to be greater &#39;</span>
+                             <span class="s1">&#39;than zero, got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">walltime</span><span class="p">))</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">JobProfile</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">workload</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">WORKLOAD_SEPARATOR</span><span class="si">}{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__res</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__profile</span> <span class="o">=</span> <span class="n">profile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__subtime</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">subtime</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__walltime</span> <span class="o">=</span> <span class="n">walltime</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__user_id</span> <span class="o">=</span> <span class="n">user_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__storage_mapping</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span><span class="p">:</span> <span class="n">JobState</span> <span class="o">=</span> <span class="n">JobState</span><span class="o">.</span><span class="n">UNKNOWN</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__allocation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__start_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># will be set on start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__stop_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># will be set on terminate</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Job_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The job ID. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__id</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The job name. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">WORKLOAD_SEPARATOR</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">workload</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The job workload name. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">WORKLOAD_SEPARATOR</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">subtime</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The job submission time. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__subtime</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">storage_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot; The job storage mapping. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__storage_mapping</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">res</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The number of resources requested. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__res</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">profile</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobProfile</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The job profile. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__profile</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">walltime</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; The job maximum execution time. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__walltime</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">user_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; The user id. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__user_id</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">JobState</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;  The current job state. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allocation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot; The allocated resource ids. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__allocation</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__allocation</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_running</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether this job is running or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">==</span> <span class="n">JobState</span><span class="o">.</span><span class="n">RUNNING</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_runnable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether this job is able to start or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">==</span> <span class="n">JobState</span><span class="o">.</span><span class="n">ALLOCATED</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_submitted</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether this job was submitted or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">==</span> <span class="n">JobState</span><span class="o">.</span><span class="n">SUBMITTED</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_finished</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether this job has finished or not. &quot;&quot;&quot;</span>
+        <span class="n">states</span> <span class="o">=</span> <span class="p">(</span><span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_SUCCESSFULLY</span><span class="p">,</span>
+                  <span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_FAILED</span><span class="p">,</span>
+                  <span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_WALLTIME_REACHED</span><span class="p">,</span>
+                  <span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_KILLED</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="ow">in</span> <span class="n">states</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_rejected</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether this job was rejected or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">==</span> <span class="n">JobState</span><span class="o">.</span><span class="n">REJECTED</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; The job start time. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__start_time</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stop_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; The job stop time. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__stop_time</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">waiting_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; The job waiting time. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">subtime</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">runtime</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; The job runtime. </span>
+
+<span class="sd">        The minimum value is 1 second.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stretch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; The job stretch. &quot;&quot;&quot;</span>
+        <span class="n">stretch</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">walltime</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">stretch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_time</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">walltime</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">stretch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_time</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span>
+        <span class="k">return</span> <span class="n">stretch</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">turnaround_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; The job turnaround time. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">waiting_time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">per_processor_slowdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; The job per-processor slowdown. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">turnaround_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">turnaround_time</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">slowdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; The job slowdown. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">turnaround_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">turnaround_time</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_allocate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hosts</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">storage_mapping</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Allocate hosts for the job. </span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            hosts: A sequence of host ids.</span>
+<span class="sd">            storage_mapping: The resource ids of the storages to use. </span>
+<span class="sd">                Defaults to None. Required only if the job needs a storage </span>
+<span class="sd">                resource.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of job is not in the queue (e.g. job is </span>
+<span class="sd">                runnable or running).</span>
+<span class="sd">            ValueError: In case of the number of allocated resources does not </span>
+<span class="sd">                match the number requested or the job needs a storage and </span>
+<span class="sd">                the mapping is not defined or valid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_submitted</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;The job is not in the queue anymore, &#39;</span>
+                               <span class="sa">f</span><span class="s1">&#39;got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `hosts` argument to be a list &#39;</span>
+                             <span class="sa">f</span><span class="s1">&#39;of length </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="si">}</span><span class="s1">, got </span><span class="si">{</span><span class="n">hosts</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="n">DataStagingJobProfile</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">storage_mapping</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Expected storage mapping to be defined, &#39;</span>
+                                 <span class="sa">f</span><span class="s1">&#39;got </span><span class="si">{</span><span class="n">storage_mapping</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">src</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">storage_mapping</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Expected storage mapping to &#39;</span>
+                                 <span class="sa">f</span><span class="s1">&#39;include </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">src</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">dest</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">storage_mapping</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Expected storage mapping to &#39;</span>
+                                 <span class="sa">f</span><span class="s1">&#39;include </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">dest</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="n">ParallelHomogeneousPFSJobProfile</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">storage_mapping</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Expected storage mapping to be defined, &#39;</span>
+                                 <span class="sa">f</span><span class="s1">&#39;got </span><span class="si">{</span><span class="n">storage_mapping</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">storage</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">storage_mapping</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Expected storage mapping to &#39;</span>
+                                 <span class="sa">f</span><span class="s1">&#39;include </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">storage</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">storage_mapping</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Expected storage mapping to be empty, &#39;</span>
+                             <span class="sa">f</span><span class="s1">&#39;got </span><span class="si">{</span><span class="n">storage_mapping</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__allocation</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">hosts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__storage_mapping</span> <span class="o">=</span> <span class="n">storage_mapping</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">=</span> <span class="n">JobState</span><span class="o">.</span><span class="n">ALLOCATED</span>
+
+    <span class="k">def</span> <span class="nf">_reject</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Rejects the job. </span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of job is not in the queue (e.g. job </span>
+<span class="sd">                is runnable or running).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_submitted</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Cannot reject a job that is not in the &#39;</span>
+                               <span class="sa">f</span><span class="s1">&#39;queue, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">=</span> <span class="n">JobState</span><span class="o">.</span><span class="n">REJECTED</span>
+
+    <span class="k">def</span> <span class="nf">_submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subtime</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Submits the job. </span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            subtime: The submission time.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of job was already submitted.</span>
+<span class="sd">            ValueError: In case of subtime is invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="n">JobState</span><span class="o">.</span><span class="n">UNKNOWN</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;This job was already submitted.&#39;</span>
+                               <span class="sa">f</span><span class="s1">&#39;got, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">subtime</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `subtime` argument to be greather &#39;</span>
+                             <span class="sa">f</span><span class="s1">&#39;than zero, got </span><span class="si">{</span><span class="n">subtime</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">=</span> <span class="n">JobState</span><span class="o">.</span><span class="n">SUBMITTED</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__subtime</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">subtime</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Start the job. </span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            current_time: The current simulation time.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of job is not runnable</span>
+<span class="sd">            ValueError: In case of current time is less than the submission time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_runnable</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;The job cannot start if it is not &#39;</span>
+                               <span class="sa">f</span><span class="s1">&#39;runnable, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">current_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">subtime</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The `current_time` argument cannot be less &#39;</span>
+                             <span class="s1">&#39;than the job submission time, &#39;</span>
+                             <span class="sa">f</span><span class="s1">&#39;got </span><span class="si">{</span><span class="n">current_time</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__start_time</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">current_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">=</span> <span class="n">JobState</span><span class="o">.</span><span class="n">RUNNING</span>
+
+    <span class="k">def</span> <span class="nf">_terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">final_state</span><span class="p">:</span> <span class="n">JobState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Terminate the job. </span>
+
+<span class="sd">        This is an internal method to be used by the simulator only.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            current_time: The current simulation time.</span>
+<span class="sd">            final_state: The job final state.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of the job is not running.</span>
+<span class="sd">            ValueError: In case of current time is less than the job start </span>
+<span class="sd">                time or the final state is not one of the possible ones.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;The job cannot be finished if it is not running&#39;</span>
+                               <span class="sa">f</span><span class="s1">&#39;got, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="n">valid_states</span> <span class="o">=</span> <span class="p">(</span><span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_SUCCESSFULLY</span><span class="p">,</span>
+                        <span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_FAILED</span><span class="p">,</span>
+                        <span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_KILLED</span><span class="p">,</span>
+                        <span class="n">JobState</span><span class="o">.</span><span class="n">COMPLETED_WALLTIME_REACHED</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">final_state</span> <span class="ow">in</span> <span class="n">valid_states</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `final_state` argument to be valid, &#39;</span>
+                             <span class="sa">f</span><span class="s1">&#39;got </span><span class="si">{</span><span class="n">final_state</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">current_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `current_time` argument to be greather &#39;</span>
+                             <span class="sa">f</span><span class="s1">&#39;than start_time, got </span><span class="si">{</span><span class="n">current_time</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__stop_time</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">current_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__state</span> <span class="o">=</span> <span class="n">final_state</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Lucas C. Casagrande
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

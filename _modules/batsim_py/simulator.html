@@ -1,0 +1,998 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>batsim_py.simulator &mdash; Batsim-py 1.0.5 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> Batsim-py
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/scheduling.html">Scheduling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/shutdown.html">Shutdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/dvfs.html">DVFS</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/simulator.html">Simulator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/events.html">Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/monitors.html">Monitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_doc/resources.html">Resources</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Batsim-py</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>batsim_py.simulator</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for batsim_py.simulator</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">atexit</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">shutil</span> <span class="kn">import</span> <span class="n">which</span>
+<span class="kn">import</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">DefaultDict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">overload</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">SimulatorEvent</span>
+<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">JobEvent</span>
+<span class="kn">from</span> <span class="nn">.events</span> <span class="kn">import</span> <span class="n">HostEvent</span>
+<span class="kn">from</span> <span class="nn">.jobs</span> <span class="kn">import</span> <span class="n">Job</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">NotifyBatsimEvent</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">BatsimNotifyType</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">SimulationBeginsBatsimEvent</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">NetworkHandler</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">BatsimMessage</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">ResourcePowerStateChangedBatsimEvent</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">BatsimEventType</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">JobCompletedBatsimEvent</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">JobSubmittedBatsimEvent</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">BatsimRequest</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">CallMeLaterBatsimRequest</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">KillJobBatsimRequest</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">ExecuteJobBatsimRequest</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">RejectJobBatsimRequest</span>
+<span class="kn">from</span> <span class="nn">.protocol</span> <span class="kn">import</span> <span class="n">SetResourceStateBatsimRequest</span>
+<span class="kn">from</span> <span class="nn">.resources</span> <span class="kn">import</span> <span class="n">Platform</span>
+<span class="kn">from</span> <span class="nn">.resources</span> <span class="kn">import</span> <span class="n">Host</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">get_free_tcp_address</span>
+
+
+<span class="c1"># Type alias</span>
+<span class="n">EventSenders</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Host</span><span class="p">,</span> <span class="n">Job</span><span class="p">,</span> <span class="s1">&#39;SimulatorHandler&#39;</span><span class="p">]</span>
+<span class="n">JobListener</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Job</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
+<span class="n">HostListener</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Host</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
+<span class="n">SimulatorListener</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="s1">&#39;SimulatorHandler&#39;</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
+<span class="n">Listener</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">JobListener</span><span class="p">,</span> <span class="n">HostListener</span><span class="p">,</span> <span class="n">SimulatorListener</span><span class="p">]</span>
+<span class="n">Event</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">JobEvent</span><span class="p">,</span> <span class="n">HostEvent</span><span class="p">,</span> <span class="n">SimulatorEvent</span><span class="p">]</span>
+<span class="n">Listeners</span> <span class="o">=</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="n">Event</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Listener</span><span class="p">]]</span>
+<span class="n">Callback</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span>
+<span class="n">Callbacks</span> <span class="o">=</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span>
+<span class="n">BatsimVerbosity</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;quiet&quot;</span><span class="p">,</span> <span class="s2">&quot;network-only&quot;</span><span class="p">,</span> <span class="s2">&quot;information&quot;</span><span class="p">,</span> <span class="s2">&quot;debug&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="Reservation"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.Reservation">[docs]</a><span class="k">class</span> <span class="nc">Reservation</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Describes the reservation of a host.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        host: The host.</span>
+<span class="sd">        release_time: The remaining time to the host be released.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        host: The host.</span>
+<span class="sd">        release_time: The remaining time to the host be released.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">:</span> <span class="n">Host</span><span class="p">,</span> <span class="n">release_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">release_time</span> <span class="o">=</span> <span class="n">release_time</span></div>
+
+
+<div class="viewcode-block" id="SimulatorHandler"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler">[docs]</a><span class="k">class</span> <span class="nc">SimulatorHandler</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Simulator handler class.</span>
+
+<span class="sd">    This class will handle the Batsim simulation process.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        tcp_address: An address string consisting of three parts as follows:</span>
+<span class="sd">            protocol://interface:port. Defaults to None. If no address</span>
+<span class="sd">            is provided, a random one will be used.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ImportError: In case of Batsim cannot be found.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; handler = SimulatorHandler(&quot;tcp://localhost:28000&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tcp_address</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">which</span><span class="p">(</span><span class="s1">&#39;batsim&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s1">&#39;(HINT: you need to install Batsim. &#39;</span>
+                              <span class="s1">&#39;Check the setup instructions here: &#39;</span>
+                              <span class="s1">&#39;https://batsim.readthedocs.io/en/latest/.). &#39;</span>
+                              <span class="s1">&#39;Run &quot;batsim --version&quot; to make sure it is working.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__network</span> <span class="o">=</span> <span class="n">NetworkHandler</span><span class="p">(</span><span class="n">tcp_address</span> <span class="ow">or</span> <span class="n">get_free_tcp_address</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__current_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__simulator</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__simulation_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="p">:</span> <span class="n">Platform</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__no_more_jobs_to_submit</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__no_more_external_event_to_occur</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_requests</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BatsimRequest</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Job</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__callbacks</span><span class="p">:</span> <span class="n">Callbacks</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__subscriptions</span><span class="p">:</span> <span class="n">Listeners</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+
+        <span class="c1"># Batsim events handlers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_event_handlers</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">BatsimEventType</span><span class="o">.</span><span class="n">SIMULATION_ENDS</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_batsim_simulation_ends</span><span class="p">,</span>
+            <span class="n">BatsimEventType</span><span class="o">.</span><span class="n">SIMULATION_BEGINS</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_batsim_simulation_begins</span><span class="p">,</span>
+            <span class="n">BatsimEventType</span><span class="o">.</span><span class="n">JOB_COMPLETED</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_batsim_job_completed</span><span class="p">,</span>
+            <span class="n">BatsimEventType</span><span class="o">.</span><span class="n">JOB_SUBMITTED</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_batsim_job_submitted</span><span class="p">,</span>
+            <span class="n">BatsimEventType</span><span class="o">.</span><span class="n">RESOURCE_STATE_CHANGED</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_batsim_host_state_changed</span><span class="p">,</span>
+            <span class="n">BatsimEventType</span><span class="o">.</span><span class="n">REQUESTED_CALL</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_batsim_requested_call</span><span class="p">,</span>
+            <span class="n">BatsimEventType</span><span class="o">.</span><span class="n">NOTIFY</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_batsim_notify</span>
+        <span class="p">}</span>
+
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__close_simulator</span><span class="p">)</span>
+        <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGTERM</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__on_sigterm</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">address</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The address string. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__network</span><span class="o">.</span><span class="n">address</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Job</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; A sequence with all the jobs in the system.</span>
+
+<span class="sd">        This does not include jobs that already finished.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">queue</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Job</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; A sequence of all jobs in the queue. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span> <span class="k">if</span> <span class="n">j</span><span class="o">.</span><span class="n">is_submitted</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">agenda</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Reservation</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot; Host reservations. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">hosts</span><span class="p">:</span>
+                <span class="n">release_t</span> <span class="o">=</span> <span class="mf">0.</span>
+                <span class="k">for</span> <span class="n">job_id</span> <span class="ow">in</span> <span class="n">host</span><span class="o">.</span><span class="n">jobs</span><span class="p">:</span>
+                    <span class="n">job</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span> <span class="k">if</span> <span class="n">j</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">job_id</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">walltime</span><span class="p">:</span>
+                        <span class="n">runtime</span> <span class="o">=</span> <span class="mf">0.</span>
+                        <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+                            <span class="k">assert</span> <span class="n">job</span><span class="o">.</span><span class="n">start_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                            <span class="n">runtime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">-</span> <span class="n">job</span><span class="o">.</span><span class="n">start_time</span>
+                        <span class="n">job_release_t</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">walltime</span> <span class="o">-</span> <span class="n">runtime</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">job_release_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+                    <span class="n">release_t</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">release_t</span><span class="p">,</span> <span class="n">job_release_t</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">Reservation</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">release_t</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">platform</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Platform</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The simulation platform.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_running</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether the simulation is running or not.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__simulator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">current_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; The current simulation time (seconds). &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__current_time</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_submitter_finished</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Whether there are still some jobs to be submitted or not. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__no_more_jobs_to_submit</span>
+
+<div class="viewcode-block" id="SimulatorHandler.start"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+              <span class="n">platform</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+              <span class="n">workload</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+              <span class="n">verbosity</span><span class="p">:</span> <span class="n">BatsimVerbosity</span> <span class="o">=</span> <span class="s2">&quot;quiet&quot;</span><span class="p">,</span>
+              <span class="n">simulation_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+              <span class="n">allow_compute_sharing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+              <span class="n">allow_storage_sharing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">external_events</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Start the simulation process.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            platform: The XML file defining the platform. It must follow the</span>
+<span class="sd">                format expected by Batsim and SimGrid. Check their documentation </span>
+<span class="sd">                to know how to define a platform</span>
+<span class="sd">            workload: A JSON file defining the jobs and their profiles.</span>
+<span class="sd">                The simulation process will only submit the jobs that are</span>
+<span class="sd">                defined in this JSON. Moreover, Batsim is responsible for </span>
+<span class="sd">                the submission process.</span>
+<span class="sd">            verbosity: The Batsim verbosity level. Defaults to &quot;quiet&quot;.</span>
+<span class="sd">            simulation_time: The maximum simulation time. Defaults to None.</span>
+<span class="sd">                If this argument is set, the simulation will stop only when this</span>
+<span class="sd">                time is reached, no matter if there are jobs to be submitted or</span>
+<span class="sd">                running. Otherwise, the simulation will only stop when all jobs</span>
+<span class="sd">                in the workload were completed or rejected.</span>
+<span class="sd">            allow_compute_sharing: Whether a host can be used by multiple jobs </span>
+<span class="sd">                or not. Defaults to False.</span>
+<span class="sd">            allow_storage_sharing: Whether a storage can be used by multiple jobs </span>
+<span class="sd">                or not. Defaults to True.</span>
+<span class="sd">            external_events: The file containing external events to simulate. </span>
+<span class="sd">                Check the Batsim documentation to know what kind of external </span>
+<span class="sd">                events are supported.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of simulation already running.</span>
+<span class="sd">            ValueError: In case of `simulation_time` is less than or equals to</span>
+<span class="sd">                zero or the verbosity is invalid.</span>
+
+<span class="sd">        Examples:</span>
+<span class="sd">            &gt;&gt;&gt; handler = SimulatorHandler(&quot;tcp://localhost:28000&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; handler.start(&quot;platform.xml&quot;, &quot;workload.json&quot;, &quot;information&quot;, 1440)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">workload</span> <span class="ow">and</span> <span class="n">platform</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The simulation is already running.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">verbosity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;quiet&quot;</span><span class="p">,</span> <span class="s2">&quot;network-only&quot;</span><span class="p">,</span> <span class="s2">&quot;information&quot;</span><span class="p">,</span> <span class="s2">&quot;debug&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;This `verbosity` argument value is not accepted &#39;</span>
+                             <span class="sa">f</span><span class="s1">&#39;by Batsim, got </span><span class="si">{</span><span class="n">verbosity</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">simulation_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">simulation_time</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `simulation_time` to be greater &#39;</span>
+                             <span class="sa">f</span><span class="s1">&#39;than zero, got </span><span class="si">{</span><span class="n">simulation_time</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__current_time</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__simulation_time</span> <span class="o">=</span> <span class="n">simulation_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__no_more_jobs_to_submit</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># There isn&#39;t an option to avoid exporting batsim results</span>
+        <span class="n">tmp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/batsim&quot;</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s1">&#39;batsim -E --forward-profiles-on-submission &#39;</span>
+            <span class="s1">&#39;--disable-schedule-tracing --disable-machine-state-tracing &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;-s </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">__network</span><span class="o">.</span><span class="n">address</span><span class="si">}</span><span class="s1"> -p </span><span class="si">{</span><span class="n">platform</span><span class="si">}</span><span class="s1"> -w </span><span class="si">{</span><span class="n">workload</span><span class="si">}</span><span class="s1"> &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;-v </span><span class="si">{</span><span class="n">verbosity</span><span class="si">}</span><span class="s1">  -e </span><span class="si">{</span><span class="n">tmp_dir</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">allow_compute_sharing</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">+=</span> <span class="s1">&#39; --enable-compute-sharing&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">allow_storage_sharing</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">+=</span> <span class="s1">&#39; --disable-storage-sharing&#39;</span>
+
+        <span class="k">if</span> <span class="n">external_events</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__no_more_external_event_to_occur</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">cmd</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39; --events </span><span class="si">{</span><span class="n">external_events</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__no_more_external_event_to_occur</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__simulator</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
+            <span class="n">cmd</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__network</span><span class="o">.</span><span class="n">bind</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__handle_batsim_events</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__simulation_time</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__set_batsim_call_me_later</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__simulation_time</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_BEGINS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimulatorHandler.close"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Close the simulation process. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__close_simulator</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__network</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__simulation_time</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_requests</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__callbacks</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">SimulatorEvent</span><span class="o">.</span><span class="n">SIMULATION_ENDS</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimulatorHandler.proceed_time"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler.proceed_time">[docs]</a>    <span class="k">def</span> <span class="nf">proceed_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Proceed the simulation process to the next event or time.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            time: The time to proceed (min is 1 sec). Defaults to 0. It&#39;s </span>
+<span class="sd">                possible to proceed directly to the next event or to a specific </span>
+<span class="sd">                time. If the time is unset (equals 0), the simulation will proceed </span>
+<span class="sd">                to the next event. Otherwise, if a time &#39;t&#39; is provided, the </span>
+<span class="sd">                simulation will proceed directly to it and only events that occur </span>
+<span class="sd">                before &#39;t&#39; will be dispatched. </span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: In case of invalid arguments value.</span>
+<span class="sd">            RuntimeError: In case of the simulation is not running or</span>
+<span class="sd">                a deadlock happened. The latter case occurs only when there are </span>
+<span class="sd">                no more events to happen. Consequently, the simulation does not </span>
+<span class="sd">                know what to do and a deadlock error is raised by Batsim.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">unflag</span><span class="p">(</span><span class="n">_</span><span class="p">):</span>
+            <span class="c1"># this a internal function to be called by the callback procedure.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__wait_callback</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The simulation is not running.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">time</span><span class="p">:</span>
+            <span class="c1"># Go to the next event.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__wait_callback</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__simulation_time</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_submitter_finished</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">__no_more_external_event_to_occur</span><span class="p">:</span>
+            <span class="c1"># There are no more actions to do. Go to the next event.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__wait_callback</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Setup a call me later request.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__wait_callback</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_callback</span><span class="p">(</span><span class="n">time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span> <span class="n">unflag</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__goto_next_batsim_event</span><span class="p">()</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">__wait_callback</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__goto_next_batsim_event</span><span class="p">()</span></div>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">JobEvent</span><span class="p">,</span> <span class="n">call</span><span class="p">:</span> <span class="n">JobListener</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">HostEvent</span><span class="p">,</span> <span class="n">call</span><span class="p">:</span> <span class="n">HostListener</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">SimulatorEvent</span><span class="p">,</span>
+                  <span class="n">call</span><span class="p">:</span> <span class="n">SimulatorListener</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="SimulatorHandler.subscribe"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler.subscribe">[docs]</a>    <span class="k">def</span> <span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">,</span> <span class="n">call</span><span class="p">:</span> <span class="n">Listener</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Subscribe to an event.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event: The event to subscribe.</span>
+<span class="sd">            call: The function to be called when the event is dispatched. It</span>
+<span class="sd">                must accept the event sender as an argument.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of simulation is not running.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">callable</span><span class="p">(</span><span class="n">call</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__subscriptions</span><span class="p">[</span><span class="n">event</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">call</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimulatorHandler.set_callback"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler.set_callback">[docs]</a>    <span class="k">def</span> <span class="nf">set_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">at</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">call</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">float</span><span class="p">],</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Setup a callback.</span>
+
+<span class="sd">        The simulation will call the function at the defined time.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            at: The time which the function must be called (min is 1 sec).</span>
+<span class="sd">            call: A function that receives the current simulation time as </span>
+<span class="sd">                an argument.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: In case of invalid arguments value.</span>
+<span class="sd">            RuntimeError: In case of simulation is not running.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">callable</span><span class="p">(</span><span class="n">call</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The simulation is not running.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">at</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected `at` argument to be a number &#39;</span>
+                             <span class="s1">&#39;greater than the current simulation time&#39;</span>
+                             <span class="sa">f</span><span class="s1">&#39;, got </span><span class="si">{</span><span class="n">at</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__callbacks</span><span class="p">[</span><span class="n">at</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">call</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_batsim_call_me_later</span><span class="p">(</span><span class="n">at</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimulatorHandler.allocate"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler.allocate">[docs]</a>    <span class="k">def</span> <span class="nf">allocate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                 <span class="n">hosts_id</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+                 <span class="n">storage_mapping</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Allocate resources for a job.</span>
+
+<span class="sd">        To start computing, a job must allocate some resources first. When these </span>
+<span class="sd">        resources are ready, the simulator will automatically start the job. If </span>
+<span class="sd">        for some reason any allocated resource is not ready (because it’s off or </span>
+<span class="sd">        switching On/Off), the simulator will try to initialize the resource and </span>
+<span class="sd">        will wait until it’s ready to start the job.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            job_id: The job id.</span>
+<span class="sd">            hosts_id: A sequence of host ids to be allocated for the job.</span>
+<span class="sd">            storage_mapping: A mapping of storage names to resource ids. If </span>
+<span class="sd">                the job needs a storage resource, this argument is required. </span>
+<span class="sd">                Otherwise, it can just be ignored.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of simulation is not running.</span>
+<span class="sd">            LookupError: In case of job/resource not found or resource type </span>
+<span class="sd">                is invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">job_id</span> <span class="ow">and</span> <span class="n">hosts_id</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The simulation is not running.&quot;</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="p">,</span> <span class="s2">&quot;For some reason the platform was not loaded&quot;</span>
+
+        <span class="n">job</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span> <span class="k">if</span> <span class="n">j</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">job_id</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="s2">&quot;The job </span><span class="si">{}</span><span class="s2"> was not found.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_id</span><span class="p">))</span>
+
+        <span class="c1"># Allocate hosts</span>
+        <span class="k">for</span> <span class="n">h_id</span> <span class="ow">in</span> <span class="n">hosts_id</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">h_id</span><span class="p">)</span><span class="o">.</span><span class="n">_allocate</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+        <span class="c1"># Allocate storages</span>
+        <span class="k">if</span> <span class="n">storage_mapping</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">h_id</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">storage_mapping</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">get_storage</span><span class="p">(</span><span class="n">h_id</span><span class="p">)</span><span class="o">.</span><span class="n">_allocate</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+        <span class="c1"># Allocate job</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">_allocate</span><span class="p">(</span><span class="n">hosts_id</span><span class="p">,</span> <span class="n">storage_mapping</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">JobEvent</span><span class="o">.</span><span class="n">ALLOCATED</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+
+        <span class="c1"># Start job</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__start_runnable_jobs</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SimulatorHandler.kill_job"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler.kill_job">[docs]</a>    <span class="k">def</span> <span class="nf">kill_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Kill a job that is running.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            job_id: The id of the job to kill.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of simulation is not running or the job </span>
+<span class="sd">                cannot be killed.</span>
+<span class="sd">            LookupError: In case of job not found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The simulation is not running.&quot;</span><span class="p">)</span>
+
+        <span class="n">job</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span> <span class="k">if</span> <span class="n">j</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">job_id</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="s2">&quot;The job </span><span class="si">{}</span><span class="s2"> was not found.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_id</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid kill. Job </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> is not running&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Sync now with Batsim</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="n">KillJobBatsimRequest</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">BatsimMessage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span> <span class="p">[</span><span class="n">request</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__network</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__handle_batsim_events</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SimulatorHandler.reject_job"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler.reject_job">[docs]</a>    <span class="k">def</span> <span class="nf">reject_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Rejects a job.</span>
+
+<span class="sd">        Only jobs in the queue can be rejected. Once a job is rejected, it </span>
+<span class="sd">        cannot be scheduled anymore.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            job_id: The id of the job to reject.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of simulation is not running or the job </span>
+<span class="sd">                cannot be rejected.</span>
+<span class="sd">            LookupError: In case of job not found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The simulation is not running.&quot;</span><span class="p">)</span>
+
+        <span class="n">job</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span> <span class="k">if</span> <span class="n">j</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">job_id</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span><span class="s2">&quot;The job </span><span class="si">{}</span><span class="s2"> was not found.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_id</span><span class="p">))</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">_reject</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+
+        <span class="c1"># Sync Batsim</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="n">RejectJobBatsimRequest</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span> <span class="n">job_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_requests</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">JobEvent</span><span class="o">.</span><span class="n">REJECTED</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimulatorHandler.switch_on"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler.switch_on">[docs]</a>    <span class="k">def</span> <span class="nf">switch_on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hosts_id</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Switch on hosts.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            hosts_id: A sequence of host ids to be switched on.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of the simulation is not running or the host </span>
+<span class="sd">                cannot switch on because it&#39;s in an invalid state or the power </span>
+<span class="sd">                state is not defined.</span>
+<span class="sd">            LookupError: In case of host not found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The simulation is not running.&quot;</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="p">,</span> <span class="s2">&quot;For some reason, the platform was not loaded.&quot;</span>
+
+        <span class="k">for</span> <span class="n">h_id</span> <span class="ow">in</span> <span class="n">hosts_id</span><span class="p">:</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">h_id</span><span class="p">)</span>
+            <span class="n">host</span><span class="o">.</span><span class="n">_switch_on</span><span class="p">()</span>
+            <span class="n">ending_pstate</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">get_default_pstate</span><span class="p">()</span>
+
+            <span class="c1"># Sync Batsim</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__set_batsim_host_pstate</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">ending_pstate</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimulatorHandler.switch_off"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler.switch_off">[docs]</a>    <span class="k">def</span> <span class="nf">switch_off</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hosts_id</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Switch off hosts.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            hosts_id: A sequence of host ids to be switched off.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of simulation is not running or a host cannot </span>
+<span class="sd">                switch off because it&#39;s in an invalid state or the power state is </span>
+<span class="sd">                not defined.</span>
+<span class="sd">            LookupError: In case of host not found or the &#39;off&#39; power state could </span>
+<span class="sd">                not be found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The simulation is not running.&quot;</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="p">,</span> <span class="s2">&quot;For some reason, the platform was not loaded.&quot;</span>
+
+        <span class="k">for</span> <span class="n">h_id</span> <span class="ow">in</span> <span class="n">hosts_id</span><span class="p">:</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">h_id</span><span class="p">)</span>
+            <span class="n">host</span><span class="o">.</span><span class="n">_switch_off</span><span class="p">()</span>
+            <span class="n">ending_pstate</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">get_sleep_pstate</span><span class="p">()</span>
+
+            <span class="c1"># Sync Batsim</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__set_batsim_host_pstate</span><span class="p">(</span><span class="n">host</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">ending_pstate</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimulatorHandler.switch_power_state"><a class="viewcode-back" href="../../api_doc/simulator.html#batsim_py.simulator.SimulatorHandler.switch_power_state">[docs]</a>    <span class="k">def</span> <span class="nf">switch_power_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pstate_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Switch the host computation power state.</span>
+
+<span class="sd">        This is useful if you want to implement a DVFS policy.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            host_id: The host id.</span>
+<span class="sd">            pstate_id: The computation power state id.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            RuntimeError: In case of the simulation is not running or the </span>
+<span class="sd">                power state were is defined or the host cannot switch.</span>
+<span class="sd">            LookupError: In case of host or power state could not be found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;The simulation is not running.&quot;</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="p">,</span> <span class="s2">&quot;For some reason, the platform was not loaded.&quot;</span>
+
+        <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">host_id</span><span class="p">)</span>
+        <span class="n">host</span><span class="o">.</span><span class="n">_set_computation_pstate</span><span class="p">(</span><span class="n">pstate_id</span><span class="p">)</span>
+
+        <span class="c1"># Sync Batsim</span>
+        <span class="k">assert</span> <span class="n">host</span><span class="o">.</span><span class="n">pstate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__set_batsim_host_pstate</span><span class="p">(</span><span class="n">host_id</span><span class="p">,</span> <span class="n">pstate_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">HostEvent</span><span class="o">.</span><span class="n">COMPUTATION_POWER_STATE_CHANGED</span><span class="p">,</span>
+                              <span class="n">host</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__dispatch_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">Event</span><span class="p">,</span> <span class="n">sender</span><span class="p">:</span> <span class="n">EventSenders</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Dispatch an simulator event &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">JobEvent</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">Job</span><span class="p">),</span> <span class="s2">&quot;JobEvent sender must be a Job&quot;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">HostEvent</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">Host</span><span class="p">),</span> <span class="s2">&quot;HostEvent sender must be a Host&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;SimulatorEvent sender must be a SimulatorHandler&#39;</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">SimulatorHandler</span><span class="p">),</span> <span class="n">msg</span>
+
+        <span class="k">for</span> <span class="n">call</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__subscriptions</span><span class="p">[</span><span class="n">event</span><span class="p">]:</span>
+            <span class="n">call</span><span class="p">(</span><span class="n">sender</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+
+    <span class="k">def</span> <span class="nf">__start_runnable_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Start runnable jobs.</span>
+
+<span class="sd">        This is an internal method used to starts jobs that were allocated. </span>
+<span class="sd">        A job can only starts if the hosts are idle. Thus, this method ensures </span>
+<span class="sd">        that the host can compute the job.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="p">,</span> <span class="s2">&quot;For some reason, the platform was not loaded.&quot;</span>
+
+        <span class="n">runnable_jobs</span> <span class="o">=</span> <span class="p">[</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span> <span class="k">if</span> <span class="n">j</span><span class="o">.</span><span class="n">is_runnable</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">runnable_jobs</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">job</span><span class="o">.</span><span class="n">allocation</span><span class="p">,</span> <span class="s2">&quot;For some reason, the job was not allocated.&quot;</span>
+
+            <span class="n">is_ready</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">hosts</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">h</span><span class="p">)</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">job</span><span class="o">.</span><span class="n">allocation</span><span class="p">]</span>
+
+            <span class="c1"># Check if all hosts are active and switch on sleeping hosts</span>
+            <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">hosts</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span><span class="o">.</span><span class="n">is_idle</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">host</span><span class="o">.</span><span class="n">is_computing</span><span class="p">:</span>
+                    <span class="n">is_ready</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">host</span><span class="o">.</span><span class="n">is_sleeping</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">switch_on</span><span class="p">([</span><span class="n">host</span><span class="o">.</span><span class="n">id</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="n">is_ready</span><span class="p">:</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">_start</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">host</span> <span class="ow">in</span> <span class="n">hosts</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">host</span><span class="o">.</span><span class="n">is_computing</span><span class="p">:</span>
+                        <span class="n">host</span><span class="o">.</span><span class="n">_start_computing</span><span class="p">()</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">JobEvent</span><span class="o">.</span><span class="n">STARTED</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+                <span class="c1"># Sync Batsim</span>
+                <span class="n">request</span> <span class="o">=</span> <span class="n">ExecuteJobBatsimRequest</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span>
+                                                  <span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                                                  <span class="n">job</span><span class="o">.</span><span class="n">allocation</span><span class="p">,</span>
+                                                  <span class="n">job</span><span class="o">.</span><span class="n">storage_mapping</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_requests</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__goto_next_batsim_event</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Go to the next Batsim event. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__send_requests</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__handle_batsim_events</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__simulation_time</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__simulation_time</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__start_runnable_jobs</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__close_simulator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Close the simulator process. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__simulator</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__simulator</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__simulator</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__simulator</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">__set_batsim_call_me_later</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">at</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Setup a call me later request. &quot;&quot;&quot;</span>
+        <span class="n">at</span> <span class="o">+=</span> <span class="mf">0.09</span>  <span class="c1"># Last batsim priority</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="n">CallMeLaterBatsimRequest</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span> <span class="n">at</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">CallMeLaterBatsimRequest</span><span class="p">)</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">at</span> <span class="o">==</span> <span class="n">request</span><span class="o">.</span><span class="n">at</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_requests</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_requests</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__set_batsim_host_pstate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">pstate_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Set Batsim host power state. &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">get_old_request</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SetResourceStateBatsimRequest</span><span class="p">]:</span>
+            <span class="sd">&quot;&quot;&quot; Get the request with the same properties. &quot;&quot;&quot;</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_requests</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">SetResourceStateBatsimRequest</span><span class="p">)</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">pstate_id</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">r</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># We try to minimize the number of requests.</span>
+        <span class="n">request</span> <span class="o">=</span> <span class="n">get_old_request</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">request</span><span class="p">:</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">add_resource</span><span class="p">(</span><span class="n">host_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">request</span> <span class="o">=</span> <span class="n">SetResourceStateBatsimRequest</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span> <span class="p">[</span><span class="n">host_id</span><span class="p">],</span> <span class="n">pstate_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_requests</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__handle_batsim_events</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Handle Batsim events. &quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__network</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">msg</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__current_time</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">timestamp</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_event_handlers</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">BatsimEventType</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_event_handlers</span><span class="p">[</span><span class="n">event</span><span class="o">.</span><span class="n">type</span><span class="p">](</span><span class="n">event</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__current_time</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">now</span>
+
+    <span class="k">def</span> <span class="nf">__send_requests</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Send Batsim requests. &quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">BatsimMessage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_requests</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__network</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__batsim_requests</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__on_batsim_simulation_begins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">SimulationBeginsBatsimEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">platform</span>
+
+    <span class="k">def</span> <span class="nf">__on_batsim_simulation_ends</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Handle batsim simulation ends event. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__simulator</span><span class="p">:</span>
+            <span class="n">ack</span> <span class="o">=</span> <span class="n">BatsimMessage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__network</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">ack</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__simulator</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__on_batsim_host_state_changed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">ResourcePowerStateChangedBatsimEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Handle batsim host state changed event. </span>
+
+<span class="sd">        When a host is switched on/off, the batsim simulates the transition costs</span>
+<span class="sd">        and tells the scheduler only when the host is sleeping or idle. Thus, </span>
+<span class="sd">        Batsim is the responsible to tell when the host finished its transition.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="p">,</span> <span class="s2">&quot;For some reason, the platform was not loaded.&quot;</span>
+
+        <span class="k">for</span> <span class="n">h_id</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">h_id</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span>
+
+            <span class="k">if</span> <span class="n">h</span><span class="o">.</span><span class="n">is_switching_off</span><span class="p">:</span>
+                <span class="n">h</span><span class="o">.</span><span class="n">_set_off</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">h</span><span class="o">.</span><span class="n">is_switching_on</span><span class="p">:</span>
+                <span class="n">h</span><span class="o">.</span><span class="n">_set_on</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">is_idle</span> <span class="ow">or</span> <span class="n">h</span><span class="o">.</span><span class="n">is_computing</span><span class="p">)</span> <span class="ow">and</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">id</span> <span class="o">!=</span> <span class="n">event</span><span class="o">.</span><span class="n">state</span><span class="p">:</span>
+                <span class="n">h</span><span class="o">.</span><span class="n">_set_computation_pstate</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span>
+                    <span class="n">HostEvent</span><span class="o">.</span><span class="n">COMPUTATION_POWER_STATE_CHANGED</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+
+            <span class="k">assert</span> <span class="n">h</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">event</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;For some reason, the internal &#39;</span>
+                                                <span class="s1">&#39;platform differs from the &#39;</span>
+                                                <span class="s1">&#39;Batsim platform, got pstate &#39;</span>
+                                                <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> while batsim got pstate </span><span class="si">{}</span><span class="s1">.&#39;</span>
+                                                <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">pstate</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">state</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__start_runnable_jobs</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__on_batsim_requested_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Handle batsim answer to call me back request.  &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__callbacks</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__current_time</span><span class="p">:</span>  <span class="c1"># batsim time</span>
+                <span class="k">for</span> <span class="n">call</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__callbacks</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+                    <span class="n">call</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">)</span>  <span class="c1"># local time</span>
+
+    <span class="k">def</span> <span class="nf">__on_batsim_job_submitted</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">JobSubmittedBatsimEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Handle batsim job submitted event.  &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">job</span><span class="p">)</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">job</span><span class="o">.</span><span class="n">_submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">JobEvent</span><span class="o">.</span><span class="n">SUBMITTED</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">job</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__on_batsim_job_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">JobCompletedBatsimEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Handle batsim job submitted event.  &quot;&quot;&quot;</span>
+
+        <span class="n">job</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span> <span class="k">if</span> <span class="n">j</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">event</span><span class="o">.</span><span class="n">job_id</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">job</span><span class="p">,</span> <span class="s2">&quot;The job </span><span class="si">{}</span><span class="s2"> was not found.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">job_id</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">job</span><span class="o">.</span><span class="n">allocation</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span>
+
+        <span class="n">job</span><span class="o">.</span><span class="n">_terminate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">job_state</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">h_id</span> <span class="ow">in</span> <span class="n">job</span><span class="o">.</span><span class="n">allocation</span><span class="p">:</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">get_host</span><span class="p">(</span><span class="n">h_id</span><span class="p">)</span>
+            <span class="n">host</span><span class="o">.</span><span class="n">_release</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">job</span><span class="o">.</span><span class="n">storage_mapping</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">s_id</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">storage_mapping</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">get_storage</span><span class="p">(</span><span class="n">s_id</span><span class="p">)</span><span class="o">.</span><span class="n">_release</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__jobs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">JobEvent</span><span class="o">.</span><span class="n">COMPLETED</span><span class="p">,</span> <span class="n">job</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__start_runnable_jobs</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__on_batsim_notify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">NotifyBatsimEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Handle batsim submitter finished event.  &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">notify_type</span> <span class="o">==</span> <span class="n">BatsimNotifyType</span><span class="o">.</span><span class="n">NO_MORE_STATIC_JOB_TO_SUBMIT</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__no_more_jobs_to_submit</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">notify_type</span> <span class="o">==</span> <span class="n">BatsimNotifyType</span><span class="o">.</span><span class="n">NO_MORE_EXTERNAL_EVENT_TO_OCCUR</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__no_more_external_event_to_occur</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">notify_type</span> <span class="o">==</span> <span class="n">BatsimNotifyType</span><span class="o">.</span><span class="n">EVENT_MACHINE_UNAVAILABLE</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">event</span><span class="o">.</span><span class="n">resources</span>
+            <span class="k">for</span> <span class="n">res_id</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">res_id</span><span class="p">)</span>
+                <span class="n">res</span><span class="o">.</span><span class="n">_set_unavailable</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">Host</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">event</span><span class="o">.</span><span class="n">notify_type</span> <span class="o">==</span> <span class="n">BatsimNotifyType</span><span class="o">.</span><span class="n">EVENT_MACHINE_AVAILABLE</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">event</span><span class="o">.</span><span class="n">resources</span>
+            <span class="k">for</span> <span class="n">res_id</span> <span class="ow">in</span> <span class="n">event</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__platform</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">res_id</span><span class="p">)</span>
+                <span class="n">res</span><span class="o">.</span><span class="n">_set_available</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">Host</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__dispatch_event</span><span class="p">(</span><span class="n">HostEvent</span><span class="o">.</span><span class="n">STATE_CHANGED</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__on_sigterm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signum</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot; Close simulation on sigterm.  &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__close_simulator</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">signum</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Lucas C. Casagrande
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

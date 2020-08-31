@@ -1,0 +1,679 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Simulator &mdash; Batsim-py 1.0.5 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Events" href="events.html" />
+    <link rel="prev" title="DVFS" href="../tutorials/dvfs.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> Batsim-py
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scheduling.html">Scheduling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/shutdown.html">Shutdown</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/dvfs.html">DVFS</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Simulator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="events.html">Events</a></li>
+<li class="toctree-l1"><a class="reference internal" href="monitors.html">Monitors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobs.html">Jobs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resources</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Batsim-py</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Simulator</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/api_doc/simulator.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="module-batsim_py.simulator">
+<span id="simulator"></span><h1>Simulator<a class="headerlink" href="#module-batsim_py.simulator" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="batsim_py.simulator.Reservation">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.simulator.</code><code class="sig-name descname">Reservation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">host</span></em>, <em class="sig-param"><span class="n">release_time</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#Reservation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.Reservation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Describes the reservation of a host.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host</strong> (<a class="reference internal" href="resources.html#batsim_py.resources.Host" title="batsim_py.resources.Host"><code class="xref py py-class docutils literal notranslate"><span class="pre">Host</span></code></a>) – The host.</p></li>
+<li><p><strong>release_time</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – The remaining time to the host be released.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="batsim_py.simulator.Reservation.host">
+<code class="sig-name descname">host</code><a class="headerlink" href="#batsim_py.simulator.Reservation.host" title="Permalink to this definition">¶</a></dt>
+<dd><p>The host.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="batsim_py.simulator.Reservation.release_time">
+<code class="sig-name descname">release_time</code><a class="headerlink" href="#batsim_py.simulator.Reservation.release_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>The remaining time to the host be released.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="batsim_py.simulator.SimulatorHandler">
+<em class="property">class </em><code class="sig-prename descclassname">batsim_py.simulator.</code><code class="sig-name descname">SimulatorHandler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tcp_address</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Simulator handler class.</p>
+<p>This class will handle the Batsim simulation process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>tcp_address</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – An address string consisting of three parts as follows:
+protocol://interface:port. Defaults to None. If no address
+is provided, a random one will be used.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>ImportError</strong> – In case of Batsim cannot be found.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">handler</span> <span class="o">=</span> <span class="n">SimulatorHandler</span><span class="p">(</span><span class="s2">&quot;tcp://localhost:28000&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.address">
+<em class="property">property </em><code class="sig-name descname">address</code><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.address" title="Permalink to this definition">¶</a></dt>
+<dd><p>The address string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.agenda">
+<em class="property">property </em><code class="sig-name descname">agenda</code><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.agenda" title="Permalink to this definition">¶</a></dt>
+<dd><p>Host reservations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code>[<a class="reference internal" href="#batsim_py.simulator.Reservation" title="batsim_py.simulator.Reservation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Reservation</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.allocate">
+<code class="sig-name descname">allocate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job_id</span></em>, <em class="sig-param"><span class="n">hosts_id</span></em>, <em class="sig-param"><span class="n">storage_mapping</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler.allocate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.allocate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocate resources for a job.</p>
+<p>To start computing, a job must allocate some resources first. When these
+resources are ready, the simulator will automatically start the job. If
+for some reason any allocated resource is not ready (because it’s off or
+switching On/Off), the simulator will try to initialize the resource and
+will wait until it’s ready to start the job.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>job_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The job id.</p></li>
+<li><p><strong>hosts_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – A sequence of host ids to be allocated for the job.</p></li>
+<li><p><strong>storage_mapping</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]) – A mapping of storage names to resource ids. If
+the job needs a storage resource, this argument is required.
+Otherwise, it can just be ignored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>RuntimeError</strong> – In case of simulation is not running.</p></li>
+<li><p><strong>LookupError</strong> – In case of job/resource not found or resource type
+    is invalid.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.close">
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the simulation process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.current_time">
+<em class="property">property </em><code class="sig-name descname">current_time</code><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.current_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>The current simulation time (seconds).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.is_running">
+<em class="property">property </em><code class="sig-name descname">is_running</code><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.is_running" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether the simulation is running or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.is_submitter_finished">
+<em class="property">property </em><code class="sig-name descname">is_submitter_finished</code><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.is_submitter_finished" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether there are still some jobs to be submitted or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.jobs">
+<em class="property">property </em><code class="sig-name descname">jobs</code><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A sequence with all the jobs in the system.</p>
+<p>This does not include jobs that already finished.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<a class="reference internal" href="jobs.html#batsim_py.jobs.Job" title="batsim_py.jobs.Job"><code class="xref py py-class docutils literal notranslate"><span class="pre">Job</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.kill_job">
+<code class="sig-name descname">kill_job</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler.kill_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.kill_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kill a job that is running.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>job_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The id of the job to kill.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>RuntimeError</strong> – In case of simulation is not running or the job
+    cannot be killed.</p></li>
+<li><p><strong>LookupError</strong> – In case of job not found.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.platform">
+<em class="property">property </em><code class="sig-name descname">platform</code><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.platform" title="Permalink to this definition">¶</a></dt>
+<dd><p>The simulation platform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="resources.html#batsim_py.resources.Platform" title="batsim_py.resources.Platform"><code class="xref py py-class docutils literal notranslate"><span class="pre">Platform</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.proceed_time">
+<code class="sig-name descname">proceed_time</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">time</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler.proceed_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.proceed_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Proceed the simulation process to the next event or time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>time</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The time to proceed (min is 1 sec). Defaults to 0. It’s
+possible to proceed directly to the next event or to a specific
+time. If the time is unset (equals 0), the simulation will proceed
+to the next event. Otherwise, if a time ‘t’ is provided, the
+simulation will proceed directly to it and only events that occur
+before ‘t’ will be dispatched.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – In case of invalid arguments value.</p></li>
+<li><p><strong>RuntimeError</strong> – In case of the simulation is not running or
+    a deadlock happened. The latter case occurs only when there are
+    no more events to happen. Consequently, the simulation does not
+    know what to do and a deadlock error is raised by Batsim.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.queue">
+<em class="property">property </em><code class="sig-name descname">queue</code><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>A sequence of all jobs in the queue.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<a class="reference internal" href="jobs.html#batsim_py.jobs.Job" title="batsim_py.jobs.Job"><code class="xref py py-class docutils literal notranslate"><span class="pre">Job</span></code></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.reject_job">
+<code class="sig-name descname">reject_job</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler.reject_job"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.reject_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rejects a job.</p>
+<p>Only jobs in the queue can be rejected. Once a job is rejected, it
+cannot be scheduled anymore.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>job_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The id of the job to reject.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>RuntimeError</strong> – In case of simulation is not running or the job
+    cannot be rejected.</p></li>
+<li><p><strong>LookupError</strong> – In case of job not found.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.set_callback">
+<code class="sig-name descname">set_callback</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">at</span></em>, <em class="sig-param"><span class="n">call</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler.set_callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.set_callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup a callback.</p>
+<p>The simulation will call the function at the defined time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>at</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The time which the function must be called (min is 1 sec).</p></li>
+<li><p><strong>call</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>], <code class="docutils literal notranslate"><span class="pre">None</span></code>]) – A function that receives the current simulation time as
+an argument.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – In case of invalid arguments value.</p></li>
+<li><p><strong>RuntimeError</strong> – In case of simulation is not running.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">platform</span></em>, <em class="sig-param"><span class="n">workload</span></em>, <em class="sig-param"><span class="n">verbosity</span><span class="o">=</span><span class="default_value">'quiet'</span></em>, <em class="sig-param"><span class="n">simulation_time</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">allow_compute_sharing</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">allow_storage_sharing</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">external_events</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start the simulation process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>platform</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The XML file defining the platform. It must follow the
+format expected by Batsim and SimGrid. Check their documentation
+to know how to define a platform</p></li>
+<li><p><strong>workload</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – A JSON file defining the jobs and their profiles.
+The simulation process will only submit the jobs that are
+defined in this JSON. Moreover, Batsim is responsible for
+the submission process.</p></li>
+<li><p><strong>verbosity</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code>[‘quiet’, ‘network-only’, ‘information’, ‘debug’]) – The Batsim verbosity level. Defaults to “quiet”.</p></li>
+<li><p><strong>simulation_time</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]) – The maximum simulation time. Defaults to None.
+If this argument is set, the simulation will stop only when this
+time is reached, no matter if there are jobs to be submitted or
+running. Otherwise, the simulation will only stop when all jobs
+in the workload were completed or rejected.</p></li>
+<li><p><strong>allow_compute_sharing</strong> – Whether a host can be used by multiple jobs
+or not. Defaults to False.</p></li>
+<li><p><strong>allow_storage_sharing</strong> – Whether a storage can be used by multiple jobs
+or not. Defaults to True.</p></li>
+<li><p><strong>external_events</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The file containing external events to simulate.
+Check the Batsim documentation to know what kind of external
+events are supported.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>RuntimeError</strong> – In case of simulation already running.</p></li>
+<li><p><strong>ValueError</strong> – In case of <cite>simulation_time</cite> is less than or equals to
+    zero or the verbosity is invalid.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">handler</span> <span class="o">=</span> <span class="n">SimulatorHandler</span><span class="p">(</span><span class="s2">&quot;tcp://localhost:28000&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">handler</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="s2">&quot;platform.xml&quot;</span><span class="p">,</span> <span class="s2">&quot;workload.json&quot;</span><span class="p">,</span> <span class="s2">&quot;information&quot;</span><span class="p">,</span> <span class="mi">1440</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.subscribe">
+<code class="sig-name descname">subscribe</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span><span class="p">:</span> <span class="n"><a class="reference internal" href="events.html#batsim_py.events.JobEvent" title="batsim_py.events.JobEvent">batsim_py.events.JobEvent</a></span></em>, <em class="sig-param"><span class="n">call</span><span class="p">:</span> <span class="n">Callable<span class="p">[</span><span class="p">[</span><a class="reference internal" href="jobs.html#batsim_py.jobs.Job" title="batsim_py.jobs.Job">batsim_py.jobs.Job</a><span class="p">]</span><span class="p">, </span>None<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler.subscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.subscribe" title="Permalink to this definition">¶</a></dt>
+<dt>
+<code class="sig-name descname">subscribe</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span><span class="p">:</span> <span class="n"><a class="reference internal" href="events.html#batsim_py.events.HostEvent" title="batsim_py.events.HostEvent">batsim_py.events.HostEvent</a></span></em>, <em class="sig-param"><span class="n">call</span><span class="p">:</span> <span class="n">Callable<span class="p">[</span><span class="p">[</span><a class="reference internal" href="resources.html#batsim_py.resources.Host" title="batsim_py.resources.Host">batsim_py.resources.Host</a><span class="p">]</span><span class="p">, </span>None<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; None</dt>
+<dt>
+<code class="sig-name descname">subscribe</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span><span class="p">:</span> <span class="n"><a class="reference internal" href="events.html#batsim_py.events.SimulatorEvent" title="batsim_py.events.SimulatorEvent">batsim_py.events.SimulatorEvent</a></span></em>, <em class="sig-param"><span class="n">call</span><span class="p">:</span> <span class="n">Callable<span class="p">[</span><span class="p">[</span><a class="reference internal" href="#batsim_py.simulator.SimulatorHandler" title="batsim_py.simulator.SimulatorHandler">SimulatorHandler</a><span class="p">]</span><span class="p">, </span>None<span class="p">]</span></span></em><span class="sig-paren">)</span> &#x2192; None</dt>
+<dd><p>Subscribe to an event.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>event</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<a class="reference internal" href="events.html#batsim_py.events.JobEvent" title="batsim_py.events.JobEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">JobEvent</span></code></a>, <a class="reference internal" href="events.html#batsim_py.events.HostEvent" title="batsim_py.events.HostEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">HostEvent</span></code></a>, <a class="reference internal" href="events.html#batsim_py.events.SimulatorEvent" title="batsim_py.events.SimulatorEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorEvent</span></code></a>]) – The event to subscribe.</p></li>
+<li><p><strong>call</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="jobs.html#batsim_py.jobs.Job" title="batsim_py.jobs.Job"><code class="xref py py-class docutils literal notranslate"><span class="pre">Job</span></code></a>], <code class="docutils literal notranslate"><span class="pre">None</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="resources.html#batsim_py.resources.Host" title="batsim_py.resources.Host"><code class="xref py py-class docutils literal notranslate"><span class="pre">Host</span></code></a>], <code class="docutils literal notranslate"><span class="pre">None</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="#batsim_py.simulator.SimulatorHandler" title="batsim_py.simulator.SimulatorHandler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimulatorHandler</span></code></a>], <code class="docutils literal notranslate"><span class="pre">None</span></code>]]) – The function to be called when the event is dispatched. It
+must accept the event sender as an argument.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>RuntimeError</strong> – In case of simulation is not running.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.switch_off">
+<code class="sig-name descname">switch_off</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">hosts_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler.switch_off"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.switch_off" title="Permalink to this definition">¶</a></dt>
+<dd><p>Switch off hosts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>hosts_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – A sequence of host ids to be switched off.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>RuntimeError</strong> – In case of simulation is not running or a host cannot
+    switch off because it’s in an invalid state or the power state is
+    not defined.</p></li>
+<li><p><strong>LookupError</strong> – In case of host not found or the ‘off’ power state could
+    not be found.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.switch_on">
+<code class="sig-name descname">switch_on</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">hosts_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler.switch_on"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.switch_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>Switch on hosts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>hosts_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]) – A sequence of host ids to be switched on.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>RuntimeError</strong> – In case of the simulation is not running or the host
+    cannot switch on because it’s in an invalid state or the power
+    state is not defined.</p></li>
+<li><p><strong>LookupError</strong> – In case of host not found.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="batsim_py.simulator.SimulatorHandler.switch_power_state">
+<code class="sig-name descname">switch_power_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">host_id</span></em>, <em class="sig-param"><span class="n">pstate_id</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/batsim_py/simulator.html#SimulatorHandler.switch_power_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#batsim_py.simulator.SimulatorHandler.switch_power_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Switch the host computation power state.</p>
+<p>This is useful if you want to implement a DVFS policy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>host_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The host id.</p></li>
+<li><p><strong>pstate_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The computation power state id.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>RuntimeError</strong> – In case of the simulation is not running or the
+    power state were is defined or the host cannot switch.</p></li>
+<li><p><strong>LookupError</strong> – In case of host or power state could not be found.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="events.html" class="btn btn-neutral float-right" title="Events" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../tutorials/dvfs.html" class="btn btn-neutral float-left" title="DVFS" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2020, Lucas C. Casagrande
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
