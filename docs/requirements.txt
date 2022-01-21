@@ -3,7 +3,7 @@ sphinx-autodoc-typehints>=1.10.3
 sphinx-copybutton>=0.2.10
 sphinx-rtd-theme>=0.4.3
 ipykernel==5.1.4
-ipython==7.13.0
+ipython==7.16.3
 nbsphinx==0.6.1
 nbconvert==5.6.1
 pandoc==1.0.2
